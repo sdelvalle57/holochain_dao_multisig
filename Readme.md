@@ -32,16 +32,16 @@ Installation
 
 
 Run the Client
-1. `nix-shell` -> `sim2h_server`
+1. ````nix-shell -> sim2h_server````
 2. Open another terminal on the root project, will run 2 agents(alice -> 8888, bob -> 8889)
-   `nix-shell` -> `cd ui/client` -> `npm run start:holochain`
+   ````nix-shell -> cd ui/client -> npm run start:holochain````
 3. Open another terminal on the root project, will run two apollo server instances (alice->4000, bob->4001)
-   `cd ui/client` -> `npm run start:apollo-server`
+   ````cd ui/client -> npm run start:apollo-server````
 4. Build typescript objects, Open another terminal on the root project
-   `cd ui/client` -> `npm run codegen`
+   ````cd ui/client -> npm run codegen````
    Press any key when its done
 5. Run two UIs for each agent
-   `cd ui/client` -> `npm run start:ui`
+   ````cd ui/client -> npm run start:ui````
    Navigate to http://localhost:8080 for Alice and http://localhost:8081 for Bob
 
 Notes. To Test queries and mutations go to http://localhost:4000 for Alice and http://localhost:4001 for Bob
