@@ -1,0 +1,18 @@
+{
+  "name": "Holochain App Name",
+  "description": "A Holochain app",
+  "authors": [
+    {
+      "identifier": "Author Name <author@name.com>",
+      "public_key_source": "",
+      "signature": ""
+    }
+  ],
+  "version": "0.1.0",
+  "dht": {},
+  "properties": {
+    "valid_members": [
+      "HcScijzE9x3Qjogoz9xOK4NjxFNthmf9br9ow8tN7PUb6djyAoWu5rKuhrsq93i"
+    ]
+  }
+}

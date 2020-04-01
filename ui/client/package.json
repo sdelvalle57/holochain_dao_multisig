@@ -1,0 +1,68 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@apollo/react-hooks": "3.0.0",
+    "@reach/router": "^1.2.1",
+    "@types/node": "^12.12.14",
+    "@types/reach__router": "^1.2.6",
+    "@types/react": "^16.9.15",
+    "@types/react-dom": "^16.9.4",
+    "apollo-cache-inmemory": "^1.6.2",
+    "apollo-client": "^2.6.3",
+    "apollo-link-http": "^1.5.15",
+    "emotion": "^9.2.12",
+    "graphql": "^14.4.2",
+    "graphql-tag": "^2.10.1",
+    "lodash.flowright": "^3.5.0",
+    "polished": "^3.4.1",
+    "react": "^16.9.0-alpha.0",
+    "react-apollo": "^3.1.3",
+    "react-dom": "^16.9.0-alpha.0",
+    "react-emotion": "^9.2.12",
+    "react-scripts": "3.0.1",
+    "typescript": "^3.7.3"
+  },
+  "scripts": {
+    "start": "PORT=3000 && react-app-rewired start",
+    "build": "react-app-rewired build",
+    "eject": "react-scripts eject",
+    "codegen": "apollo client:codegen --target typescript --watch",
+    "start:server": "cd ../../ui/server/ && npm run start:agents",
+    "ui:alice": "REACT_APP_SERVER_PORT=4000 PORT=8080 react-app-rewired start",
+    "ui:bob": "REACT_APP_SERVER_PORT=4001 PORT=8081 react-app-rewired start",
+    "hc:bob": "cd ../../dna && holochain ",
+    "start:ui": "concurrently \"npm run ui:alice\" \"npm run ui:bob\"",
+    "start:apollo-server": "cd ../../ui/server/ && npm run start:agents",
+    "start:holochain": "cd ../../dna && holochain -c conductor-config.toml",
+    "package": "cd ../../dna && hc package",
+    "hc:test": "cd ../../dna && hc test"
+  },
+  "resolutions": {
+    "@types/graphql": "14.0.1",
+    "graphql": "14.4.2"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "devDependencies": {
+    "@apollo/react-testing": "3.0.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
+    "@testing-library/jest-dom": "^4.0.0",
+    "@testing-library/react": "^8.0.7",
+    "@types/jest": "^24.0.23",
+    "concurrently": "^5.0.2",
+    "apollo": "^2.16.3",
+    "artillery": "^1.6.0-26",
+    "customize-cra": "^0.9.1",
+    "npm-watch": "^0.6.0",
+    "react-app-rewired": "^2.1.5"
+  }
+}
