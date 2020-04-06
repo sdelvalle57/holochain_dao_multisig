@@ -1,0 +1,1 @@
+pub const ADD_MEMBER: &str = "add_member";

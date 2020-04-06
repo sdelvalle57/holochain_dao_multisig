@@ -131,9 +131,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "constants"
+version = "0.1.0"
+
+[[package]]
 name = "create_multisig"
 version = "0.1.0"
 dependencies = [
+ "constants 0.1.0",
  "hdk 0.0.42-alpha5 (registry+https://github.com/rust-lang/crates.io-index)",
  "hdk_proc_macros 0.0.42-alpha5 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_json_derive 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",

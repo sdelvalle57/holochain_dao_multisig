@@ -36,19 +36,6 @@ const conductorConfig = Config.gen(
 
 /**********Functions */
 
-const createMultisig = async (user, title, description) => {
-  const multisig_addr = await user.call(
-    "multisig_test", 
-    "create_multisig", 
-    "create_multisig", 
-    {
-      title, 
-      description
-    }
-  )
-  return multisig_addr;
-}
-
 const getEntry = async (user, address) => {
   const entryResult = await user.call(
     "multisig_test", 
@@ -59,7 +46,28 @@ const getEntry = async (user, address) => {
   return entryResult;
 }
 
-orchestrator.registerScenario("Scenario0: Get Valid Memebers", async (s, t) => {
+// orchestrator.registerScenario("Scenario0: Get Valid Memebers", async (s, t) => {
+
+//   const  {alice, bob } = await s.players(
+//     { alice: conductorConfig, bob: conductorConfig }, 
+//     true
+//   );
+
+//   const members = await alice.call(
+//     "multisig_test", 
+//     "multisig", 
+//     "get_members", 
+//     { }
+//   )
+
+//   console.log("dna_address", members);
+
+//   //t.equal(1, members.Ok.length);
+//   await s.consistency();
+
+// })
+
+orchestrator.registerScenario("Scenario1: Add Memeber", async (s, t) => {
 
   const  {alice, bob } = await s.players(
     { alice: conductorConfig, bob: conductorConfig }, 
@@ -68,9 +76,13 @@ orchestrator.registerScenario("Scenario0: Get Valid Memebers", async (s, t) => {
 
   const members = await alice.call(
     "multisig_test", 
-    "create_multisig", 
-    "get_members", 
-    { }
+    "multisig", 
+    "add_member", 
+    { 
+      name: "Bob", 
+      description: "Add Bob", 
+      address: bob.instance("multisig_test").agentAddress
+    }
   )
 
   console.log("dna_address", members);

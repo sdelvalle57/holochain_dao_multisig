@@ -20,14 +20,14 @@ use hdk::prelude::*;
 
 use hdk::holochain_json_api::{error::JsonError, json::JsonString};
 use hdk::holochain_persistence_api::cas::content::Address;
-use hdk::{AGENT_ADDRESS, THIS_INSTANCE, DNA_ADDRESS};
+use hdk::{AGENT_ADDRESS, THIS_INSTANCE};
 use hdk_proc_macros::zome;
 
 //use std::convert::TryInto;
 
 /******************************** */
 
-mod multisig;
+mod members;
 mod transaction;
 mod helpers;
 
@@ -41,7 +41,7 @@ mod my_zome {
 
     #[init]
     fn init() {
-        hdk::debug(format!("New message from: {:?}", DNA_ADDRESS.clone())).ok();
+        hdk::debug(format!("New message from: {:?}", THIS_INSTANCE)).ok();
         Ok(())
     }
 
@@ -52,10 +52,7 @@ mod my_zome {
 
     /*************** Multisig Entry Definitions */
 
-    #[entry_def]
-    fn multisig_entry_definition() -> ValidatingEntryType {
-        multisig::entry_def()
-    }
+   
 
     /*************** Helper Functions */
 
@@ -65,44 +62,27 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_dna_address() -> ZomeApiResult<Address> {
-        Ok(DNA_ADDRESS.clone())
-    }
-
-    #[zome_fn("hc_public")]
     fn get_entry(address: Address) -> ZomeApiResult<Option<Entry>> {
         hdk::get_entry(&address)
     }
 
-    #[zome_fn("hc_public")]
-    fn is_member() -> ZomeApiResult<bool> {
-        helpers::check_is_member()
-    }
-
-    #[zome_fn("hc_public")]
-    fn get_members() -> ZomeApiResult<Vec<Address>> {
-        helpers::get_members()
-    }
-    
     /*************** Multisig Functions Setters */
 
     #[zome_fn("hc_public")]
-    fn create_multisig(title: String, description: String) -> ZomeApiResult<Address> {
-        multisig::create(title, description)
+    fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
+        members::add_member(name, description, address)
     }
 
     /************ Multisig Functions Getters */
 
     #[zome_fn("hc_public")]
-    fn get(address: Address) -> ZomeApiResult<multisig::Multisig> {
-        multisig::get(address)
+    fn get_members() -> ZomeApiResult<Vec<Address>> {
+        helpers::get_members()
     }
 
-    #[zome_fn("hc_public")]
-    fn get_my_multisigs() -> ZomeApiResult<Vec<Address>> {
-        multisig::get_my_multisigs()
-    }
-
-    
+    // #[zome_fn("hc_public")]
+    // fn get_my_multisigs() -> ZomeApiResult<Vec<Address>> {
+    //     multisig::get_my_multisigs()
+    // }
 
 }

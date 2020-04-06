@@ -19,39 +19,40 @@ use hdk::prelude::LinkMatch;
 use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
+
+use constants::{ADD_MEMBER};
 /******************************************* */
 
+use crate::{
+    transaction
+};
+
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
-pub struct Transaction {
-    title: String,
-    description: String,
-    required: u64,
-    signed: Vec<Address>,
-    creator: Address,
-    //TODO: figure out how to call functions of another DNA
-    dna: Address,
-    destination: Address,
-    executed: bool,
-    data: Entry
+pub struct Members {
+    name: String,
+    address: Address
 }
 
-impl Transaction{
-    pub fn new(title: String, description: String, required: u64, dna: Address, destination: Address, data: Entry) -> Self {
-        Transaction {
-            title,
-            description,
-            required,
-            signed: vec![AGENT_ADDRESS.clone()],
-            creator: AGENT_ADDRESS.clone(),
-            //TODO: figure out how to call functions of another DNA
-            dna,
-            destination,
-            executed: false,
-            data
+impl Members{
+    pub fn new(name: String, address: Address) -> Self {
+        Members {
+            name,
+            address,
         }
     }
 
+    pub fn entry(&self) -> Entry {
+        Entry::App("members".into(), self.into())
+    }
 }
+
+pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
+    let new_member = Members::new(name, address);
+    let new_member_entry = new_member.entry();
+    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry)
+}
+
+
 
 // Helper for handling decoding of entry data to requested entry struct type
 // pub (crate) fn try_decode_entry<R>(entry: ZomeApiResult<Option<Entry>>) -> ZomeApiResult<Option<R>>
