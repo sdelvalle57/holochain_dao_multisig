@@ -50,43 +50,53 @@ impl Transaction{
         hdk::utils::get_as_type(address.to_string().into())
     }
 
-
+    pub fn from(title: String, description: String, required: u64, signed: Vec<Address>, creator: Address, executed: bool, data: Entry) -> Self {
+        Transaction {
+            title,
+            description,
+            required,
+            signed,
+            creator,
+            executed,
+            data
+        }
+    }
     pub fn entry(&self) -> Entry {
         Entry::App("transaction".into(), self.into())
     }
 }
 
-// pub fn entry_def() -> ValidatingEntryType {
-//     entry!(
-//         name: "transaction",
-//         description: "this is the transaction entry def",
-//         sharing: Sharing::Public,
-//         validation_package: || {
-//             hdk::ValidationPackageDefinition::Entry
-//         },
-//         validation: | _validation_data: hdk::EntryValidationData<Transaction> | {
-//             Ok(())
-//             // match validation_data {
+pub fn entry_def() -> ValidatingEntryType {
+    entry!(
+        name: "transaction",
+        description: "this is the transaction entry def",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+        validation: | _validation_data: hdk::EntryValidationData<Transaction> | {
+            Ok(())
+            // match validation_data {
                 
-//                 // EntryValidationData::Create { entry, validation_data } => {
-//                 //     if !validation_data.sources().contains(&entry.creator) {
-//                 //         return Err(String::from("Only the owner can create their multisigs"));
-//                 //     }
-//                 //     //validate_multisig(&entry)
-//                 // },
-//                 // EntryValidationData::Modify { new_entry: _, old_entry: _, validation_data: _, .. } => {
-//                 //     return Err(String::from("Cannot modify"));
-//                 // },
-//                 // EntryValidationData::Delete {old_entry: _, validation_data: _, .. } => {
-//                 //     return Err(String::from("Cannot delete"));
-//                 // }
-//             // }
-//         },
-//         links: [
+                // EntryValidationData::Create { entry, validation_data } => {
+                //     if !validation_data.sources().contains(&entry.creator) {
+                //         return Err(String::from("Only the owner can create their multisigs"));
+                //     }
+                //     //validate_multisig(&entry)
+                // },
+                // EntryValidationData::Modify { new_entry: _, old_entry: _, validation_data: _, .. } => {
+                //     return Err(String::from("Cannot modify"));
+                // },
+                // EntryValidationData::Delete {old_entry: _, validation_data: _, .. } => {
+                //     return Err(String::from("Cannot delete"));
+                // }
+            // }
+        },
+        links: [
             
-//         ]
-//     )
-// }
+        ]
+    )
+}
 
 pub(crate) fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     let new_tx = Transaction::new(title, description, 1, entry);

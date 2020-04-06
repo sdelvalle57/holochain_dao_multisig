@@ -9,6 +9,9 @@ const {
   tapeExecutor 
 } = require('@holochain/tryorama')
 
+const DNA = "multisig_test";
+const M_ZOME = "multisig";
+
 process.on('unhandledRejection', error => {
   console.error('got unhandledRejection:', error);
 });
@@ -38,13 +41,14 @@ const conductorConfig = Config.gen(
 
 const getEntry = async (user, address) => {
   const entryResult = await user.call(
-    "multisig_test", 
-    "create_multisig", 
+    DNA, 
+    M_ZOME, 
     "get_entry",
     { address }
   )
   return entryResult;
 }
+
 
 // orchestrator.registerScenario("Scenario0: Get Valid Memebers", async (s, t) => {
 
@@ -67,30 +71,65 @@ const getEntry = async (user, address) => {
 
 // })
 
-orchestrator.registerScenario("Scenario1: Add Memeber", async (s, t) => {
+orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
 
   const  {alice, bob } = await s.players(
     { alice: conductorConfig, bob: conductorConfig }, 
     true
   );
 
-  const members = await alice.call(
-    "multisig_test", 
-    "multisig", 
-    "add_member", 
-    { 
-      name: "Bob", 
-      description: "Add Bob", 
-      address: bob.instance("multisig_test").agentAddress
-    }
+  const start = await alice.call(
+    DNA, 
+    M_ZOME, 
+    "start", 
+    { }
   )
+  t.ok(start.Ok)
+  await s.consistency();
 
-  console.log("dna_address", members);
-
-  //t.equal(1, members.Ok.length);
+  const multisig = await alice.call(
+    DNA,
+    M_ZOME,
+    "get_multisig",
+    { }
+  )
+  console.log("get_ms", multisig)
   await s.consistency();
 
 })
+
+// orchestrator.registerScenario("Scenario1: Add Memeber", async (s, t) => {
+
+//   const  {alice, bob } = await s.players(
+//     { alice: conductorConfig, bob: conductorConfig }, 
+//     true
+//   );
+
+//   const members = await alice.call(
+//     DNA, 
+//     M_ZOME, 
+//     "add_member", 
+//     { 
+//       name: "Bob", 
+//       description: "Add Bob", 
+//       address: bob.instance(DNA).agentAddress
+//     }
+//   )
+//   t.ok(members.Ok);
+//   await s.consistency();
+
+//   const transaction = await alice.call(
+//     DNA,
+//     M_ZOME,
+//     "get_transaction",
+//     {
+//       address: members.Ok
+//     }
+//   );
+//   console.log("the_tx", JSON.stringify(transaction))
+//   await s.consistency();
+
+// })
 
 // orchestrator.registerScenario("Scenario1: Create Multisig", async (s, t) => {
 

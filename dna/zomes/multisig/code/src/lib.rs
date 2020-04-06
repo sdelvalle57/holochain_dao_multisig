@@ -30,6 +30,7 @@ use hdk_proc_macros::zome;
 mod members;
 mod transaction;
 mod helpers;
+mod multisig;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct MyEntry {
@@ -41,7 +42,6 @@ mod my_zome {
 
     #[init]
     fn init() {
-        hdk::debug(format!("New message from: {:?}", THIS_INSTANCE)).ok();
         Ok(())
     }
 
@@ -50,9 +50,22 @@ mod my_zome {
         Ok(())
     }
 
-    /*************** Multisig Entry Definitions */
+    /*************** Entry Definitions */
 
-   
+    #[entry_def]
+    fn transaction_entry_definition() -> ValidatingEntryType {
+      transaction::entry_def()
+    }
+
+    #[entry_def]
+    fn multisig_entry_definition() -> ValidatingEntryType {
+      multisig::entry_def()
+    }
+
+    #[entry_def]
+    fn multisig_anchor_entry_definition() -> ValidatingEntryType {
+      multisig::anchor_entry_def()
+    }
 
     /*************** Helper Functions */
 
@@ -66,6 +79,11 @@ mod my_zome {
         hdk::get_entry(&address)
     }
 
+    #[zome_fn("hc_public")]
+    fn get_hardcoded_members() -> ZomeApiResult<Vec<Address>> {
+        helpers::get_members()
+    }
+
     /*************** Multisig Functions Setters */
 
     #[zome_fn("hc_public")]
@@ -76,13 +94,30 @@ mod my_zome {
     /************ Multisig Functions Getters */
 
     #[zome_fn("hc_public")]
-    fn get_members() -> ZomeApiResult<Vec<Address>> {
-        helpers::get_members()
+    fn get_transaction(address: Address) -> ZomeApiResult<transaction::Transaction> {
+        transaction::Transaction::get(address)
     }
 
-    // #[zome_fn("hc_public")]
-    // fn get_my_multisigs() -> ZomeApiResult<Vec<Address>> {
-    //     multisig::get_my_multisigs()
-    // }
+    #[zome_fn("hc_public")]
+    fn get_members() -> ZomeApiResult<Vec<Address>> {
+        multisig::get_members()
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_multisig() -> ZomeApiResult<Vec<Address>> {
+        multisig::get_multisig()
+        // let addresses = multisig::get_multisig()?;
+        // let mut multisigs: Vec<multisig::Multisig> = Vec::default();
+        // for address in addresses {
+        //     let multisig_entry = multisig::Multisig::get(address)?;
+        //     multisigs.push(multisig_entry);
+        // }
+        // Ok(multisigs)
+    }
+
+    #[zome_fn("hc_public")]
+    fn start() -> ZomeApiResult<Address> {
+        multisig::start_multisig()
+    }
 
 }
