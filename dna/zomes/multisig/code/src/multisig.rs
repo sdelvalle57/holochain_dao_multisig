@@ -29,13 +29,15 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Multisig {
-    required: u64
+    required: u64,
+    members: Vec<Address>
 }
 
 impl Multisig{
     pub fn start_default() -> Self {
         Multisig {
             required: 1,
+            members: Vec::default()
         }
     }
 
@@ -48,7 +50,33 @@ impl Multisig{
     }
 }
 
-//// Entry Definition
+//// Entry Definitions
+pub fn anchor_entry_def() -> ValidatingEntryType {
+    entry!(
+        name: "anchor",
+        description: "Anchor to the multisig",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+        validation: | _validation_data: hdk::EntryValidationData<String> | {
+            Ok(())
+        },
+        links:[
+            to!(
+                "multisig",
+                link_type: "multisig_list",
+                validation_package:||{
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation:|_validation_data: hdk::LinkValidationData|{
+                    Ok(())
+                }
+            )
+        ]
+    )
+}
+
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
         name: "multisig",
@@ -59,70 +87,7 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | _validation_data: hdk::EntryValidationData<Multisig> | {
             Ok(())
-            // match validation_data {
-            //     EntryValidationData::Create { .. } => {
-            //         let my_multisig: Vec<Address> = get_multisig()?;
-            //         if my_multisig.len() > 0 {
-            //             return Err(String::from("Multisig already created"));
-            //         }
-            //         Ok(())
-            //     },
-            //     EntryValidationData::Modify {new_entry, validation_data, .. } => {
-            //         let members = get_members()?;
-            //         if !&members.contains(&AGENT_ADDRESS.clone()) {
-            //             return Err(String::from("Only members can perform this operation"));
-            //         }
-            //         if !validation_data.sources().contains(&AGENT_ADDRESS) {
-            //             return Err(String::from("Only caller can perform this operation"));
-            //         }
-            //         if new_entry.required as usize > members.len() {
-            //             return Err(String::from("Cannot set requirement greater than number of members"));
-            //         }
-            //         Ok(())
-            //     },
-            //     EntryValidationData::Delete { .. } => {
-            //         Err(String::from("Cannot delete entry"))
-            //     }
-            // }
-        },
-        links: [ ]
-    )
-}
-
-//// Anchor Definition
-pub fn anchor_entry_def() -> ValidatingEntryType {
-    entry!(
-        name: "anchor",
-        description: "this is the transaction entry def",
-        sharing: Sharing::Public,
-        validation_package: || {
-            hdk::ValidationPackageDefinition::Entry
-        },
-        validation: | _validation_data: hdk::EntryValidationData<String> | {
-            Ok(())
-        },
-        links: [
-            to!(
-                "multisig",
-                link_type: "multisig_values",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation:|_validation_data: hdk::LinkValidationData| {
-                    Ok(())
-                }
-            )
-            // to!(
-            //     "multisig",
-            //     link_type: "multisig->members",
-            //     validation_package: || {
-            //         hdk::ValidationPackageDefinition::Entry
-            //     },
-            //     validation:|_validation_data: hdk::LinkValidationData| {
-            //         Ok(())
-            //     }
-            // )
-        ]
+        }
     )
 }
 
@@ -134,10 +99,11 @@ pub fn anchor_address() -> ZomeApiResult<Address> {
     hdk::entry_address(&anchor_entry())
 }
 
+
 pub fn get_multisig() -> ZomeApiResult<Vec<Address>> {
     let links = hdk::get_links(
         &anchor_address()?, 
-        LinkMatch::Exactly("multisig_values"), 
+        LinkMatch::Exactly("multisig_list"), 
         LinkMatch::Any
     )?
     .addresses();
@@ -145,9 +111,8 @@ pub fn get_multisig() -> ZomeApiResult<Vec<Address>> {
 }
 
 pub fn get_members() -> ZomeApiResult<Vec<Address>> {
-    let anchor_address = anchor_address()?;
     let links = hdk::get_links(
-        &anchor_address, 
+        &AGENT_ADDRESS, 
         LinkMatch::Exactly("multisig->members"), 
         LinkMatch::Any
     )?
@@ -157,14 +122,20 @@ pub fn get_members() -> ZomeApiResult<Vec<Address>> {
 
 pub fn start_multisig() -> ZomeApiResult<Address> {
     let anchor_entry = anchor_entry();
-    let anchor_address = hdk::commit_entry(&anchor_entry)?;
-    let default_multisig = Multisig::start_default();
+    let anchor_address = hdk::commit_entry(&anchor_entry)?; // if Anchor exist, it returns the commited one.
+
+    let mut default_multisig = Multisig::start_default();
+
+    let hardcoded_members = helpers::get_members()?;
+    for member in hardcoded_members {
+        default_multisig.members.push(member);
+    }
+
     let multisig_entry = default_multisig.entry();
-    let multisig_address = hdk::commit_entry(&multisig_entry)?;
-    hdk::link_entries(&anchor_address, &multisig_address, "multisig_values", "")?;
-    // let hardcoded_members = helpers::get_members()?;
-    // for member in hardcoded_members {
-    //     hdk::link_entries(&member, &multisig_address, "multisig->members", "")?;
-    // }
+    let multisig_address = hdk::commit_entry(&multisig_entry)?; //TODO: do validation if agent_address is in hardcoded members
+
+    hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; //TODO: do validation if link is not already added
+
     Ok(multisig_address)
+  
 }

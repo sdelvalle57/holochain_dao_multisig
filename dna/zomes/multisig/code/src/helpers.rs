@@ -35,7 +35,7 @@ pub fn get_members() -> ZomeApiResult<Vec<Address>> {
     if valid_members.contains(&AGENT_ADDRESS.clone()) {
         return Ok(valid_members);
     } else {
-        return Err(ZomeApiError::from(String::from("User is not member")))
+        return Err(ZomeApiError::from(String::from("Uer is not member")))
     }
 }
 
