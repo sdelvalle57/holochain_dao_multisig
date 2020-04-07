@@ -53,8 +53,8 @@ mod my_zome {
     /*************** Entry Definitions */
 
     #[entry_def]
-    fn transaction_entry_definition() -> ValidatingEntryType {
-      transaction::entry_def()
+    fn multisig_anchor_entry_definition() -> ValidatingEntryType {
+      multisig::anchor_entry_def()
     }
 
     #[entry_def]
@@ -63,9 +63,16 @@ mod my_zome {
     }
 
     #[entry_def]
-    fn multisig_anchor_entry_definition() -> ValidatingEntryType {
-      multisig::anchor_entry_def()
+    fn transaction_entry_definition() -> ValidatingEntryType {
+      transaction::entry_def()
     }
+
+    #[entry_def]
+    fn member_entry_definition() -> ValidatingEntryType {
+      member::entry_def()
+    }
+
+    
 
     /*************** Helper Functions */
 
@@ -81,7 +88,7 @@ mod my_zome {
 
     #[zome_fn("hc_public")]
     fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
-        helpers::get_members()
+        helpers::get_hardcoded_members()
     }
 
     /*************** Multisig Functions Setters */
@@ -104,15 +111,13 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_multisig() -> ZomeApiResult<Vec<Address>> {
+    fn get_multisig_address() -> ZomeApiResult<Vec<Address>> {
+        multisig::get_multisig_address()
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_multisig() -> ZomeApiResult<multisig::Multisig> {
         multisig::get_multisig()
-        // let addresses = multisig::get_multisig()?;
-        // let mut multisigs: Vec<multisig::Multisig> = Vec::default();
-        // for address in addresses {
-        //     let multisig_entry = multisig::Multisig::get(address)?;
-        //     multisigs.push(multisig_entry);
-        // }
-        // Ok(multisigs)
     }
 
     #[zome_fn("hc_public")]

@@ -34,7 +34,7 @@ fn get_valid_members() -> ZomeApiResult<Vec<member::Member>> {
     }
 }
 
-pub fn get_members() -> ZomeApiResult<Vec<member::Member>> {
+pub fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
     let valid_members = get_valid_members()?;
     for m in &valid_members {
         if m.address == AGENT_ADDRESS.clone() {

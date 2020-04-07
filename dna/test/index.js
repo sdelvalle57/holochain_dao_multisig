@@ -125,7 +125,18 @@ orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
   t.ok(start2.Err)
   await s.consistency();
 
-  //gets multisigs, should always be length = 1
+  //gets multisigs addresses, should always be length = 1
+  const multisigAddress = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_multisig_address",
+    { }
+  )
+  t.ok(multisigAddress.Ok)
+  t.true(multisigAddress.Ok.length === 1);
+  await s.consistency();
+
+  //gets multisig
   const multisig = await alice.call(
     "alice_instance",
     M_ZOME,
@@ -133,7 +144,7 @@ orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
     { }
   )
   t.ok(multisig.Ok)
-  t.true(multisig.Ok.length === 1);
+  console.log("the_multisig", JSON.stringify(multisig))
   await s.consistency();
 
   //gets members, should be 2 members

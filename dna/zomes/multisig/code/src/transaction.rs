@@ -19,6 +19,10 @@ use hdk::prelude::LinkMatch;
 use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
+
+use crate::{
+    multisig
+};
 /******************************************* */
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -74,35 +78,66 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Transaction> | {
-            Ok(())
-            // match validation_data {
-                
-                // EntryValidationData::Create { entry, validation_data } => {
-                //     if !validation_data.sources().contains(&entry.creator) {
-                //         return Err(String::from("Only the owner can create their multisigs"));
-                //     }
-                //     //validate_multisig(&entry)
-                // },
-                // EntryValidationData::Modify { new_entry: _, old_entry: _, validation_data: _, .. } => {
-                //     return Err(String::from("Cannot modify"));
-                // },
-                // EntryValidationData::Delete {old_entry: _, validation_data: _, .. } => {
-                //     return Err(String::from("Cannot delete"));
-                // }
-            // }
-        },
+        validation: | validation_data: hdk::EntryValidationData<Transaction> | {
+            match validation_data {
+                EntryValidationData::Create { .. } => {
+                    //TODO: validate agent is member
+                    Ok(())
+                    //return Err(String::from("Only the owner can create their multisigs"));
+                },
+                EntryValidationData::Modify { .. } => {
+                    //TODO: validate agent is member
+                    Ok(())
+                    //return Err(String::from("Cannot modify"));
+                },
+                EntryValidationData::Delete {.. } => {
+                     //TODO: validate agent is member and transaction has just one signature, and signature must be agent
+                    return Err(String::from("Cannot delete"));
+                }
+            }
+        },//TODO: link member-> transactions
         links: [
-            
+            from!(
+                "%agent_id",
+                link_type: "member->transactions",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _valudation_data: hdk::LinkValidationData | {
+                    Ok(())
+                } 
+            )
         ]
     )
 }
+
 
 pub(crate) fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     let new_tx = Transaction::new(title, description, 1, entry);
     let new_tx_entry = new_tx.entry();
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
+    let multisig_addresses = multisig::get_multisig_address()?;
+    let multisig_address =  &multisig_addresses[0];
+    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
+    hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
     Ok(new_tx_address)
+}
+
+pub fn list() -> ZomeApiResult<Vec<Transaction>> {
+    let multisig_addresses = multisig::get_multisig_address()?;
+    let multisig_address =  &multisig_addresses[0];
+    let mut transactions: Vec<Transaction> = Vec::default();
+    let links = hdk::get_links(
+        &multisig_address, 
+        LinkMatch::Exactly("multisig->transactions"), 
+        LinkMatch::Any
+    )?
+    .addresses();
+    for _tx_address in links {
+        let transaction: Transaction = hdk::utils::get_as_type(tx_address.clone())?;
+        transactions.push(transaction)
+    }
+    Ok(transactions)
 }
 
 // pub fn change_requirement(new_requirement: u64) -> ZomeApiError<Address> {

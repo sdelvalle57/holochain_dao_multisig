@@ -38,7 +38,7 @@ impl Member {
     pub fn new(name: String, address: Address) -> Self {
         Member {
             name,
-            address,
+            address
         }
     }
 
@@ -47,6 +47,22 @@ impl Member {
     }
 }
 
+pub fn entry_def() -> ValidatingEntryType {
+    entry!(
+        name:"member",
+        description: "member entry def",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+        validation: | _validation_data: hdk::EntryValidationData<Member> | {
+            Ok(())
+        } 
+    )
+}
+
+
+
 pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
@@ -54,7 +70,7 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
 }
 
 pub fn get_members() -> ZomeApiResult<Vec<Member>> {
-    let multisig_addresses = multisig::get_multisig()?;
+    let multisig_addresses = multisig::get_multisig_address()?;
     if multisig_addresses.len() == 0 {
         return Err(ZomeApiError::Internal(format!("Multisig still not created")));
     }
