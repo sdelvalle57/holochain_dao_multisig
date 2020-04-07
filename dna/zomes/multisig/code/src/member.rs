@@ -24,7 +24,8 @@ use constants::{ADD_MEMBER};
 /******************************************* */
 
 use crate::{
-    transaction
+    transaction,
+    multisig
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -50,6 +51,17 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry)
+}
+
+pub fn get_members() -> ZomeApiResult<Vec<Member>> {
+    let multisig_addresses = multisig::get_multisig()?;
+    if multisig_addresses.len() == 0 {
+        return Err(ZomeApiError::Internal(format!("Multisig still not created")));
+    }
+    
+    let multisig_address = &multisig_addresses[0];
+    let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
+    Ok(multisig_obj.members)
 }
 
 

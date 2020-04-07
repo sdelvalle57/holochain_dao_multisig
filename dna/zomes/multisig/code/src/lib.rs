@@ -100,7 +100,7 @@ mod my_zome {
 
     #[zome_fn("hc_public")]
     fn get_members() -> ZomeApiResult<Vec<member::Member>> {
-        multisig::get_members()
+        member::get_members()
     }
 
     #[zome_fn("hc_public")]

@@ -30,8 +30,8 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Multisig {
-    required: u64,
-    members: Vec<member::Member>
+    pub required: u64,
+    pub members: Vec<member::Member>
 }
 
 impl Multisig{
@@ -148,16 +148,7 @@ pub fn get_multisig() -> ZomeApiResult<Vec<Address>> {
     Ok(links)
 }
 
-pub fn get_members() -> ZomeApiResult<Vec<member::Member>> {
-    let multisig_addresses = get_multisig()?;
-    if multisig_addresses.len() == 0 {
-        return Err(ZomeApiError::Internal(format!("Multisig still not created")));
-    }
-    
-    let multisig_address = &multisig_addresses[0];
-    let multisig: Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
-    Ok(multisig.members)
-}
+
 
 pub fn start_multisig() -> ZomeApiResult<Address> {
     let anchor_entry = anchor_entry();
