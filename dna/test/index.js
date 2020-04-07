@@ -105,6 +105,7 @@ orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
   console.log("bob instance add", bob.instance("bob_instance").agentAddress)
   t.ok( alice.instance("alice_instance").agentAddress)
 
+  //created multisig for the first time
   const start = await alice.call(
     "alice_instance", 
     M_ZOME, 
@@ -114,15 +115,17 @@ orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
   t.ok(start.Ok)
   await s.consistency();
 
+  //tries to start multisig again, should fail
   const start2 = await alice.call(
     "alice_instance",
     M_ZOME,
     "start",
     { }
   )
-  t.ok(start2.Ok)
+  t.ok(start2.Err)
   await s.consistency();
 
+  //gets multisigs, should always be length = 1
   const multisig = await alice.call(
     "alice_instance",
     M_ZOME,
@@ -130,8 +133,19 @@ orchestrator.registerScenario("Scenario1: Start app", async (s, t) => {
     { }
   )
   t.ok(multisig.Ok)
+  t.true(multisig.Ok.length === 1);
+  await s.consistency();
 
-  console.log("the_multisigs", multisig)
+  //gets members, should be 2 members
+  const members = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_members",
+    { } 
+  )
+  t.ok(members.Ok)
+  console.log("the_members", members)
+  t.true(members.Ok.length === 2);
 
 })
 

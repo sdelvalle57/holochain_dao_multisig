@@ -12,7 +12,14 @@
   "dht": {},
   "properties": {
     "valid_members": [
-      "HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui"
+      {
+        "address": "HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui",
+        "name": "Alice"
+      },
+      {
+        "address": "HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa",
+        "name": "Bob"
+      }
     ]
   }
 }

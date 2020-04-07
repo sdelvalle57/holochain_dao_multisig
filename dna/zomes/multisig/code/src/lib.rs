@@ -27,7 +27,7 @@ use hdk_proc_macros::zome;
 
 /******************************** */
 
-mod members;
+mod member;
 mod transaction;
 mod helpers;
 mod multisig;
@@ -80,7 +80,7 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_hardcoded_members() -> ZomeApiResult<Vec<Address>> {
+    fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
         helpers::get_members()
     }
 
@@ -88,7 +88,7 @@ mod my_zome {
 
     #[zome_fn("hc_public")]
     fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
-        members::add_member(name, description, address)
+        member::add_member(name, description, address)
     }
 
     /************ Multisig Functions Getters */
@@ -99,7 +99,7 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_members() -> ZomeApiResult<Vec<Address>> {
+    fn get_members() -> ZomeApiResult<Vec<member::Member>> {
         multisig::get_members()
     }
 

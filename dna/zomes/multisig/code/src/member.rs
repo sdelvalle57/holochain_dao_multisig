@@ -28,14 +28,14 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
-pub struct Members {
-    name: String,
-    address: Address
+pub struct Member {
+    pub name: String,
+    pub address: Address
 }
 
-impl Members{
+impl Member {
     pub fn new(name: String, address: Address) -> Self {
-        Members {
+        Member {
             name,
             address,
         }
@@ -47,7 +47,7 @@ impl Members{
 }
 
 pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
-    let new_member = Members::new(name, address);
+    let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry)
 }

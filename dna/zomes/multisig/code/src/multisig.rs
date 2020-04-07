@@ -24,13 +24,14 @@ use constants::{ADD_MEMBER};
 /******************************************* */
 
 use crate::{
-    helpers
+    helpers,
+    member
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Multisig {
     required: u64,
-    members: Vec<Address>
+    members: Vec<member::Member>
 }
 
 impl Multisig{
@@ -69,8 +70,20 @@ pub fn anchor_entry_def() -> ValidatingEntryType {
                 validation_package:||{
                     hdk::ValidationPackageDefinition::Entry
                 },
-                validation:|_validation_data: hdk::LinkValidationData|{
-                    Ok(())
+                validation:| validation_data: hdk::LinkValidationData|{
+                    match validation_data {
+                        LinkValidationData::LinkAdd { link , ..} => {
+                            let my_multisigs: Vec<Address> = get_multisig()?;
+                            let target: Address = link.link.target().clone();
+                            if my_multisigs.contains(&target) {
+                                return Err(String::from("Multisig already created"));
+                            }
+                            Ok(())
+                       },
+                       LinkValidationData::LinkRemove { .. } => {
+                            Err(String::from("Cannot remove link"))
+                       }
+                    }
                 }
             )
         ]
@@ -85,8 +98,33 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Multisig> | {
-            Ok(())
+        validation: | validation_data: hdk::EntryValidationData<Multisig> | {
+            match validation_data{
+                EntryValidationData::Create { .. } => {
+                    let is_member = helpers::check_is_member()?;
+                    if !is_member {
+                        return Err(String::from("Only members can perform this operation"));
+                    }
+                    Ok(())
+        
+                },
+                EntryValidationData::Modify { new_entry, .. } => {
+
+                    let is_member = helpers::check_is_member()?;
+                    if !is_member {
+                        return Err(String::from("Only members can perform this operation"));
+                    }
+
+                    if new_entry.members.len() < new_entry.required as usize {
+                        return Err(String::from("Members length cannot be greater than required"));
+                    }
+
+                    Ok(())
+                },
+                EntryValidationData::Delete { .. } => {
+                    Err(String::from("Cannot delete multisig"))
+                }
+            }
         }
     )
 }
@@ -110,14 +148,15 @@ pub fn get_multisig() -> ZomeApiResult<Vec<Address>> {
     Ok(links)
 }
 
-pub fn get_members() -> ZomeApiResult<Vec<Address>> {
-    let links = hdk::get_links(
-        &AGENT_ADDRESS, 
-        LinkMatch::Exactly("multisig->members"), 
-        LinkMatch::Any
-    )?
-    .addresses();
-    Ok(links)
+pub fn get_members() -> ZomeApiResult<Vec<member::Member>> {
+    let multisig_addresses = get_multisig()?;
+    if multisig_addresses.len() == 0 {
+        return Err(ZomeApiError::Internal(format!("Multisig still not created")));
+    }
+    
+    let multisig_address = &multisig_addresses[0];
+    let multisig: Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
+    Ok(multisig.members)
 }
 
 pub fn start_multisig() -> ZomeApiResult<Address> {
