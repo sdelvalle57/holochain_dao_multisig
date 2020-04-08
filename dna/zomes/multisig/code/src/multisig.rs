@@ -37,7 +37,7 @@ pub struct Multisig {
 impl Multisig{
     pub fn start_default() -> Self {
         Multisig {
-            required: 1,
+            required: 2,
             members: Vec::default()
         }
     }
@@ -163,7 +163,7 @@ pub fn get_multisig_address() -> ZomeApiResult<Address> {
         let link = &links.links()[0];
         return Ok(link.address.clone())
     }
-    Err(ZomeApiError::from(String::from("Multisig has not been started")))
+    Err(ZomeApiError::from(String::from("Multisig has not been started or user is not Member")))
 }
 
 pub fn get_multisig() -> ZomeApiResult<Multisig> {

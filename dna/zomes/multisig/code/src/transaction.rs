@@ -43,9 +43,9 @@ pub struct Transaction {
     title: String,
     description: String,
     required: u64,
-    signed: Vec<member::Member>,
+    pub signed: Vec<VerifiedMember>,
     creator: member::Member,
-    executed: bool,
+    pub executed: bool,
     data: Entry
 }
 
@@ -72,9 +72,24 @@ impl Transaction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
+struct VerifiedMember {
+    member: member::Member,
+    signature: Option<String>
+}
+
+impl VerifiedMember {
+    pub fn new(member: member::Member, signature: Option<String>) -> Self {
+        VerifiedMember {
+            member,
+            signature
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct VerifiedTransaction {
     transaction: Transaction,
-    verifications: Vec<bool>,
+    verifications: Vec<VerifiedMember>,
 }
 
 impl VerifiedTransaction {
@@ -131,6 +146,7 @@ pub fn entry_def() -> ValidatingEntryType {
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     let signer = member::get_member(AGENT_ADDRESS.clone())?;
     let multisig = multisig::get_multisig()?;
+    //TODO: sign the entry
     let new_tx = Transaction::new(title, description, multisig.required, signer, entry);
     let new_tx_entry = new_tx.entry();
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
@@ -139,6 +155,22 @@ pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult
     hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
     //TODO: check if the transaction can be executed (if requried === signatures)
     Ok(new_tx_address)
+}
+
+pub fn sign(entry_address: Address) -> ZomeApiResult<VerifiedTransaction> {
+    hdk::debug(format!("entry_address_res {:?}", &entry_address))?;
+    let member = member::get_member(AGENT_ADDRESS.clone())?;
+
+    let transaction = Transaction::get(entry_address.clone())?;
+    //TODO: sign the transaction.data
+    let mut new_transaction = transaction.clone();
+    new_transaction.signed.push(member);
+    let new_transaction_entry = new_transaction.entry();
+    hdk::debug(format!("entry_address_res_new {:?}", &new_transaction_entry))?;
+    hdk::update_entry(new_transaction_entry, &entry_address)?;
+    verify_transaction(entry_address)
+
+
 }
 
 pub fn links_list() -> ZomeApiResult<Vec<Address>> {
@@ -181,34 +213,36 @@ pub fn member_list() -> ZomeApiResult<Vec<Transaction>> {
 }
 
 pub fn verify_transaction(entry_address: Address) -> ZomeApiResult<VerifiedTransaction> {
+    member::get_member(AGENT_ADDRESS.clone())?;
     let transaction = Transaction::get(entry_address.clone())?;
-    let signers: Vec<member::Member> = transaction.clone().signed;
+    let signers: Vec<member::Member> = transaction.signed.clone();
     let mut verified_transaction = VerifiedTransaction::new(transaction.clone());
     for signer in signers {
-        let verified = verify_signature(entry_address.clone(), signer.address)?;
-        verified_transaction.verifications.push(verified);
+        let signature = get_signature(entry_address.clone(), signer.address.clone())?;
+        let verified_member = VerifiedMember::new(signer, signature);
+        verified_transaction.verifications.push(verified_member);
     }
     Ok(verified_transaction)
 }
 
-pub fn verify_signature(entry_address: Address, agent: Address) -> ZomeApiResult<bool> {
+fn get_signature(entry_address: Address, agent: Address) -> ZomeApiResult<Option<String>> {
     let option = GetEntryOptions::new(StatusRequestKind::Latest, true, true, Timeout::default());
     let entry_result = hdk::get_entry_result(&entry_address, option)?;
-    hdk::debug(format!("header_res {:?}", entry_result))?;
+    hdk::debug(format!("entry_address_option {:?}", &entry_result))?;
     let signature = hdk::sign(entry_address.clone())?;
-    let my_provenance = Provenance::new(agent.clone(), Signature::from(signature));
+    let my_provenance = Provenance::new(agent.clone(), Signature::from(signature.clone()));
 
     if let GetEntryResultType::Single(item) = entry_result.result {
         for header in item.headers {
             for i in header.provenances().iter() {
                 if JsonString::from(i).to_string() == JsonString::from(&my_provenance).to_string() {
-                    return Ok(true);
+                    return Ok(Some(signature));
                 }
             }
         }
-        return Ok(false);
+        return Ok(None);
     }
-    return Ok(false);
+    return Ok(None);
 }
 
 // Helper for handling decoding of entry data to requested entry struct type

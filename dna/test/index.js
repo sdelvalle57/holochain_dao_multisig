@@ -267,32 +267,6 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   t.ok(tx_address_list.Ok)
   await s.consistency();
 
-  //verifies signature of tx
-  let tx_verify_transaction_signature = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "verify_transaction_signature",
-    {
-      entry_address: tx_address_list.Ok[0],
-      agent: alice.instance("alice_instance").agentAddress
-    }
-  )
-  t.ok(tx_verify_transaction_signature.Ok);
-  await s.consistency();
-
-  //verifies if bob already signed the entry, should be false
-  tx_verify_transaction_signature = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "verify_transaction_signature",
-    {
-      entry_address: tx_address_list.Ok[0],
-      agent: charlie.instance("charlie_instance").agentAddress
-    }
-  )
-  t.ok(!tx_verify_transaction_signature.Ok);
-  await s.consistency();
-
   //gets verified transaction
   const verified_transaction = await alice.call(
     "alice_instance",
@@ -306,6 +280,51 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   t.ok(verified_transaction.Ok);
   await s.consistency();
 
+  //tries to get verified transaction, wont pass if if is not member
+  const verified_transaction_by_no_member = await bob.call(
+    "bob_instance",
+    M_ZOME,
+    "get_verified_transaction",
+    {
+      entry_address: tx_address_list.Ok[0]
+    }
+  )
+  console.log("verif_tx_error", JSON.stringify(verified_transaction_by_no_member))
+  //"Multisig has not been started or user is not Member"
+  t.ok(verified_transaction_by_no_member.Err );
+  await s.consistency();
+
+  //tries to get verified transaction, wont pass if if is not member
+  const verified_transaction_by_member = await charlie.call(
+    "charlie_instance",
+    M_ZOME,
+    "get_verified_transaction",
+    {
+      entry_address: tx_address_list.Ok[0]
+    }
+  )
+  console.log("verif_tx_charlie", JSON.stringify(verified_transaction_by_member))
+  //
+  t.ok(verified_transaction_by_member.Ok);
+  await s.consistency();
+
+  const sign_tx_by_member = await charlie.call(
+    "charlie_instance",
+    M_ZOME,
+    "sign_transaction",
+    {
+      entry_address: tx_address_list.Ok[0]
+    }
+  )
+  console.log("verif_tx_charlie_sign", JSON.stringify(sign_tx_by_member))
+  t.ok(sign_tx_by_member.Ok);
+  await s.consistency();
+
 })
 
 orchestrator.run()
+
+
+//charlie_address HcScJTf9ffN4t483u988j33hqoa8k63s5Pu9QEnbR5Bwuu573zKjYoMhMhs7s6z
+//bob_address HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr
+//alice_address HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3u
