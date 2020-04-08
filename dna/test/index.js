@@ -81,6 +81,32 @@ const bobConfig = Config.gen(
   }
 )
 
+const charlieConfig = Config.gen(
+  [
+    {
+      id: 'charlie_instance',
+      agent: {
+        id: 'charlie_instance',
+        name: "charlie", 
+        public_address: 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa',
+        keystore_file: bobPath,
+        test_agent: true,
+      },
+      dna: {
+        id: 'multisig-test',
+        file: dnaPath,
+      }
+    }
+  ],
+  {
+    network: {
+      type: "sim2h",
+      sim2h_url: "ws://localhost:9000"
+    },
+    //logger: Config.logger({ type: "error" }),
+  }
+)
+
 /*
 console.log("alice instance add", alice.instance("alice_instance").agentAddress)
   t.ok( alice.instance("alice_instance").agentAddress)
@@ -108,8 +134,6 @@ const getEntry = async (user, address) => {
 //     true
 //   );
 
-  
-
 //   //created multisig for the first time
 //   const start = await alice.call(
 //     "alice_instance", 
@@ -118,6 +142,18 @@ const getEntry = async (user, address) => {
 //     { }
 //   )
 //   t.ok(start.Ok)
+//   console.log("start_msig", start);
+//   await s.consistency();
+
+//   //gets multisigs addresses, should always be length = 1
+//   const multisigAddress = await alice.call(
+//     "alice_instance",
+//     M_ZOME,
+//     "get_multisig_address",
+//     { }
+//   )
+//   console.log("address_msig", multisigAddress);
+//   t.ok(multisigAddress.Ok)
 //   await s.consistency();
 
 //   //tries to start multisig again, should fail
@@ -128,17 +164,7 @@ const getEntry = async (user, address) => {
 //     { }
 //   )
 //   t.ok(start2.Err)
-//   await s.consistency();
-
-//   //gets multisigs addresses, should always be length = 1
-//   const multisigAddress = await alice.call(
-//     "alice_instance",
-//     M_ZOME,
-//     "get_multisig_address",
-//     { }
-//   )
-//   t.ok(multisigAddress.Ok)
-//   t.true(multisigAddress.Ok.length === 1);
+//   console.log("start_msig2", start2);
 //   await s.consistency();
 
 //   //gets multisig
@@ -167,12 +193,12 @@ const getEntry = async (user, address) => {
 
 orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) => {
 
-  const { alice, bob } = await s.players(
-    { alice: aliceConfig, bob: bobConfig },
+  const { alice, bob, charlie } = await s.players(
+    { alice: aliceConfig, bob: bobConfig, charlie: charlieConfig },
     true
   );
 
-  //created multisig for the first time
+  //create multisig
   const start = await alice.call(
     "alice_instance", 
     M_ZOME, 
@@ -182,8 +208,8 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   t.ok(start.Ok)
   await s.consistency();
 
-  //created multisig for the first time
-  const add_member = await alice.call(
+  //add member transaction
+  const add_bob_member = await alice.call(
     "alice_instance", 
     M_ZOME, 
     "add_member", 
@@ -193,8 +219,91 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
       address: bob.instance("bob_instance").agentAddress
      }
   )
-  t.ok(add_member.Ok)
-  console.log("add_member_sisas", add_member)
+  t.ok(add_bob_member.Ok)
+  await s.consistency();
+
+  const add_charlie_member = await alice.call(
+    "alice_instance", 
+    M_ZOME, 
+    "add_member", 
+    { 
+      name: "Charlie",
+      description: "Add Charlie as member",
+      address: charlie.instance("charlie_instance").agentAddress
+     }
+  )
+  t.ok(add_charlie_member.Ok)
+  await s.consistency();
+
+  //get transaction list
+  const tx_list = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_transaction_list",
+    {}
+  );
+  console.log("tx_list", JSON.stringify(tx_list));
+  t.ok(tx_list.Ok)
+  await s.consistency();
+
+  //get user tx list
+  const tx_list_member = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_member_transaction_list",
+    {}
+  );
+  console.log("tx_list_member", JSON.stringify(tx_list_member));
+  t.ok(tx_list_member.Ok)
+  await s.consistency();
+
+  //get user tx address list
+  const tx_address_list = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_transaction_member_address_list",
+    {}
+  )
+  t.ok(tx_address_list.Ok)
+  await s.consistency();
+
+  //verifies signature of tx
+  let tx_verify_transaction_signature = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "verify_transaction_signature",
+    {
+      entry_address: tx_address_list.Ok[0],
+      agent: alice.instance("alice_instance").agentAddress
+    }
+  )
+  t.ok(tx_verify_transaction_signature.Ok);
+  await s.consistency();
+
+  //verifies if bob already signed the entry, should be false
+  tx_verify_transaction_signature = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "verify_transaction_signature",
+    {
+      entry_address: tx_address_list.Ok[0],
+      agent: charlie.instance("charlie_instance").agentAddress
+    }
+  )
+  t.ok(!tx_verify_transaction_signature.Ok);
+  await s.consistency();
+
+  //gets verified transaction
+  const verified_transaction = await alice.call(
+    "alice_instance",
+    M_ZOME,
+    "get_verified_transaction",
+    {
+      entry_address: tx_address_list.Ok[0]
+    }
+  )
+  console.log("verif_tx", JSON.stringify(verified_transaction))
+  t.ok(verified_transaction.Ok);
   await s.consistency();
 
 })

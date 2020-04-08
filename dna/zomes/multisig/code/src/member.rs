@@ -61,8 +61,6 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
-
-
 pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
@@ -73,6 +71,18 @@ pub fn get_members() -> ZomeApiResult<Vec<Member>> {
     let multisig_address = multisig::get_multisig_address()?;
     let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
     Ok(multisig_obj.members)
+}
+
+pub fn get_member(address: Address) -> ZomeApiResult<Member> {
+    let multisig_address = multisig::get_multisig_address()?;
+    let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
+
+    for member in multisig_obj.members {
+        if member.address == address {
+            return Ok(member)
+        }
+    }
+    Err(ZomeApiError::from(String::from("Member not found")))
 }
 
 

@@ -72,13 +72,17 @@ pub fn anchor_entry_def() -> ValidatingEntryType {
                 },
                 validation:| validation_data: hdk::LinkValidationData|{
                     match validation_data {
-                        LinkValidationData::LinkAdd { link , ..} => {
-                            let multisig_address: Address = get_multisig_address()?;
-                            let target: Address = link.link.target().clone();
-                            if multisig_address == target {
-                                return Err(String::from("Multisig already created"));
+                        LinkValidationData::LinkAdd { .. } => {
+                            let multisig_address = get_multisig_address();
+                            match multisig_address {
+                                //checks if there is an multisig created already, 
+                                // Ok(_) => if there is one returns error
+                                // Err(_) => if there is none returns ok
+                                Ok(_) => {
+                                    return Err(String::from("Multisig already created"));
+                                },
+                                Err(_) => return Ok(())
                             }
-                            Ok(())
                        },
                        LinkValidationData::LinkRemove { .. } => {
                             Err(String::from("Cannot remove link"))
@@ -149,32 +153,17 @@ pub fn anchor_address() -> ZomeApiResult<Address> {
     hdk::entry_address(&anchor_entry())
 }
 
-
 pub fn get_multisig_address() -> ZomeApiResult<Address> {
-
     let links = hdk::get_links(
         &anchor_address()?, 
         LinkMatch::Exactly("multisig_list"), 
         LinkMatch::Any
     )?;
-    if &links.len() == &usize::min_value() {
-        return Err(ZomeApiError::from(String::from("Multisig has not been started")))
+    if &links.addresses().len() > &usize::min_value() {
+        let link = &links.links()[0];
+        return Ok(link.address.clone())
     }
-    links[0]
-    //Err(ZomeApiError::from(String::from("Multisig has not been started")))
-    
-
-    // let links = hdk::get_links(
-    //     &anchor_address()?, 
-    //     LinkMatch::Exactly("multisig_list"), 
-    //     LinkMatch::Any
-    // )?;
-    // let multisigs = links.addresses();
-    // if multisigs.len() >= 0  {
-    //     let multisig = multisigs.nth(0).expect("Missing argument");
-    //     return Ok(multisigs.clone()[0]);
-    // }
-    
+    Err(ZomeApiError::from(String::from("Multisig has not been started")))
 }
 
 pub fn get_multisig() -> ZomeApiResult<Multisig> {
@@ -200,5 +189,4 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
     hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; //TODO: do validation if link is not already added
 
     Ok(multisig_address)
-  
 }

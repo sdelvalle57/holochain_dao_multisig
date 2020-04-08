@@ -5,8 +5,16 @@ use hdk::{
     AGENT_ADDRESS, DNA_ADDRESS, PUBLIC_TOKEN,
 };
 
-use hdk::holochain_core_types::dna::entry_types::Sharing;
-use hdk::holochain_core_types::{entry::Entry, validation::EntryValidationData, validation::LinkValidationData};
+use hdk::holochain_core_types::{
+    dna::entry_types::Sharing,
+    signature::{Provenance, Signature},
+    time::Timeout,
+    entry::Entry,
+    validation::{
+        EntryValidationData,
+        LinkValidationData
+    },
+};
 use holochain_wasm_utils::api_serialization::{
     get_entry::{GetEntryOptions, GetEntryResult},
     get_links::GetLinksOptions,
@@ -14,14 +22,19 @@ use holochain_wasm_utils::api_serialization::{
 
 use hdk::holochain_json_api::{error::JsonError, json::JsonString};
 use hdk::holochain_persistence_api::cas::content::Address;
-use hdk::prelude::AddressableContent;
-use hdk::prelude::LinkMatch;
+use hdk::prelude::{
+    GetEntryResultType,
+    StatusRequestKind,
+    LinkMatch,
+    AddressableContent
+};
 use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
 
 use crate::{
-    multisig
+    multisig,
+    member
 };
 /******************************************* */
 
@@ -30,20 +43,20 @@ pub struct Transaction {
     title: String,
     description: String,
     required: u64,
-    signed: Vec<Address>,
-    creator: Address,
+    signed: Vec<member::Member>,
+    creator: member::Member,
     executed: bool,
     data: Entry
 }
 
-impl Transaction{
-    pub fn new(title: String, description: String, required: u64, data: Entry) -> Self {
+impl Transaction {
+    pub fn new(title: String, description: String, required: u64, signer: member::Member, data: Entry) -> Self {
         Transaction {
             title,
             description,
             required,
-            signed: vec![AGENT_ADDRESS.clone()],
-            creator: AGENT_ADDRESS.clone(),
+            signed: vec![signer.clone()],
+            creator: signer.clone(),
             executed: false,
             data
         }
@@ -55,6 +68,21 @@ impl Transaction{
 
     pub fn entry(&self) -> Entry {
         Entry::App("transaction".into(), self.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
+pub struct VerifiedTransaction {
+    transaction: Transaction,
+    verifications: Vec<bool>,
+}
+
+impl VerifiedTransaction {
+    pub fn new(transaction: Transaction) -> Self {
+        VerifiedTransaction {
+            transaction,
+            verifications: Vec::default(),
+        }
     }
 }
 
@@ -101,26 +129,40 @@ pub fn entry_def() -> ValidatingEntryType {
 
 
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
-    let new_tx = Transaction::new(title, description, 1, entry);
+    let signer = member::get_member(AGENT_ADDRESS.clone())?;
+    let multisig = multisig::get_multisig()?;
+    let new_tx = Transaction::new(title, description, multisig.required, signer, entry);
     let new_tx_entry = new_tx.entry();
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    let _multisig_addresses = multisig::get_multisig_address()?;
-    // let _multisig_address =  &multisig_addresses[0];
-    // hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
-    // hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
+    let multisig_address = multisig::get_multisig_address()?;
+    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
+    hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
     //TODO: check if the transaction can be executed (if requried === signatures)
     Ok(new_tx_address)
 }
 
-pub fn list() -> ZomeApiResult<Vec<Transaction>> {
+pub fn links_list() -> ZomeApiResult<Vec<Address>> {
     let multisig_address = multisig::get_multisig_address()?;
-    let mut transactions: Vec<Transaction> = Vec::default();
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->transactions"), 
         LinkMatch::Any
-    )?
-    .addresses();
+    )?;
+    Ok(links.addresses())
+}
+
+pub fn links_member_list() -> ZomeApiResult<Vec<Address>> {
+    let links = hdk::get_links(
+        &AGENT_ADDRESS, 
+        LinkMatch::Exactly("member->transactions"), 
+        LinkMatch::Any
+    )?;
+    Ok(links.addresses())
+}
+
+pub fn list() -> ZomeApiResult<Vec<Transaction>> {
+    let links = links_list()?;
+    let mut transactions: Vec<Transaction> = Vec::default();
     for tx_address in links {
         let transaction: Transaction = hdk::utils::get_as_type(tx_address.clone())?;
         transactions.push(transaction)
@@ -128,10 +170,46 @@ pub fn list() -> ZomeApiResult<Vec<Transaction>> {
     Ok(transactions)
 }
 
-// pub fn change_requirement(new_requirement: u64) -> ZomeApiError<Address> {
-    
-// }
- 
+pub fn member_list() -> ZomeApiResult<Vec<Transaction>> {
+    let links = links_member_list()?;
+    let mut transactions: Vec<Transaction> = Vec::default();
+    for tx_address in links {
+        let transaction: Transaction = hdk::utils::get_as_type(tx_address.clone())?;
+        transactions.push(transaction)
+    }
+    Ok(transactions)
+}
+
+pub fn verify_transaction(entry_address: Address) -> ZomeApiResult<VerifiedTransaction> {
+    let transaction = Transaction::get(entry_address.clone())?;
+    let signers: Vec<member::Member> = transaction.clone().signed;
+    let mut verified_transaction = VerifiedTransaction::new(transaction.clone());
+    for signer in signers {
+        let verified = verify_signature(entry_address.clone(), signer.address)?;
+        verified_transaction.verifications.push(verified);
+    }
+    Ok(verified_transaction)
+}
+
+pub fn verify_signature(entry_address: Address, agent: Address) -> ZomeApiResult<bool> {
+    let option = GetEntryOptions::new(StatusRequestKind::Latest, true, true, Timeout::default());
+    let entry_result = hdk::get_entry_result(&entry_address, option)?;
+    hdk::debug(format!("header_res {:?}", entry_result))?;
+    let signature = hdk::sign(entry_address.clone())?;
+    let my_provenance = Provenance::new(agent.clone(), Signature::from(signature));
+
+    if let GetEntryResultType::Single(item) = entry_result.result {
+        for header in item.headers {
+            for i in header.provenances().iter() {
+                if JsonString::from(i).to_string() == JsonString::from(&my_provenance).to_string() {
+                    return Ok(true);
+                }
+            }
+        }
+        return Ok(false);
+    }
+    return Ok(false);
+}
 
 // Helper for handling decoding of entry data to requested entry struct type
 // pub (crate) fn try_decode_entry<R>(entry: ZomeApiResult<Option<Entry>>) -> ZomeApiResult<Option<R>>
@@ -146,4 +224,25 @@ pub fn list() -> ZomeApiResult<Vec<Transaction>> {
 //         },
 //         _ => Err(ZomeApiError::Internal("ERR_MSG_ENTRY_NOT_FOUND".to_string())),
 //     }
+// }
+
+// GetEntryOptions
+// {
+// 	result: Single(GetEntryResultItem {
+// 		meta: Some(EntryResultMeta {
+// 			address: HashString("QmS4UvP4FDGbQvY7fV21wDfZ2bRcnGe8YADUYE2GThDaVt"),
+// 			entry_type: App(AppEntryType("transaction")),
+// 			crud_status: Live
+// 		}),
+// 		entry: Some(App(AppEntryType("transaction"), JsonString("{\"title\":\"add_member\",\"description\":\"Add bob as member\",\"required\":1,\"signed\":[\"HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui\"],\"creator\":\"HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui\",\"executed\":false,\"data\":{\"App\":[\"member\",\"{\\\"name\\\":\\\"Bob\\\",\\\"address\\\":\\\"HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr\\\"}\"]}}"))),
+// 		headers: [ChainHeader {
+// 			entry_type: App(AppEntryType("transaction")),
+// 			entry_address: HashString("QmS4UvP4FDGbQvY7fV21wDfZ2bRcnGe8YADUYE2GThDaVt"),
+// 			provenances: [Provenance(HashString("HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui"), Signature("jP6KguBjYwH9Ph6ITQpePUasB1vaS6Qu1syNKLsRzeuBnKrRdrZiyC3JTYVs4EYu8cPqYGrww/HC6478lLMgAg=="))],
+// 			link: Some(HashString("QmXUT73GrPkt84azJ1giDyac4kX9GS5w8Wmv9LNMqs4oGN")),
+// 			link_same_type: None,
+// 			link_update_delete: None,
+// 			timestamp: Iso8601(2020 - 04 - 08 T06: 36: 32 + 00: 00)
+// 		}]
+// 	})
 // }
