@@ -32,7 +32,6 @@ pub struct Transaction {
     required: u64,
     signed: Vec<Address>,
     creator: Address,
-    //TODO: figure out how to call functions of another DNA
     executed: bool,
     data: Entry
 }
@@ -54,17 +53,6 @@ impl Transaction{
         hdk::utils::get_as_type(address.to_string().into())
     }
 
-    pub fn from(title: String, description: String, required: u64, signed: Vec<Address>, creator: Address, executed: bool, data: Entry) -> Self {
-        Transaction {
-            title,
-            description,
-            required,
-            signed,
-            creator,
-            executed,
-            data
-        }
-    }
     pub fn entry(&self) -> Entry {
         Entry::App("transaction".into(), self.into())
     }
@@ -112,20 +100,20 @@ pub fn entry_def() -> ValidatingEntryType {
 }
 
 
-pub(crate) fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
+pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     let new_tx = Transaction::new(title, description, 1, entry);
     let new_tx_entry = new_tx.entry();
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    let multisig_addresses = multisig::get_multisig_address()?;
-    let multisig_address =  &multisig_addresses[0];
-    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
-    hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
+    let _multisig_addresses = multisig::get_multisig_address()?;
+    // let _multisig_address =  &multisig_addresses[0];
+    // hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
+    // hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
+    //TODO: check if the transaction can be executed (if requried === signatures)
     Ok(new_tx_address)
 }
 
 pub fn list() -> ZomeApiResult<Vec<Transaction>> {
-    let multisig_addresses = multisig::get_multisig_address()?;
-    let multisig_address =  &multisig_addresses[0];
+    let multisig_address = multisig::get_multisig_address()?;
     let mut transactions: Vec<Transaction> = Vec::default();
     let links = hdk::get_links(
         &multisig_address, 
@@ -133,7 +121,7 @@ pub fn list() -> ZomeApiResult<Vec<Transaction>> {
         LinkMatch::Any
     )?
     .addresses();
-    for _tx_address in links {
+    for tx_address in links {
         let transaction: Transaction = hdk::utils::get_as_type(tx_address.clone())?;
         transactions.push(transaction)
     }

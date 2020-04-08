@@ -43,7 +43,7 @@ impl Member {
     }
 
     pub fn entry(&self) -> Entry {
-        Entry::App("members".into(), self.into())
+        Entry::App("member".into(), self.into())
     }
 }
 
@@ -70,12 +70,7 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
 }
 
 pub fn get_members() -> ZomeApiResult<Vec<Member>> {
-    let multisig_addresses = multisig::get_multisig_address()?;
-    if multisig_addresses.len() == 0 {
-        return Err(ZomeApiError::Internal(format!("Multisig still not created")));
-    }
-    
-    let multisig_address = &multisig_addresses[0];
+    let multisig_address = multisig::get_multisig_address()?;
     let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
     Ok(multisig_obj.members)
 }

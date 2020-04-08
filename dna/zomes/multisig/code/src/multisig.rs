@@ -73,9 +73,9 @@ pub fn anchor_entry_def() -> ValidatingEntryType {
                 validation:| validation_data: hdk::LinkValidationData|{
                     match validation_data {
                         LinkValidationData::LinkAdd { link , ..} => {
-                            let my_multisigs: Vec<Address> = get_multisig_address()?;
+                            let multisig_address: Address = get_multisig_address()?;
                             let target: Address = link.link.target().clone();
-                            if my_multisigs.contains(&target) {
+                            if multisig_address == target {
                                 return Err(String::from("Multisig already created"));
                             }
                             Ok(())
@@ -150,20 +150,36 @@ pub fn anchor_address() -> ZomeApiResult<Address> {
 }
 
 
-pub fn get_multisig_address() -> ZomeApiResult<Vec<Address>> {
+pub fn get_multisig_address() -> ZomeApiResult<Address> {
+
     let links = hdk::get_links(
         &anchor_address()?, 
         LinkMatch::Exactly("multisig_list"), 
         LinkMatch::Any
-    )?
-    .addresses();
-    Ok(links)
+    )?;
+    if &links.len() == &usize::min_value() {
+        return Err(ZomeApiError::from(String::from("Multisig has not been started")))
+    }
+    links[0]
+    //Err(ZomeApiError::from(String::from("Multisig has not been started")))
+    
+
+    // let links = hdk::get_links(
+    //     &anchor_address()?, 
+    //     LinkMatch::Exactly("multisig_list"), 
+    //     LinkMatch::Any
+    // )?;
+    // let multisigs = links.addresses();
+    // if multisigs.len() >= 0  {
+    //     let multisig = multisigs.nth(0).expect("Missing argument");
+    //     return Ok(multisigs.clone()[0]);
+    // }
+    
 }
 
 pub fn get_multisig() -> ZomeApiResult<Multisig> {
-    let addresses = get_multisig_address()?;
-    let entry_address = &addresses[0];
-    let multisig: Multisig = hdk::utils::get_as_type(entry_address.clone())?;
+    let multisig_address = get_multisig_address()?;
+    let multisig: Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
     Ok(multisig)
 }
 
