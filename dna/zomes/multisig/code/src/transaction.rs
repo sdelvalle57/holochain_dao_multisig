@@ -50,13 +50,13 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn new(title: String, description: String, required: u64, signer: member::Member, data: Entry) -> Self {
+    pub fn new(title: String, description: String, required: u64, signer: VerifiedMember, data: Entry) -> Self {
         Transaction {
             title,
             description,
             required,
             signed: vec![signer.clone()],
-            creator: signer.clone(),
+            creator: signer.member,
             executed: false,
             data
         }
@@ -72,8 +72,8 @@ impl Transaction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
-struct VerifiedMember {
-    member: member::Member,
+pub struct VerifiedMember {
+    pub member: member::Member,
     signature: Option<String>
 }
 
@@ -146,9 +146,15 @@ pub fn entry_def() -> ValidatingEntryType {
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     let signer = member::get_member(AGENT_ADDRESS.clone())?;
     let multisig = multisig::get_multisig()?;
-    //TODO: sign the entry
-    let new_tx = Transaction::new(title, description, multisig.required, signer, entry);
+    
+    let entry_string = entry_to_string(entry.clone())?;
+    let signature = hdk::sign(entry_string)?;
+    let verified_member = VerifiedMember::new(signer, Some(signature));
+    
+
+    let new_tx = Transaction::new(title, description, multisig.required, verified_member, entry);
     let new_tx_entry = new_tx.entry();
+    
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
     let multisig_address = multisig::get_multisig_address()?;
     hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
@@ -158,18 +164,27 @@ pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult
 }
 
 pub fn sign(entry_address: Address) -> ZomeApiResult<VerifiedTransaction> {
-    hdk::debug(format!("entry_address_res {:?}", &entry_address))?;
     let member = member::get_member(AGENT_ADDRESS.clone())?;
 
     let transaction = Transaction::get(entry_address.clone())?;
-    //TODO: sign the transaction.data
+    let entry_string = entry_to_string(transaction.data.clone())?;
+    let signature = hdk::sign(entry_string)?;
+    let verified_member = VerifiedMember::new(member, Some(signature));
+
     let mut new_transaction = transaction.clone();
-    new_transaction.signed.push(member);
+    new_transaction.signed.push(verified_member);
     let new_transaction_entry = new_transaction.entry();
-    hdk::debug(format!("entry_address_res_new {:?}", &new_transaction_entry))?;
     hdk::update_entry(new_transaction_entry, &entry_address)?;
     verify_transaction(entry_address)
+}
 
+fn entry_to_string(entry: Entry) -> ZomeApiResult<String> {
+    match entry {
+        Entry::App(_, entry_value) => {
+            Ok(entry_value.to_string())
+        },
+        _ => Err(ZomeApiError::Internal("Cannot read entry".to_string())),
+    }
 
 }
 
@@ -215,35 +230,42 @@ pub fn member_list() -> ZomeApiResult<Vec<Transaction>> {
 pub fn verify_transaction(entry_address: Address) -> ZomeApiResult<VerifiedTransaction> {
     member::get_member(AGENT_ADDRESS.clone())?;
     let transaction = Transaction::get(entry_address.clone())?;
-    let signers: Vec<member::Member> = transaction.signed.clone();
+    let signers: Vec<VerifiedMember> = transaction.signed.clone();
     let mut verified_transaction = VerifiedTransaction::new(transaction.clone());
-    for signer in signers {
-        let signature = get_signature(entry_address.clone(), signer.address.clone())?;
-        let verified_member = VerifiedMember::new(signer, signature);
+    for verified_member in signers {
         verified_transaction.verifications.push(verified_member);
     }
     Ok(verified_transaction)
 }
 
-fn get_signature(entry_address: Address, agent: Address) -> ZomeApiResult<Option<String>> {
-    let option = GetEntryOptions::new(StatusRequestKind::Latest, true, true, Timeout::default());
-    let entry_result = hdk::get_entry_result(&entry_address, option)?;
-    hdk::debug(format!("entry_address_option {:?}", &entry_result))?;
-    let signature = hdk::sign(entry_address.clone())?;
-    let my_provenance = Provenance::new(agent.clone(), Signature::from(signature.clone()));
-
-    if let GetEntryResultType::Single(item) = entry_result.result {
-        for header in item.headers {
-            for i in header.provenances().iter() {
-                if JsonString::from(i).to_string() == JsonString::from(&my_provenance).to_string() {
-                    return Ok(Some(signature));
-                }
-            }
-        }
-        return Ok(None);
+pub fn verify_signature(entry: Entry, member: member::Member) -> ZomeApiResult<Option<String>> {
+    match entry {
+        Entry::App(_, entry_value) => {
+            Ok(entry_value.to_string())
+        },
+        _ => Err(ZomeApiError::Internal("Cannot read entry".to_string())),
     }
-    return Ok(None);
 }
+
+// fn get_signature(entry_address: Address, agent: Address) -> ZomeApiResult<Option<String>> {
+//     let option = GetEntryOptions::new(StatusRequestKind::Latest, true, true, Timeout::default());
+//     let entry_result = hdk::get_entry_result(&entry_address, option)?;
+//     hdk::debug(format!("entry_address_option {:?}", &entry_result))?;
+//     let signature = hdk::sign(entry_address.clone())?;
+//     let my_provenance = Provenance::new(agent.clone(), Signature::from(signature.clone()));
+
+//     if let GetEntryResultType::Single(item) = entry_result.result {
+//         for header in item.headers {
+//             for i in header.provenances().iter() {
+//                 if JsonString::from(i).to_string() == JsonString::from(&my_provenance).to_string() {
+//                     return Ok(Some(signature));
+//                 }
+//             }
+//         }
+//         return Ok(None);
+//     }
+//     return Ok(None);
+// }
 
 // Helper for handling decoding of entry data to requested entry struct type
 // pub (crate) fn try_decode_entry<R>(entry: ZomeApiResult<Option<Entry>>) -> ZomeApiResult<Option<R>>

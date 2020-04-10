@@ -294,7 +294,7 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   t.ok(verified_transaction_by_no_member.Err );
   await s.consistency();
 
-  //tries to get verified transaction, wont pass if if is not member
+  //tries to get verified transaction, is member, will pass
   const verified_transaction_by_member = await charlie.call(
     "charlie_instance",
     M_ZOME,
