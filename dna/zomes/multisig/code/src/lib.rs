@@ -51,7 +51,6 @@ mod my_zome {
     }
 
     /*************** Entry Definitions */
-
     #[entry_def]
     fn multisig_anchor_entry_definition() -> ValidatingEntryType {
       multisig::anchor_entry_def()
@@ -72,10 +71,7 @@ mod my_zome {
       member::entry_def()
     }
 
-    
-
     /*************** Helper Functions */
-
     #[zome_fn("hc_public")]
     fn get_my_address() -> ZomeApiResult<Address> {
         Ok(AGENT_ADDRESS.clone())
@@ -91,28 +87,30 @@ mod my_zome {
         helpers::get_hardcoded_members()
     }
 
-    /*************** Multisig Functions Setters */
-
+    /*************** Setters */
+    /*********** multisig.rs */
     #[zome_fn("hc_public")]
     fn start() -> ZomeApiResult<Address> {
         multisig::start_multisig()
     }
 
+    /*********** member.rs */
     #[zome_fn("hc_public")]
     fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
         member::add_member(name, description, address)
     }
 
+    /*********** Transaction.rs */
     #[zome_fn("hc_public")]
-    fn sign_transaction(entry_address: Address) -> ZomeApiResult<transaction::VerifiedTransaction> {
-        transaction::sign(entry_address)
+    fn sign_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
+        transaction::sign_entry(entry_address)
     }
 
-    /************ Multisig Functions Getters */
-
+    /************ Getters */
+    /*********** Transaction.rs */
     #[zome_fn("hc_public")]
-    fn get_transaction(address: Address) -> ZomeApiResult<transaction::Transaction> {
-        transaction::Transaction::get(address)
+    fn get_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
+        transaction::get_transaction(entry_address)
     }
 
     #[zome_fn("hc_public")]
@@ -135,16 +133,13 @@ mod my_zome {
         transaction::member_list()
     }
 
-    #[zome_fn("hc_public")]
-    fn get_verified_transaction(entry_address: Address) -> ZomeApiResult<transaction::VerifiedTransaction> {
-        transaction::verify_transaction(entry_address)
-    }
-
+    /*********** member.rs */
     #[zome_fn("hc_public")]
     fn get_members() -> ZomeApiResult<Vec<member::Member>> {
         member::get_members()
     }
 
+    /*********** multisig.rs */
     #[zome_fn("hc_public")]
     fn get_multisig_address() -> ZomeApiResult<Address> {
         multisig::get_multisig_address()
@@ -154,7 +149,4 @@ mod my_zome {
     fn get_multisig() -> ZomeApiResult<multisig::Multisig> {
         multisig::get_multisig()
     }
-
-    
-
 }

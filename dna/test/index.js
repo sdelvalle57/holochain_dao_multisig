@@ -199,125 +199,67 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   );
 
   //create multisig
-  const start = await alice.call(
-    "alice_instance", 
-    M_ZOME, 
-    "start", 
-    { }
-  )
+  const start = await alice.call("alice_instance", M_ZOME, "start", { })
   t.ok(start.Ok)
   await s.consistency();
 
   //add member transaction
-  const add_bob_member = await alice.call(
-    "alice_instance", 
-    M_ZOME, 
-    "add_member", 
-    { 
-      name: "Bob",
-      description: "Add bob as member",
-      address: bob.instance("bob_instance").agentAddress
-     }
-  )
+  const add_bob_member = await alice.call("alice_instance", M_ZOME, "add_member", { 
+    name: "Bob",
+    description: "Add bob as member",
+    address: bob.instance("bob_instance").agentAddress
+  })
   t.ok(add_bob_member.Ok)
   await s.consistency();
 
-  const add_charlie_member = await alice.call(
-    "alice_instance", 
-    M_ZOME, 
-    "add_member", 
-    { 
-      name: "Charlie",
-      description: "Add Charlie as member",
-      address: charlie.instance("charlie_instance").agentAddress
-     }
-  )
-  t.ok(add_charlie_member.Ok)
-  await s.consistency();
-
   //get transaction list
-  const tx_list = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "get_transaction_list",
-    {}
-  );
-  console.log("tx_list", JSON.stringify(tx_list));
+  const tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_list", { });
   t.ok(tx_list.Ok)
   await s.consistency();
 
   //get user tx list
-  const tx_list_member = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "get_member_transaction_list",
-    {}
-  );
-  console.log("tx_list_member", JSON.stringify(tx_list_member));
+  const tx_list_member = await alice.call("alice_instance", M_ZOME, "get_member_transaction_list", { });
   t.ok(tx_list_member.Ok)
   await s.consistency();
 
   //get user tx address list
-  const tx_address_list = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "get_transaction_member_address_list",
-    {}
-  )
+  const tx_address_list = await alice.call("alice_instance", M_ZOME, "get_transaction_member_address_list", { })
   t.ok(tx_address_list.Ok)
   await s.consistency();
 
   //gets verified transaction
-  const verified_transaction = await alice.call(
-    "alice_instance",
-    M_ZOME,
-    "get_verified_transaction",
-    {
-      entry_address: tx_address_list.Ok[0]
-    }
-  )
-  console.log("verif_tx", JSON.stringify(verified_transaction))
-  t.ok(verified_transaction.Ok);
+  const transaction = await alice.call("alice_instance", M_ZOME, "get_transaction", {
+    entry_address: tx_address_list.Ok[0]
+  })
+  t.ok(transaction.Ok);
   await s.consistency();
 
   //tries to get verified transaction, wont pass if if is not member
-  const verified_transaction_by_no_member = await bob.call(
-    "bob_instance",
-    M_ZOME,
-    "get_verified_transaction",
-    {
-      entry_address: tx_address_list.Ok[0]
-    }
-  )
-  console.log("verif_tx_error", JSON.stringify(verified_transaction_by_no_member))
+  const transaction_by_no_member = await bob.call("bob_instance", M_ZOME, "get_transaction", {
+    entry_address: tx_address_list.Ok[0]
+  })
   //"Multisig has not been started or user is not Member"
-  t.ok(verified_transaction_by_no_member.Err );
+  t.ok(transaction_by_no_member.Err );
   await s.consistency();
 
   //tries to get verified transaction, is member, will pass
-  const verified_transaction_by_member = await charlie.call(
-    "charlie_instance",
-    M_ZOME,
-    "get_verified_transaction",
-    {
-      entry_address: tx_address_list.Ok[0]
-    }
-  )
-  console.log("verif_tx_charlie", JSON.stringify(verified_transaction_by_member))
-  //
-  t.ok(verified_transaction_by_member.Ok);
+  let transaction_by_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
+    entry_address: tx_address_list.Ok[0]
+  })
+  t.ok(transaction_by_member.Ok);
   await s.consistency();
 
-  const sign_tx_by_member = await charlie.call(
-    "charlie_instance",
-    M_ZOME,
-    "sign_transaction",
-    {
-      entry_address: tx_address_list.Ok[0]
-    }
-  )
-  console.log("verif_tx_charlie_sign", JSON.stringify(sign_tx_by_member))
+  const sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+    entry_address: tx_address_list.Ok[0]
+  })
   t.ok(sign_tx_by_member.Ok);
+  await s.consistency();
+
+  transaction_by_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
+    entry_address: tx_address_list.Ok[0]
+  })
+  t.ok(transaction_by_member.Ok);
+  console.log("transaction_get_by_charlie", JSON.stringify(transaction_by_member))
   await s.consistency();
 
 })
