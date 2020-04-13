@@ -78,11 +78,6 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_entry(address: Address) -> ZomeApiResult<Option<Entry>> {
-        hdk::get_entry(&address)
-    }
-
-    #[zome_fn("hc_public")]
     fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
         helpers::get_hardcoded_members()
     }

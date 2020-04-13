@@ -211,60 +211,76 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   })
   t.ok(add_bob_member.Ok)
   await s.consistency();
+  await sleep(5000)
 
   //get transaction list
-  const tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_list", { });
-  t.ok(tx_list.Ok)
+
+  let tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
+  console.log("tx_by_alice", tx_list);
+  t.ok(tx_list.Ok.length > 0)
   await s.consistency();
 
-  //get user tx list
-  const tx_list_member = await alice.call("alice_instance", M_ZOME, "get_member_transaction_list", { });
-  t.ok(tx_list_member.Ok)
-  await s.consistency();
-
-  //get user tx address list
-  const tx_address_list = await alice.call("alice_instance", M_ZOME, "get_transaction_member_address_list", { })
+  const tx_address_list = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
   t.ok(tx_address_list.Ok)
+  console.log("tx_list_by_charlie", JSON.stringify(tx_address_list))
   await s.consistency();
 
-  //gets verified transaction
-  const transaction = await alice.call("alice_instance", M_ZOME, "get_transaction", {
-    entry_address: tx_address_list.Ok[0]
-  })
-  t.ok(transaction.Ok);
-  await s.consistency();
+  // const sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(sign_tx_by_member.Ok);
+  // await s.consistency();
+
+
+  // //get user tx list
+  // const tx_list_member = await alice.call("alice_instance", M_ZOME, "get_member_transaction_list", { });
+  // t.ok(tx_list_member.Ok)
+  // await s.consistency();
+
+  // //get user tx address list
+  
+
+  // //gets verified transaction
+  // let transaction = await alice.call("alice_instance", M_ZOME, "get_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(transaction.Ok);
+  // console.log("tx_by_alice", JSON.stringify(transaction))
+  // await s.consistency();
+  // await sleep(5000)
+
+  // //tries to get verified transaction, is member, will pass
+  // transaction = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(transaction.Ok);
+  // console.log("tx_by_charlie", JSON.stringify(transaction))
+  // await s.consistency();
 
   //tries to get verified transaction, wont pass if if is not member
-  const transaction_by_no_member = await bob.call("bob_instance", M_ZOME, "get_transaction", {
-    entry_address: tx_address_list.Ok[0]
-  })
-  //"Multisig has not been started or user is not Member"
-  t.ok(transaction_by_no_member.Err );
-  await s.consistency();
+  // const transaction_by_no_member = await bob.call("bob_instance", M_ZOME, "get_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // //"Multisig has not been started or user is not Member"
+  // t.ok(transaction_by_no_member.Err);
+  // await s.consistency();
 
-  //tries to get verified transaction, is member, will pass
-  let transaction_by_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
-    entry_address: tx_address_list.Ok[0]
-  })
-  t.ok(transaction_by_member.Ok);
-  await s.consistency();
+  
 
-  const sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-    entry_address: tx_address_list.Ok[0]
-  })
-  t.ok(sign_tx_by_member.Ok);
-  await s.consistency();
-
-  transaction_by_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
-    entry_address: tx_address_list.Ok[0]
-  })
-  t.ok(transaction_by_member.Ok);
-  console.log("transaction_get_by_charlie", JSON.stringify(transaction_by_member))
-  await s.consistency();
+  // transaction = await charlie.call("charlie_instance", M_ZOME, "get_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(transaction.Ok);
+  // console.log("transaction_get_by_charlie", JSON.stringify(transaction))
+  // await s.consistency();
 
 })
 
 orchestrator.run()
+
+const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
 //charlie_address HcScJTf9ffN4t483u988j33hqoa8k63s5Pu9QEnbR5Bwuu573zKjYoMhMhs7s6z

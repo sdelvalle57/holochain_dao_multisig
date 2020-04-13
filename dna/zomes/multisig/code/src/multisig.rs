@@ -66,7 +66,7 @@ pub fn anchor_entry_def() -> ValidatingEntryType {
         links:[
             to!(
                 "multisig",
-                link_type: "multisig_list",
+                link_type: "multisig_list", //there should be just one
                 validation_package:||{
                     hdk::ValidationPackageDefinition::Entry
                 },
@@ -184,9 +184,9 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
     }
 
     let multisig_entry = default_multisig.entry();
-    let multisig_address = hdk::commit_entry(&multisig_entry)?; //TODO: do validation if agent_address is in hardcoded members
+    let multisig_address = hdk::commit_entry(&multisig_entry)?; 
 
-    hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; //TODO: do validation if link is not already added
+    hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
 
     Ok(multisig_address)
 }

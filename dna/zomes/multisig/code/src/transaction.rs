@@ -86,21 +86,6 @@ impl VerifiedMember {
     }
 }
 
-// #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
-// pub struct VerifiedTransaction {
-//     transaction: Transaction,
-//     verifications: Vec<VerifiedMember>,
-// }
-
-// impl VerifiedTransaction {
-//     pub fn new(transaction: Transaction) -> Self {
-//         VerifiedTransaction {
-//             transaction,
-//             verifications: Vec::default(),
-//         }
-//     }
-// }
-
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
         name: "transaction",
@@ -111,19 +96,30 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
-                EntryValidationData::Create { .. } => {
-                    //TODO: validate agent is member
+                EntryValidationData::Create { validation_data, ..} => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
+                    if !validation_data.sources().contains(&AGENT_ADDRESS.clone()) {
+                        return Err(String::from("Cannot create entry, agent is not signer"));
+                    }
                     Ok(())
-                    //return Err(String::from("Only the owner can create their multisigs"));
                 },
-                EntryValidationData::Modify { .. } => {
-                    //TODO: validate agent is member
+                EntryValidationData::Modify { old_entry, .. } => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
+                    if old_entry.executed {
+                        return Err(String::from("Cannot delete entry, entry already executed"));
+                    }
                     Ok(())
-                    //return Err(String::from("Cannot modify"));
                 },
-                EntryValidationData::Delete {.. } => {
-                     //TODO: validate agent is member and transaction has just one signature, and signature must be agent
-                    return Err(String::from("Cannot delete"));
+                EntryValidationData::Delete { old_entry, .. } => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
+                    if old_entry.executed {
+                        return Err(String::from("Cannot delete entry, entry already executed"));
+                    } else if old_entry.signed.len() > 1 {
+                        return Err(String::from("Cannot delete entry, already signed for more than one members"));
+                    } else if old_entry.signed.len() == 0 && old_entry.creator.address != AGENT_ADDRESS.clone() {
+                        return Err(String::from("Cannot delete entry, signer is not creator"));
+                    }
+                    Ok(())
                 }
             }
         },
@@ -144,6 +140,7 @@ pub fn entry_def() -> ValidatingEntryType {
 
 
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
+    
     let signer = member::get_member(AGENT_ADDRESS.clone())?;
     let multisig = multisig::get_multisig()?;
     
@@ -197,7 +194,7 @@ fn entry_to_string(entry: Entry) -> ZomeApiResult<String> {
 //Clones the transaction and verifies each member who has signed it
 pub fn get_transaction(entry_address: Address) -> ZomeApiResult<Transaction> {
     member::get_member(AGENT_ADDRESS.clone())?;
-    let transaction: Transaction = hdk::utils::get_as_type(entry_address.clone())?;
+    let transaction: Transaction = Transaction::get(entry_address)?;
     let mut transaction_response = transaction.clone();
     transaction_response.signed = Vec::default();
     for verified_member in transaction.signed {
@@ -212,11 +209,13 @@ pub fn get_transaction(entry_address: Address) -> ZomeApiResult<Transaction> {
 pub fn links_list() -> ZomeApiResult<Vec<Address>> {
     member::get_member(AGENT_ADDRESS.clone())?;
     let multisig_address = multisig::get_multisig_address()?;
+    hdk::debug(format!("this_is_the_msig_address {:?} {:?}", AGENT_ADDRESS.clone(), multisig_address))?;
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->transactions"), 
         LinkMatch::Any
     )?;
+    
     Ok(links.addresses())
 }
 
