@@ -36,7 +36,7 @@ const aliceConfig = Config.gen(
       agent: {
         id: "alice_instance",
         name: "alice", 
-        public_address: 'HcScijzE9x3Qjogoz9xOK4NjxFNthmf9br9ow8tN7PUb6djyAoWu5rKuhrsq93i',
+        public_address: 'HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3u',
         keystore_file: alicePath,
         test_agent: true,
       },
@@ -62,7 +62,7 @@ const bobConfig = Config.gen(
       agent: {
         id: 'bob_instance',
         name: "bob", 
-        public_address: 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa',
+        public_address: 'HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr',
         keystore_file: bobPath,
         test_agent: true,
       },
@@ -88,7 +88,7 @@ const charlieConfig = Config.gen(
       agent: {
         id: 'charlie_instance',
         name: "charlie", 
-        public_address: 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa',
+        public_address: 'HcScJTf9ffN4t483u988j33hqoa8k63s5Pu9QEnbR5Bwuu573zKjYoMhMhs7s6z',
         keystore_file: bobPath,
         test_agent: true,
       },
@@ -215,37 +215,35 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
 
   //get transaction list
 
-  const tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
+  let tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
   t.ok(tx_list.Ok.length > 0)
   await s.consistency();
 
-  const tx_list2 = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
-  t.ok(tx_list2.Ok.length === 1)
+  tx_list = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
+  t.ok(tx_list.Ok.length === 1)
   await s.consistency();
 
-  // let sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-  //   entry_address: tx_list.Ok[0]
-  // })
-  // t.ok(sign_tx_by_member.Ok);
-  // await s.consistency();
+  let sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+    entry_address: tx_list.Ok[0]
+  })
+  t.ok(sign_tx_by_member.Ok);
+  await s.consistency();
 
   //tries to sign tx again
-  // sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-  //   entry_address: tx_address_list.Ok[0]
-  // })
-  // t.ok(sign_tx_by_member.Err);
-  // await s.consistency();
+  sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+    entry_address: tx_list.Ok[0]
+  })
+  t.ok(sign_tx_by_member.Err);
+  await s.consistency();
 
   // sign_tx_by_member = await alice.call("alice_instance", M_ZOME, "sign_transaction", {
-  //   entry_address: tx_address_list.Ok[0]
+  //   entry_address: tx_list.Ok[0]
   // })
   // t.ok(sign_tx_by_member.Err);
   // await s.consistency();
 
 
   //get user tx list
-  
-
   // let tx_list_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { });
   // t.ok(tx_list_member.Ok)
   // console.log("tx_by_charlie", JSON.stringify(tx_list_member));
