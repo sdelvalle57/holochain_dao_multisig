@@ -211,34 +211,50 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   })
   t.ok(add_bob_member.Ok)
   await s.consistency();
-  await sleep(5000)
+  //await sleep(5000)
 
   //get transaction list
 
-  let tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
-  console.log("tx_by_alice", tx_list);
+  const tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
   t.ok(tx_list.Ok.length > 0)
   await s.consistency();
 
-  const tx_address_list = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
-  t.ok(tx_address_list.Ok)
-  console.log("tx_list_by_charlie", JSON.stringify(tx_address_list))
+  const tx_list2 = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
+  t.ok(tx_list2.Ok.length === 1)
   await s.consistency();
 
-  // const sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-  //   entry_address: tx_address_list.Ok[0]
+  // let sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_list.Ok[0]
   // })
   // t.ok(sign_tx_by_member.Ok);
   // await s.consistency();
 
-
-  // //get user tx list
-  // const tx_list_member = await alice.call("alice_instance", M_ZOME, "get_member_transaction_list", { });
-  // t.ok(tx_list_member.Ok)
+  //tries to sign tx again
+  // sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(sign_tx_by_member.Err);
   // await s.consistency();
 
-  // //get user tx address list
+  // sign_tx_by_member = await alice.call("alice_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_address_list.Ok[0]
+  // })
+  // t.ok(sign_tx_by_member.Err);
+  // await s.consistency();
+
+
+  //get user tx list
   
+
+  // let tx_list_member = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { });
+  // t.ok(tx_list_member.Ok)
+  // console.log("tx_by_charlie", JSON.stringify(tx_list_member));
+  // await s.consistency(); 
+
+  // tx_list_member = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
+  // t.ok(tx_list_member.Ok)
+  // console.log("tx_by_alice", JSON.stringify(tx_list_member));
+  // await s.consistency();  
 
   // //gets verified transaction
   // let transaction = await alice.call("alice_instance", M_ZOME, "get_transaction", {

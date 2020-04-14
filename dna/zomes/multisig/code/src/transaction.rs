@@ -96,17 +96,19 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
-                EntryValidationData::Create { validation_data, ..} => {
+                EntryValidationData::Create { .. } => {
                     member::get_member(AGENT_ADDRESS.clone())?;
-                    if !validation_data.sources().contains(&AGENT_ADDRESS.clone()) {
-                        return Err(String::from("Cannot create entry, agent is not signer"));
-                    }
                     Ok(())
                 },
                 EntryValidationData::Modify { old_entry, .. } => {
                     member::get_member(AGENT_ADDRESS.clone())?;
+                    for verified_member in old_entry.signed {
+                        if verified_member.member.address == AGENT_ADDRESS.clone() {
+                            return Err(String::from("Member already signed the transaction"));
+                        }
+                    }
                     if old_entry.executed {
-                        return Err(String::from("Cannot delete entry, entry already executed"));
+                        return Err(String::from("Cannot modify entry, entry already executed"));
                     }
                     Ok(())
                 },
@@ -170,7 +172,8 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Transaction> {
     let mut new_transaction = transaction.clone();
     new_transaction.signed.push(verified_member);
     let new_transaction_entry = new_transaction.entry();
-    hdk::update_entry(new_transaction_entry, &entry_address)?;
+    let new_tx_address = hdk::update_entry(new_transaction_entry, &entry_address)?;
+    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
     Ok(new_transaction.clone())
 }
 
@@ -226,6 +229,7 @@ pub fn links_member_list() -> ZomeApiResult<Vec<Address>> {
         LinkMatch::Exactly("member->transactions"), 
         LinkMatch::Any
     )?;
+    hdk::debug(format!("links_member {:?}", links))?;
     Ok(links.addresses())
 }
 
