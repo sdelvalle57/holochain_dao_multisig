@@ -62,6 +62,11 @@ mod my_zome {
     }
 
     #[entry_def]
+    fn transaction_anchor_entry_definition() -> ValidatingEntryType {
+      transaction::anchor_entry_def()
+    }
+
+    #[entry_def]
     fn transaction_entry_definition() -> ValidatingEntryType {
       transaction::entry_def()
     }
@@ -97,7 +102,7 @@ mod my_zome {
 
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
-    fn sign_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
+    fn sign_transaction(entry_address: Address) -> ZomeApiResult<Address> {
         transaction::sign_entry(entry_address)
     }
 
@@ -105,28 +110,20 @@ mod my_zome {
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
     fn get_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
-        transaction::get_transaction(entry_address)
+        transaction::get(entry_address)
     }
 
     #[zome_fn("hc_public")]
-    fn get_transaction_address_list() -> ZomeApiResult<Vec<Address>> {
-        transaction::links_list()
-    }
-
-    #[zome_fn("hc_public")]
-    fn get_transaction_member_address_list() -> ZomeApiResult<Vec<Address>> {
-        transaction::links_member_list()
-    }
-
-    #[zome_fn("hc_public")]
-    fn get_transaction_list() -> ZomeApiResult<Vec<transaction::Transaction>> {
+    fn get_transaction_list() -> ZomeApiResult<Vec<Address>> {
         transaction::list()
     }
 
     #[zome_fn("hc_public")]
-    fn get_member_transaction_list() -> ZomeApiResult<Vec<transaction::Transaction>> {
+    fn get_transaction_member_list() -> ZomeApiResult<Vec<Address>> {
         transaction::member_list()
     }
+
+    
 
     /*********** member.rs */
     #[zome_fn("hc_public")]

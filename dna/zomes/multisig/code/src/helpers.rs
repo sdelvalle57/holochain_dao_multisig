@@ -42,7 +42,7 @@ pub fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
         }
     }
    
-    return Err(ZomeApiError::from(String::from("Uer is not member")))
+    return Err(ZomeApiError::from(String::from("User is not member")))
 }
 
 pub fn check_is_member() -> ZomeApiResult<bool> {
@@ -52,6 +52,6 @@ pub fn check_is_member() -> ZomeApiResult<bool> {
             return Ok(true);
         }
     }
-    return Err(ZomeApiError::from(String::from("Uer is not member")))
+    return Err(ZomeApiError::from(String::from("User is not member")))
     
 }

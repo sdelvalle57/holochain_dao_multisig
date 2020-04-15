@@ -23,8 +23,8 @@ class MyAddressAPI extends RESTDataSource {
         return this.reducer(JSON.parse(response))
     }
 
-    async isMember() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, isMember)({})
+    async getHardcodedMembers() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_hardcoded_members")({})
         return this.reducer(JSON.parse(response))
     }
 

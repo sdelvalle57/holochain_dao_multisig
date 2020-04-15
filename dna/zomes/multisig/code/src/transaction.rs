@@ -86,6 +86,33 @@ impl VerifiedMember {
     }
 }
 
+pub fn anchor_entry_def() -> ValidatingEntryType {
+    entry!(
+        name:"anchor",
+        description: "Anchor to transactions",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+        validation: | _validation_data: hdk::EntryValidationData<Transaction> | {
+            Ok(())
+        },
+        links:[
+            to!(
+                "transaction",
+                link_type: "transaction_list",
+                validation_package:||{
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation:| _validation_data: hdk::LinkValidationData|{
+                    //TODO: do link validation
+                    Ok(())
+                }
+            )
+        ]
+    )
+}
+
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
         name: "transaction",
@@ -140,6 +167,14 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
+pub fn anchor_entry() -> Entry {
+    Entry::App("anchor".into(), "transaction".into())
+}
+
+pub fn anchor_address() -> ZomeApiResult<Address> {
+    hdk::entry_address(&anchor_entry())
+}
+
 
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
     
@@ -154,14 +189,21 @@ pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult
     let new_tx_entry = new_tx.entry();
     
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    let multisig_address = multisig::get_multisig_address()?;
+    let tx_list = list()?;
+    if tx_list.contains(&new_tx_address) {
+        return Ok(new_tx_address);
+    }
+    
+    let anchor_entry = anchor_entry();
+    let anchor_address = hdk::commit_entry(&anchor_entry)?;
+
     hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
-    hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
+    hdk::link_entries(&anchor_address, &new_tx_address, "transaction_list", "")?;
     //TODO: check if the transaction can be executed (if requried === signatures)
     Ok(new_tx_address)
 }
 
-pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Transaction> {
+pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
     let member = member::get_member(AGENT_ADDRESS.clone())?;
 
     let transaction = Transaction::get(entry_address.clone())?;
@@ -172,9 +214,9 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Transaction> {
     let mut new_transaction = transaction.clone();
     new_transaction.signed.push(verified_member);
     let new_transaction_entry = new_transaction.entry();
-    let new_tx_address = hdk::update_entry(new_transaction_entry, &entry_address)?;
-    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
-    Ok(new_transaction.clone())
+    hdk::update_entry(new_transaction_entry, &entry_address)?;
+    hdk::link_entries(&AGENT_ADDRESS, &entry_address, "member->transactions", "")?;
+    Ok(entry_address)
 }
 
 fn verify_signature(entry_data: Entry, verified_member: VerifiedMember) -> ZomeApiResult<Option<String>> {
@@ -195,7 +237,16 @@ fn entry_to_string(entry: Entry) -> ZomeApiResult<String> {
 }
 
 //Clones the transaction and verifies each member who has signed it
-pub fn get_transaction(entry_address: Address) -> ZomeApiResult<Transaction> {
+pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
+    hdk::debug(format!("entry_hostory {:?}", hdk::get_entry_history(&entry_address)))?;
+
+    let latest_entry = match hdk::get_entry(&entry_address)? {
+        Some(entry) => Ok(entry),
+        None => Err(ZomeApiError::Internal("Failed to get latest entry".into())),
+    }?;
+    let latest_address = hdk::entry_address(&latest_entry)?;
+    hdk::debug(format!("latest_address {:?}", latest_address))?;
+
     member::get_member(AGENT_ADDRESS.clone())?;
     let transaction: Transaction = Transaction::get(entry_address)?;
     let mut transaction_response = transaction.clone();
@@ -209,20 +260,18 @@ pub fn get_transaction(entry_address: Address) -> ZomeApiResult<Transaction> {
     Ok(transaction_response)
 }
 
-pub fn links_list() -> ZomeApiResult<Vec<Address>> {
+pub fn list() -> ZomeApiResult<Vec<Address>> {
     member::get_member(AGENT_ADDRESS.clone())?;
-    let multisig_address = multisig::get_multisig_address()?;
-    hdk::debug(format!("this_is_the_msig_address {:?} {:?}", AGENT_ADDRESS.clone(), multisig_address))?;
     let links = hdk::get_links(
-        &multisig_address, 
-        LinkMatch::Exactly("multisig->transactions"), 
+        &anchor_address()?, 
+        LinkMatch::Exactly("transaction_list"), 
         LinkMatch::Any
     )?;
     
     Ok(links.addresses())
 }
 
-pub fn links_member_list() -> ZomeApiResult<Vec<Address>> {
+pub fn member_list() -> ZomeApiResult<Vec<Address>> {
     member::get_member(AGENT_ADDRESS.clone())?;
     let links = hdk::get_links(
         &AGENT_ADDRESS, 
@@ -233,25 +282,6 @@ pub fn links_member_list() -> ZomeApiResult<Vec<Address>> {
     Ok(links.addresses())
 }
 
-pub fn list() -> ZomeApiResult<Vec<Transaction>> {
-    let links = links_list()?;
-    let mut transactions: Vec<Transaction> = Vec::default();
-    for tx_address in links {
-        let transaction: Transaction = get_transaction(tx_address.clone())?;
-        transactions.push(transaction)
-    }
-    Ok(transactions)
-}
-
-pub fn member_list() -> ZomeApiResult<Vec<Transaction>> {
-    let links = links_member_list()?;
-    let mut transactions: Vec<Transaction> = Vec::default();
-    for tx_address in links {
-        let transaction: Transaction = get_transaction(tx_address.clone())?;
-        transactions.push(transaction)
-    }
-    Ok(transactions)
-}
 
 
 

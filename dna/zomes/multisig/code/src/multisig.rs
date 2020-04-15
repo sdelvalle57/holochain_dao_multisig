@@ -129,19 +129,7 @@ pub fn entry_def() -> ValidatingEntryType {
                     Err(String::from("Cannot delete multisig"))
                 }
             }
-        },
-        links: [
-            to!(
-                "transaction",
-                link_type: "multisig->transactions",
-                validation_package:|| {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
-            )
-        ]
+        }
     )
 }
 
@@ -150,6 +138,7 @@ pub fn anchor_entry() -> Entry {
 }
 
 pub fn anchor_address() -> ZomeApiResult<Address> {
+    hdk::debug(format!("anchor_address {:?}", hdk::entry_address(&anchor_entry())))?;
     hdk::entry_address(&anchor_entry())
 }
 
@@ -159,9 +148,10 @@ pub fn get_multisig_address() -> ZomeApiResult<Address> {
         LinkMatch::Exactly("multisig_list"), 
         LinkMatch::Any
     )?;
+    hdk::debug(format!("anchor_address_link {:?}", links))?;
     if &links.addresses().len() > &usize::min_value() {
         let link = &links.links()[0];
-        return Ok(link.address.clone())
+        return Ok(link.address.clone());
     }
     Err(ZomeApiError::from(String::from("Multisig has not been started or user is not Member")))
 }

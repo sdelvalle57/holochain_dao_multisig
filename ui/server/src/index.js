@@ -20,6 +20,7 @@ const resolvers = require('./resolvers');
         resolvers,
         dataSources: () => ({
             helpersAPI: new HelpersAPI({callZome: connection}),
+            multisigAPI: new MultisigAPI({callZome: connection}),
         }),
         engine: {
             apiKey: process.env.ENGINE_API_KEY,

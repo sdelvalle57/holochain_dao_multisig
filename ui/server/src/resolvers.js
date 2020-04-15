@@ -6,27 +6,51 @@ module.exports = {
         const res = await dataSources.helpersAPI.getMyAddress()
         return handleResponse(res, "Cannot fetch user Address")
       },
-      isMember: async (_, __, { dataSources }) => {
-        const res = await dataSources.helpersAPI.isMember();
-        return handleResponse(res, "Cannot check if member")
+      getHardcodedMembers: async (_, __, { dataSources }) => {
+        const res = await dataSources.helpersAPI.getHardcodedMembers();
+        return handleResponse(res, "Cant fetch members")
       },
-      dnaAddress: async (_, __, { dataSources }) => {
-        const res = await dataSources.helpersAPI.dnaAddress();
-        return handleResponse(res, "Cannot fetch DNA address")
+      getMembers: async (_, __, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMembers();
+        return handleResponse(res, "Cannot fetch members")
       },
-      members: async (_, __, { dataSources }) => {
-        const res = await dataSources.helpersAPI.members();
-        return handleResponse(res, "Cannot fetch Members")
+      getMultisigAddress: async (_, __, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMultisigAddress();
+        return handleResponse(res, "Cannot fetch Multisig")
       },
-      
-      // getMyMultisigs: (_, __, { dataSources }) => dataSources.multisigAPI.getAll()
+      getMultisig: async (_, __, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMultisig();
+        return handleResponse(res, "Cannot fetch Multisig")
+      },
+      getTransaction: async (_, { entry_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransaction(entry_address);
+        return handleResponse(res, "Cannot fetch Transaction")
+      },
+      getTransactionList: async (_, __, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransactionList();
+        return handleResponse(res, "Cannot fetch Multisig")
+      },
+      getTransactionMemberList: async (_, __, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransactionMemberList();
+        return handleResponse(res, "Cannot fetch Multisig")
+      },
     },
-    // Mutation: {
-    //     createMultisig: async (_, {title, description}, { dataSources }) => {
-    //       const res = await dataSources.multisigAPI.createMultisig(title, description)
-    //       return handleResponse(res, "Unable to create Multisig")
-    //     }
-    // },
+    Mutation: {
+        start: async (_, __, { dataSources }) => {
+          const res = await dataSources.multisigAPI.start()
+          return handleResponse(res, "Unable to create Multisig")
+        },
+        addMember: async (_, {name, description, address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.addMember(name, description, address)
+          console.log(res)
+          return handleResponse(res, "Unable to create transaction")
+        },
+        signTransaction: async (_, {entry_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.signTransaction(entry_address)
+          console.log(res)
+          return handleResponse(res, "Unable to create transaction")
+        },
+    },
   };
 
   const handleResponse = (res, message) => {

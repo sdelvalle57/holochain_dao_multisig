@@ -8,6 +8,7 @@
     "start": "AGENT_PORT=8889 nodemon src/index.js",
     "start:alice": "AGENT_PORT=8888 INSTANCE_NAME=alice-instance PORT=4000 nodemon src/index.js",
     "start:bob": "AGENT_PORT=8889 INSTANCE_NAME=bob-instance PORT=4001 nodemon src/index.js",
+    "start:charlie": "AGENT_PORT=8890 INSTANCE_NAME=charlie-instance PORT=4002 nodemon src/index.js",
     "start:agents": "concurrently \"npm run start:alice\" \"npm run start:bob\""
   },
   "author": "",

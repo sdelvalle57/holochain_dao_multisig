@@ -201,40 +201,58 @@ orchestrator.registerScenario("Scenario1: add member transaction", async (s, t) 
   //create multisig
   const start = await alice.call("alice_instance", M_ZOME, "start", { })
   t.ok(start.Ok)
+  console.log("start_msgi", JSON.stringify(start));
   await s.consistency();
+
+  // console.log("alice instance add", alice.instance("alice_instance").agentAddress)
+  // console.log("bob instance add", bob.instance("bob_instance").agentAddress)
+  // console.log("charlie instance add", charlie.instance("charlie_instance").agentAddress)
 
   //add member transaction
-  const add_bob_member = await alice.call("alice_instance", M_ZOME, "add_member", { 
-    name: "Bob",
-    description: "Add bob as member",
-    address: bob.instance("bob_instance").agentAddress
-  })
-  t.ok(add_bob_member.Ok)
+  // const add_bob_member = await charlie.call("charlie_instance", M_ZOME, "add_member", { 
+  //   name: "Bob",
+  //   description: "Add bob as member",
+  //   address: bob.instance("bob_instance").agentAddress
+  // })
+  // t.ok(add_bob_member.Ok)
+  // console.log("add_member_bob", JSON.stringify(add_bob_member))
   await s.consistency();
-  //await sleep(5000)
+  // //await sleep(5000)
 
-  //get transaction list
+  // //get transaction list
 
-  let tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_address_list", { });
-  t.ok(tx_list.Ok.length > 0)
-  await s.consistency();
+  // let tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction_list", { });
+  // t.ok(tx_list.Ok.length > 0)
+  // console.log("tx_list_by_alice, 1", JSON.stringify(tx_list));
+  // await s.consistency();
 
-  tx_list = await charlie.call("charlie_instance", M_ZOME, "get_transaction_address_list", { })
-  t.ok(tx_list.Ok.length === 1)
-  await s.consistency();
+  // tx_list = await charlie.call("charlie_instance", M_ZOME, "get_transaction_list", { })
+  // t.ok(tx_list.Ok.length === 1)
+  // console.log("tx_list_by_charlie, 1", JSON.stringify(tx_list));
+  // await s.consistency();
 
-  let sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-    entry_address: tx_list.Ok[0]
-  })
-  t.ok(sign_tx_by_member.Ok);
-  await s.consistency();
+  // let sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_list.Ok[0]
+  // })
+  // t.ok(sign_tx_by_member.Ok);
+  // await s.consistency();
+
+  // tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction", { entry_address: tx_list.Ok[0] });
+  // t.ok(tx_list.Ok.length > 0)
+  // console.log("tx_list_by_alice, 2", JSON.stringify(tx_list));
+  // await s.consistency();
+
+  // tx_list = await alice.call("alice_instance", M_ZOME, "get_transaction", { entry_address: tx_list.Ok[0] });
+  // t.ok(tx_list.Ok.length === 1)
+  // console.log("tx_list_by_charlie, 1", JSON.stringify(tx_list));
+  // await s.consistency();
 
   //tries to sign tx again
-  sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
-    entry_address: tx_list.Ok[0]
-  })
-  t.ok(sign_tx_by_member.Err);
-  await s.consistency();
+  // sign_tx_by_member = await charlie.call("charlie_instance", M_ZOME, "sign_transaction", {
+  //   entry_address: tx_list.Ok[0]
+  // })
+  // t.ok(sign_tx_by_member.Err);
+  // await s.consistency();
 
   // sign_tx_by_member = await alice.call("alice_instance", M_ZOME, "sign_transaction", {
   //   entry_address: tx_list.Ok[0]
@@ -296,7 +314,6 @@ const sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
+//alice_address HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3u
 //charlie_address HcScJTf9ffN4t483u988j33hqoa8k63s5Pu9QEnbR5Bwuu573zKjYoMhMhs7s6z
 //bob_address HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr
-//alice_address HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3u

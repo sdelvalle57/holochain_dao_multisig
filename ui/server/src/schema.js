@@ -4,14 +4,18 @@ const typeDefs = gql`
     
     type Query {
         myAddress: String,
-        dnaAddress: String,
-        members: [String]!,
-        isMember: Boolean
+        getHardcodedMembers: [Member!]!,
+        getMembers: [Member!]!,
+        getMultisigAddress: Entry!,
+        getMultisig: Multisig!,
+        getTransaction(entry_address: String!): Transaction!,
+        getTransactionList: [String]!,
+        getTransactionMemberList: [String]!
     }
 
     type Multisig {
         required: Int!,
-        members: [Member]!,
+        members: [Member!]!,
     }
 
     type Member {
@@ -26,7 +30,7 @@ const typeDefs = gql`
         signed: [VerifiedMember!],
         creator: Member!,
         executed: Boolean!,
-        data: Entry!
+        data: AppEntry!
     }
 
     type VerifiedMember {
@@ -35,29 +39,24 @@ const typeDefs = gql`
     }
 
     type Entry {
-        App: [String | Member]!
+        entry: String!
     }
 
-
-
-    # data: {
-    #     App: [
-    #       'member',
-    #       '{"name":"Bob","address":"HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr"}',
-    #       [length]: 2
-    #     ]
-    #   }
-
+    type AppEntry {
+        App: [String!]!
+    }
 
 
 
     type Mutation {
-        createMultisig(title: String!, description: String!): CreateMultisigResponse!
+        start: Entry!,
+        addMember(name: String!, description: String!, address: String!): Entry!,
+        signTransaction(entry_address: String!): Entry!
     }
 
-    type CreateMultisigResponse {
-        entry: String
-    }
+    # type CreateMultisigResponse {
+    #     entry: String
+    # }
 `;
 
 

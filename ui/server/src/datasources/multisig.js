@@ -10,7 +10,7 @@ class MyAddressAPI extends RESTDataSource {
         this.callZome = callZome;
     }
 
-    createMultisigReducer(response) {
+    entryReducer(response) {
         if(response.Ok) {
             return {
                 entry: response.Ok,
@@ -20,45 +20,70 @@ class MyAddressAPI extends RESTDataSource {
         } else return null
     }
 
-    getMultisigReducer(response) {
+    reducer(response) {
         if(response.Ok) {
-            const {title, description, signatories, required, creator} = response.Ok
-            return {
-                title,
-                description,
-                signatories,
-                required,
-                creator
-            }
+            return response.Ok
         } else if(response.Err) {
             return Error(response.Err)
         } else return null
         
     }
 
-    async createMultisig(title, description) {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, createMultisig)({title, description})
-        return this.createMultisigReducer(JSON.parse(response))
+    async start() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "start")({})
+        console.log(response)
+        return this.entryReducer(JSON.parse(response))
     }
 
-    async get(address) {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, get)({address})
-        return this.getMultisigReducer(JSON.parse(response))
+    async addMember(name, description, address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "add_member")({
+            name, 
+            description, 
+            address
+        })
+        return this.entryReducer(JSON.parse(response))
     }
 
-    async getAll() {
-        let addresses = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, getAll)({})
-        addresses = JSON.parse(addresses).Ok;
-        console.log("addressss" , addresses)
-        const multisigs = []
-        for(let j = 0; j < addresses.length; j++) {
-            const response = await this.get(addresses[j]);
-            response.address = addresses[j]
-            multisigs.push(response)
-        }
-        return multisigs
+    async signTransaction(entry_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "sign_transaction")({
+            entry_address
+        })
+        return this.entryReducer(JSON.parse(response))
     }
 
+    /**Getters */
+    async getMembers() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_members")({})
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getMultisigAddress() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_multisig_address")({})
+        return this.entryReducer(JSON.parse(response))
+    }
+
+    async getMultisig() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_multisig")({})
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getTransaction(entry_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_transaction")({
+            entry_address
+        })
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getTransactionList() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_transaction_list")({})
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getTransactionMemberList() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_transaction_member_list")({})
+        return this.reducer(JSON.parse(response))
+    }
+   
 }
 
 module.exports = MyAddressAPI;
