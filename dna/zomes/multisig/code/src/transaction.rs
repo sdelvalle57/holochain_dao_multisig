@@ -161,6 +161,10 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
     let member = member::get_member(AGENT_ADDRESS.clone())?;
 
     let transaction = Transaction::get(entry_address.clone())?;
+    //TODO: this should go on the validation data
+    if transaction.executed {
+        return Err(ZomeApiError::from(String::from("Cannot sign transaction, already executed")));
+    }
     let entry_string = entry_to_string(transaction.data.clone())?;
     let signature = hdk::sign(entry_string)?;
     let verified_member = VerifiedMember::new(member, Some(signature));
