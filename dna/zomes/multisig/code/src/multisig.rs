@@ -129,7 +129,19 @@ pub fn entry_def() -> ValidatingEntryType {
                     Err(String::from("Cannot delete multisig"))
                 }
             }
-        }
+        },
+        links: [
+            to!(
+                "transaction",
+                link_type: "multisig->transactions",
+                validation_package:|| {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            )
+        ]
     )
 }
 

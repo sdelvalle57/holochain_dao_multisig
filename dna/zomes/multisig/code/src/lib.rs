@@ -62,11 +62,6 @@ mod my_zome {
     }
 
     #[entry_def]
-    fn transaction_anchor_entry_definition() -> ValidatingEntryType {
-      transaction::anchor_entry_def()
-    }
-
-    #[entry_def]
     fn transaction_entry_definition() -> ValidatingEntryType {
       transaction::entry_def()
     }
@@ -122,8 +117,6 @@ mod my_zome {
     fn get_transaction_member_list() -> ZomeApiResult<Vec<Address>> {
         transaction::member_list()
     }
-
-    
 
     /*********** member.rs */
     #[zome_fn("hc_public")]

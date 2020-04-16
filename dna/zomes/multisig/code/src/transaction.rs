@@ -86,33 +86,6 @@ impl VerifiedMember {
     }
 }
 
-pub fn anchor_entry_def() -> ValidatingEntryType {
-    entry!(
-        name:"anchor",
-        description: "Anchor to transactions",
-        sharing: Sharing::Public,
-        validation_package: || {
-            hdk::ValidationPackageDefinition::Entry
-        },
-        validation: | _validation_data: hdk::EntryValidationData<Transaction> | {
-            Ok(())
-        },
-        links:[
-            to!(
-                "transaction",
-                link_type: "transaction_list",
-                validation_package:||{
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation:| _validation_data: hdk::LinkValidationData|{
-                    //TODO: do link validation
-                    Ok(())
-                }
-            )
-        ]
-    )
-}
-
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
         name: "transaction",
@@ -123,20 +96,18 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
-                EntryValidationData::Create { .. } => {
-                    member::get_member(AGENT_ADDRESS.clone())?;
+                EntryValidationData::Create { ..} => {
+                    // member::get_member(AGENT_ADDRESS.clone())?;
+                    // if !validation_data.sources().contains(&AGENT_ADDRESS.clone()) {
+                    //     return Err(String::from("Cannot create entry, agent is not signer"));
+                    // }
                     Ok(())
                 },
-                EntryValidationData::Modify { old_entry, .. } => {
-                    member::get_member(AGENT_ADDRESS.clone())?;
-                    for verified_member in old_entry.signed {
-                        if verified_member.member.address == AGENT_ADDRESS.clone() {
-                            return Err(String::from("Member already signed the transaction"));
-                        }
-                    }
-                    if old_entry.executed {
-                        return Err(String::from("Cannot modify entry, entry already executed"));
-                    }
+                EntryValidationData::Modify {.. } => {
+                    // member::get_member(AGENT_ADDRESS.clone())?;
+                    // if old_entry.executed {
+                    //     return Err(String::from("Cannot delete entry, entry already executed"));
+                    // }
                     Ok(())
                 },
                 EntryValidationData::Delete { old_entry, .. } => {
@@ -167,17 +138,7 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
-pub fn anchor_entry() -> Entry {
-    Entry::App("anchor".into(), "transaction".into())
-}
-
-pub fn anchor_address() -> ZomeApiResult<Address> {
-    hdk::entry_address(&anchor_entry())
-}
-
-
 pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult<Address> {
-    
     let signer = member::get_member(AGENT_ADDRESS.clone())?;
     let multisig = multisig::get_multisig()?;
     
@@ -189,16 +150,9 @@ pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult
     let new_tx_entry = new_tx.entry();
     
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    let tx_list = list()?;
-    if tx_list.contains(&new_tx_address) {
-        return Ok(new_tx_address);
-    }
-    
-    let anchor_entry = anchor_entry();
-    let anchor_address = hdk::commit_entry(&anchor_entry)?;
-
+    let multisig_address = multisig::get_multisig_address()?;
     hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
-    hdk::link_entries(&anchor_address, &new_tx_address, "transaction_list", "")?;
+    hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
     //TODO: check if the transaction can be executed (if requried === signatures)
     Ok(new_tx_address)
 }
@@ -262,12 +216,12 @@ pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
 
 pub fn list() -> ZomeApiResult<Vec<Address>> {
     member::get_member(AGENT_ADDRESS.clone())?;
+    let multisig_address = multisig::get_multisig_address()?;
     let links = hdk::get_links(
-        &anchor_address()?, 
-        LinkMatch::Exactly("transaction_list"), 
+        &multisig_address, 
+        LinkMatch::Exactly("multisig->transactions"), 
         LinkMatch::Any
     )?;
-    
     Ok(links.addresses())
 }
 
