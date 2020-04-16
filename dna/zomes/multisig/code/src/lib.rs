@@ -32,10 +32,6 @@ mod transaction;
 mod helpers;
 mod multisig;
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct MyEntry {
-    content: String,
-}
 
 #[zome]
 mod my_zome {

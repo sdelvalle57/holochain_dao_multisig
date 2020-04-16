@@ -103,11 +103,11 @@ pub fn entry_def() -> ValidatingEntryType {
                     // }
                     Ok(())
                 },
-                EntryValidationData::Modify {.. } => {
-                    // member::get_member(AGENT_ADDRESS.clone())?;
-                    // if old_entry.executed {
-                    //     return Err(String::from("Cannot delete entry, entry already executed"));
-                    // }
+                EntryValidationData::Modify { old_entry, .. } => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
+                    if old_entry.executed {
+                        return Err(String::from("Cannot delete entry, entry already executed"));
+                    }
                     Ok(())
                 },
                 EntryValidationData::Delete { old_entry, .. } => {
