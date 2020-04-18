@@ -31,6 +31,7 @@ const typeDefs = gql`
         creator: Member!,
         executed: Boolean!,
         data: AppEntry!
+        entry_address: String
     }
 
     type VerifiedMember {
@@ -51,7 +52,8 @@ const typeDefs = gql`
     type Mutation {
         start: Entry!,
         addMember(name: String!, description: String!, address: String!): Entry!,
-        signTransaction(entry_address: String!): Entry!
+        signTransaction(entry_address: String!): Entry!,
+        executeTransaction(entry_address: String!): Entry!,
     }
 
     # type CreateMultisigResponse {

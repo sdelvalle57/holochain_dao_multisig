@@ -97,6 +97,12 @@ mod my_zome {
         transaction::sign_entry(entry_address)
     }
 
+    #[zome_fn("hc_public")]
+    fn execute_transaction(entry_address: Address ) -> ZomeApiResult<Address> {
+        transaction::execute_transaction(entry_address)
+    }
+
+
     /************ Getters */
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]

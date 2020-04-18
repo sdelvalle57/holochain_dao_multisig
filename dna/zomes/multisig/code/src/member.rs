@@ -55,8 +55,21 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Member> | {
-            Ok(())
+        validation: | validation_data: hdk::EntryValidationData<Member> | {
+            match validation_data {
+                EntryValidationData::Create { .. } => {
+                    // let new_member = member::new(name: entry.name, address: entry.address)
+                    // multisig::get_multisig()?;
+                    // multisig.members.push(new_member);
+                    Ok(())
+                },
+                EntryValidationData::Modify { .. } => {
+                    Ok(())
+                },
+                EntryValidationData::Delete { .. } => {
+                    Ok(())
+                }
+            }
         } 
     )
 }

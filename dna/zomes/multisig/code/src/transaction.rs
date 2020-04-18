@@ -46,7 +46,8 @@ pub struct Transaction {
     pub signed: Vec<VerifiedMember>,
     creator: member::Member,
     pub executed: bool,
-    data: Entry
+    data: Entry,
+    entry_address: Option<Address>
 }
 
 impl Transaction {
@@ -58,7 +59,8 @@ impl Transaction {
             signed: vec![signer.clone()],
             creator: signer.member,
             executed: false,
-            data
+            data,
+            entry_address: None
         }
     }
 
@@ -96,11 +98,8 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
-                EntryValidationData::Create { ..} => {
-                    // member::get_member(AGENT_ADDRESS.clone())?;
-                    // if !validation_data.sources().contains(&AGENT_ADDRESS.clone()) {
-                    //     return Err(String::from("Cannot create entry, agent is not signer"));
-                    // }
+                EntryValidationData::Create { .. } => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
                     Ok(())
                 },
                 EntryValidationData::Modify { old_entry, .. } => {
@@ -153,7 +152,7 @@ pub fn submit(title: String, description: String, entry: Entry) -> ZomeApiResult
     let multisig_address = multisig::get_multisig_address()?;
     hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
     hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
-    //TODO: check if the transaction can be executed (if requried === signatures)
+    
     Ok(new_tx_address)
 }
 
@@ -161,10 +160,6 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
     let member = member::get_member(AGENT_ADDRESS.clone())?;
 
     let transaction = Transaction::get(entry_address.clone())?;
-    //TODO: this should go on the validation data
-    if transaction.executed {
-        return Err(ZomeApiError::from(String::from("Cannot sign transaction, already executed")));
-    }
     let entry_string = entry_to_string(transaction.data.clone())?;
     let signature = hdk::sign(entry_string)?;
     let verified_member = VerifiedMember::new(member, Some(signature));
@@ -175,6 +170,41 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
     hdk::update_entry(new_transaction_entry, &entry_address)?;
     hdk::link_entries(&AGENT_ADDRESS, &entry_address, "member->transactions", "")?;
     Ok(entry_address)
+}
+
+
+pub fn execute_transaction(entry_address: Address) -> ZomeApiResult<Address> {
+    member::get_member(AGENT_ADDRESS.clone())?;
+    let mut transaction = Transaction::get(entry_address.clone())?;
+    let can_execute = can_execute(&transaction);
+    match can_execute {
+        Some(err) => return Err(err),
+        None =>  {
+            let data: Entry = transaction.clone().data;
+            let data_address = hdk::commit_entry(&data)?;
+            transaction.executed = true;
+            transaction.entry_address = Some(data_address);
+            let transaction_entry = transaction.entry();
+            hdk::update_entry(transaction_entry.clone(), &entry_address)?;
+            return Ok(entry_address)
+        }
+    }
+}
+
+fn can_execute(transaction: &Transaction) -> Option<ZomeApiError> {
+    if transaction.signed.clone().len() < transaction.required as usize {
+        return Some(ZomeApiError::Internal("Cannot execute transaction".into()));
+    } 
+    if transaction.executed  {
+        return Some(ZomeApiError::Internal("Transaction already executed".into()));
+    }
+    for verified_member in &transaction.signed {
+        if verified_member.member.address == AGENT_ADDRESS.clone() {
+            // No error.transaction can be executed
+            return None
+        }
+    }
+    Some(ZomeApiError::Internal("Member has not signed the transaction".into()))
 }
 
 fn verify_signature(entry_data: Entry, verified_member: VerifiedMember) -> ZomeApiResult<Option<String>> {
@@ -196,15 +226,6 @@ fn entry_to_string(entry: Entry) -> ZomeApiResult<String> {
 
 //Clones the transaction and verifies each member who has signed it
 pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
-    hdk::debug(format!("entry_hostory {:?}", hdk::get_entry_history(&entry_address)))?;
-
-    let latest_entry = match hdk::get_entry(&entry_address)? {
-        Some(entry) => Ok(entry),
-        None => Err(ZomeApiError::Internal("Failed to get latest entry".into())),
-    }?;
-    let latest_address = hdk::entry_address(&latest_entry)?;
-    hdk::debug(format!("latest_address {:?}", latest_address))?;
-
     member::get_member(AGENT_ADDRESS.clone())?;
     let transaction: Transaction = Transaction::get(entry_address)?;
     let mut transaction_response = transaction.clone();
