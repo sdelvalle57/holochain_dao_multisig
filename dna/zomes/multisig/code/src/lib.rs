@@ -122,10 +122,15 @@ mod my_zome {
 
     /*********** member.rs */
     #[zome_fn("hc_public")]
-    fn get_members() -> ZomeApiResult<Vec<member::Member>> {
-        member::get_members()
+    fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<member::Member>> {
+        member::get_members(multisig_address)
     }
 
+    #[zome_fn("hc_public")]
+    fn get_member(entry_address: Address) -> ZomeApiResult<member::Member> {
+        member::get_member_by_entry(entry_address)
+    }
+    
     /*********** multisig.rs */
     #[zome_fn("hc_public")]
     fn get_multisig_address() -> ZomeApiResult<Address> {

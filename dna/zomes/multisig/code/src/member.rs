@@ -80,22 +80,36 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry)
 }
 
-pub fn get_members() -> ZomeApiResult<Vec<Member>> {
-    let multisig_address = multisig::get_multisig_address()?;
-    let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
-    Ok(multisig_obj.members)
+pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
+    let links = hdk::get_links(
+        &multisig_address, 
+        LinkMatch::Exactly("multisig->members"), 
+        LinkMatch::Any
+    )?;
+
+    let mut members: Vec<Member> = Vec::default();
+    for add in links.addresses() {
+        let member: Member = hdk::utils::get_as_type(add.clone())?;
+        members.push(member);
+    }
+    Ok(members)
 }
 
 pub fn get_member(address: Address) -> ZomeApiResult<Member> {
     let multisig_address = multisig::get_multisig_address()?;
-    let multisig_obj: multisig::Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
+    let members = get_members(multisig_address)?;
 
-    for member in multisig_obj.members {
+    for member in members {
         if member.address == address {
             return Ok(member)
         }
     }
     Err(ZomeApiError::from(String::from("Member not found")))
+}
+
+pub fn get_member_by_entry(entry_address: Address) -> ZomeApiResult<Member> {
+    let member: Member = hdk::utils::get_as_type(entry_address.clone())?;
+    Ok(member)
 }
 
 

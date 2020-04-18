@@ -30,15 +30,13 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Multisig {
-    pub required: u64,
-    pub members: Vec<member::Member>
+    pub required: u64
 }
 
 impl Multisig{
     pub fn start_default() -> Self {
         Multisig {
-            required: 2,
-            members: Vec::default()
+            required: 2
         }
     }
 
@@ -113,13 +111,14 @@ pub fn entry_def() -> ValidatingEntryType {
         
                 },
                 EntryValidationData::Modify { new_entry, .. } => {
+                    member::get_member(AGENT_ADDRESS.clone())?;
+                    let links = hdk::get_links(
+                        &anchor_address()?, 
+                        LinkMatch::Exactly("multisig->members"), 
+                        LinkMatch::Any
+                    )?;
 
-                    let is_member = helpers::check_is_member()?;
-                    if !is_member {
-                        return Err(String::from("Only members can perform this operation"));
-                    }
-
-                    if new_entry.members.len() < new_entry.required as usize {
+                    if links.addresses().len() < new_entry.required as usize {
                         return Err(String::from("Members length cannot be greater than required"));
                     }
 
@@ -140,9 +139,40 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation: |_validation_data: hdk::LinkValidationData | {
                     Ok(())
                 }
+            ),
+            to!(
+                "member",
+                link_type: "multisig->members",
+                validation_package:|| {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
             )
         ]
     )
+}
+
+pub fn start_multisig() -> ZomeApiResult<Address> {
+    let anchor_entry = anchor_entry();
+    let anchor_address = hdk::commit_entry(&anchor_entry)?; // if Anchor exist, it returns the commited one.
+
+    let default_multisig = Multisig::start_default();
+
+    let hardcoded_members = helpers::get_hardcoded_members()?;
+    for member in hardcoded_members {
+        let member_entry = member.entry();
+        let memeber_address = hdk::commit_entry(&member_entry)?;
+        hdk::link_entries(&anchor_address, &memeber_address, "multisig->members", "")?; 
+    }
+
+    let multisig_entry = default_multisig.entry();
+    let multisig_address = hdk::commit_entry(&multisig_entry)?; 
+
+    hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
+
+    Ok(multisig_address)
 }
 
 pub fn anchor_entry() -> Entry {
@@ -174,21 +204,3 @@ pub fn get_multisig() -> ZomeApiResult<Multisig> {
     Ok(multisig)
 }
 
-pub fn start_multisig() -> ZomeApiResult<Address> {
-    let anchor_entry = anchor_entry();
-    let anchor_address = hdk::commit_entry(&anchor_entry)?; // if Anchor exist, it returns the commited one.
-
-    let mut default_multisig = Multisig::start_default();
-
-    let hardcoded_members = helpers::get_hardcoded_members()?;
-    for member in hardcoded_members {
-        default_multisig.members.push(member);
-    }
-
-    let multisig_entry = default_multisig.entry();
-    let multisig_address = hdk::commit_entry(&multisig_entry)?; 
-
-    hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
-
-    Ok(multisig_address)
-}
