@@ -49,6 +49,7 @@ pub struct Transaction {
     pub executed: bool,
     data: Entry,
     link_data: Option<structures::LinkData>,
+    
     entry_address: Option<Address>
 }
 
@@ -196,6 +197,7 @@ pub fn execute_transaction(entry_address: Address) -> ZomeApiResult<Address> {
         Some(err) => return Err(err),
         None =>  {
             let data: Entry = transaction.clone().data;
+            //TODO: do it for update_entry too
             let data_address = hdk::commit_entry(&data)?;
             transaction.executed = true;
             transaction.entry_address = Some(data_address.clone());

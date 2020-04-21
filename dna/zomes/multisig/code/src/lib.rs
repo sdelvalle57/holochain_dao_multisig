@@ -86,6 +86,11 @@ mod my_zome {
         multisig::start_multisig()
     }
 
+    #[zome_fn("hc_public")]
+    fn change_requirement(new_requirement: u64, description: String) -> ZomeApiResult<Address> {
+        multisig::change_requirement(new_requirement, description)
+    }
+
     /*********** member.rs */
     #[zome_fn("hc_public")]
     fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {

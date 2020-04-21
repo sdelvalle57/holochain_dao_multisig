@@ -20,12 +20,16 @@ use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
 
-use constants::{ADD_MEMBER};
+use constants::{
+    ADD_MEMBER,
+    CHANGE_REQUIREMENT
+};
 /******************************************* */
 
 use crate::{
     helpers,
-    member
+    member,
+    transaction
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -173,6 +177,13 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
     hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
 
     Ok(multisig_address)
+}
+
+pub fn change_requirement(new_requirement: u64, description: String) -> ZomeApiResult<Address> {
+    let mut multisig = get_multisig().clone()?;
+    multisig.required = new_requirement;
+    let new_entry = multisig.entry();
+    transaction::submit(CHANGE_REQUIREMENT.to_string(), description, new_entry, None)
 }
 
 pub fn anchor_entry() -> Entry {
