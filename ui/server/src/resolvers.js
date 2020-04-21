@@ -10,8 +10,10 @@ module.exports = {
         const res = await dataSources.helpersAPI.getHardcodedMembers();
         return handleResponse(res, "Cant fetch members")
       },
-      getMembers: async (_, __, { dataSources }) => {
-        const res = await dataSources.multisigAPI.getMembers();
+      getMembers: async (_, { multisig_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMembers(multisig_address);
+        console.log(res)
+
         return handleResponse(res, "Cannot fetch members")
       },
       getMultisigAddress: async (_, __, { dataSources }) => {

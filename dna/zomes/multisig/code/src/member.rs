@@ -25,7 +25,8 @@ use constants::{ADD_MEMBER};
 
 use crate::{
     transaction,
-    multisig
+    multisig,
+    structures
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -58,9 +59,6 @@ pub fn entry_def() -> ValidatingEntryType {
         validation: | validation_data: hdk::EntryValidationData<Member> | {
             match validation_data {
                 EntryValidationData::Create { .. } => {
-                    // let new_member = member::new(name: entry.name, address: entry.address)
-                    // multisig::get_multisig()?;
-                    // multisig.members.push(new_member);
                     Ok(())
                 },
                 EntryValidationData::Modify { .. } => {
@@ -77,7 +75,9 @@ pub fn entry_def() -> ValidatingEntryType {
 pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
-    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry)
+    let multisig_address = multisig::get_multisig_address()?;
+    let link_data = structures::LinkData::new(Some(multisig_address), None, "multisig->members".into(), None);
+    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, Some(link_data))
 }
 
 pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
@@ -86,6 +86,7 @@ pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
         LinkMatch::Exactly("multisig->members"), 
         LinkMatch::Any
     )?;
+    hdk::debug(format!("links_members {:?}", links))?;
 
     let mut members: Vec<Member> = Vec::default();
     for add in links.addresses() {

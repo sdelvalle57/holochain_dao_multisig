@@ -113,7 +113,7 @@ pub fn entry_def() -> ValidatingEntryType {
                 EntryValidationData::Modify { new_entry, .. } => {
                     member::get_member(AGENT_ADDRESS.clone())?;
                     let links = hdk::get_links(
-                        &anchor_address()?, 
+                        &get_multisig_address()?, 
                         LinkMatch::Exactly("multisig->members"), 
                         LinkMatch::Any
                     )?;
@@ -160,15 +160,15 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
 
     let default_multisig = Multisig::start_default();
 
+    let multisig_entry = default_multisig.entry();
+    let multisig_address = hdk::commit_entry(&multisig_entry)?; 
+
     let hardcoded_members = helpers::get_hardcoded_members()?;
     for member in hardcoded_members {
         let member_entry = member.entry();
-        let memeber_address = hdk::commit_entry(&member_entry)?;
-        hdk::link_entries(&anchor_address, &memeber_address, "multisig->members", "")?; 
+        let member_address = hdk::commit_entry(&member_entry)?;
+        hdk::link_entries(&multisig_address, &member_address, "multisig->members", "")?; 
     }
-
-    let multisig_entry = default_multisig.entry();
-    let multisig_address = hdk::commit_entry(&multisig_entry)?; 
 
     hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
 

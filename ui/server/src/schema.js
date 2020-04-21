@@ -5,7 +5,7 @@ const typeDefs = gql`
     type Query {
         myAddress: String,
         getHardcodedMembers: [Member!]!,
-        getMembers: [Member!]!,
+        getMembers(multisig_address: String!): [Member!]!,
         getMultisigAddress: Entry!,
         getMultisig: Multisig!,
         getTransaction(entry_address: String!): Transaction!,
@@ -14,13 +14,19 @@ const typeDefs = gql`
     }
 
     type Multisig {
-        required: Int!,
-        members: [Member!]!,
+        required: Int!
     }
 
     type Member {
         name: String!,
         address: String!
+    }
+
+    type LinkData {
+        base: String,
+        target: String,
+        link_type: String!,
+        link_tag: String
     }
 
     type Transaction {
@@ -30,7 +36,8 @@ const typeDefs = gql`
         signed: [VerifiedMember!],
         creator: Member!,
         executed: Boolean!,
-        data: AppEntry!
+        data: AppEntry!,
+        link_data: LinkData,
         entry_address: String
     }
 
@@ -46,6 +53,8 @@ const typeDefs = gql`
     type AppEntry {
         App: [String!]!
     }
+
+    
 
 
 

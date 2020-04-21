@@ -31,6 +31,7 @@ mod member;
 mod transaction;
 mod helpers;
 mod multisig;
+mod structures;
 
 
 #[zome]
