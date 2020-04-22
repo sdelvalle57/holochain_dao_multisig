@@ -29,7 +29,8 @@ use constants::{
 use crate::{
     helpers,
     member,
-    transaction
+    transaction,
+    structures
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -180,10 +181,11 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
 }
 
 pub fn change_requirement(new_requirement: u64, description: String) -> ZomeApiResult<Address> {
+    let multisig_address = get_multisig_address()?;
     let mut multisig = get_multisig().clone()?;
     multisig.required = new_requirement;
     let new_entry = multisig.entry();
-    transaction::submit(CHANGE_REQUIREMENT.to_string(), description, new_entry, None)
+    transaction::submit(CHANGE_REQUIREMENT.to_string(), description,  new_entry, structures::EntryAction::UPDATE(multisig_address), None)
 }
 
 pub fn anchor_entry() -> Entry {

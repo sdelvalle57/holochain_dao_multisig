@@ -77,7 +77,7 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
     let new_member_entry = new_member.entry();
     let multisig_address = multisig::get_multisig_address()?;
     let link_data = structures::LinkData::new(Some(multisig_address), None, "multisig->members".into(), None);
-    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, Some(link_data))
+    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, structures::EntryAction::COMMIT, Some(vec![link_data]))
 }
 
 pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {

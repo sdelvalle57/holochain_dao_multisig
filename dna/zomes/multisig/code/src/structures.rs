@@ -23,3 +23,9 @@ impl LinkData {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, DefaultJson, Clone, Debug)]
+pub enum EntryAction {
+    UPDATE(Address),
+    COMMIT
+}

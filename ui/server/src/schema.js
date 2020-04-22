@@ -36,10 +36,24 @@ const typeDefs = gql`
         signed: [VerifiedMember!],
         creator: Member!,
         executed: Boolean!,
-        data: AppEntry!,
-        link_data: LinkData,
-        entry_address: String
+        entry_data: AppEntry!,
+        entry_action: EntryAction,
+        entry_links: [LinkData],
+        response_address: String
     }
+
+    type EntryAction {
+        COMMIT: String,
+        UPDATE: String
+    }
+
+    enum _EntryAction {
+        COMMIT 
+        UPDATE
+    }
+
+ 
+
 
     type VerifiedMember {
         member: Member!,
