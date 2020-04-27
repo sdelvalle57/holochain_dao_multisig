@@ -29,3 +29,9 @@ pub enum EntryAction {
     UPDATE(Address),
     COMMIT
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
+pub struct Person {
+    pub name: String,
+    pub address: Address
+}
