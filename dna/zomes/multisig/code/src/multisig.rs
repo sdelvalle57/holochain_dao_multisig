@@ -193,7 +193,6 @@ pub fn anchor_entry() -> Entry {
 }
 
 pub fn anchor_address() -> ZomeApiResult<Address> {
-    hdk::debug(format!("anchor_address {:?}", hdk::entry_address(&anchor_entry())))?;
     hdk::entry_address(&anchor_entry())
 }
 

@@ -3,6 +3,7 @@ const { ApolloServer } = require('apollo-server');
 const typeDefs = require('./schema');
 const HelpersAPI = require('./datasources/helpers');
 const MultisigAPI = require('./datasources/multisig');
+const OrganizationsAPI = require('./datasources/organizations');
 const { connect } = require('@holochain/hc-web-client');
 const resolvers = require('./resolvers');
 
@@ -21,6 +22,7 @@ const resolvers = require('./resolvers');
         dataSources: () => ({
             helpersAPI: new HelpersAPI({callZome: connection}),
             multisigAPI: new MultisigAPI({callZome: connection}),
+            organizationsAPI: new OrganizationsAPI({callZome: connection})
         }),
         engine: {
             apiKey: process.env.ENGINE_API_KEY,

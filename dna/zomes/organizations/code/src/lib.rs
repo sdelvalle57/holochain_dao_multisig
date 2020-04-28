@@ -27,6 +27,7 @@ use hdk_proc_macros::zome;
 
 /******************************** */
 
+mod organization;
 
 #[zome]
 mod my_zome {
@@ -39,6 +40,23 @@ mod my_zome {
     #[validate_agent]
     pub fn validate_agent(validation_data: EntryValidationData<AgentId>) {
         Ok(())
+    }
+
+    /*************** Entry Definitions */
+    #[entry_def]
+    fn anchor_entry_def() -> ValidatingEntryType {
+      organization::anchor_entry_def()
+    }
+
+    #[entry_def]
+    fn entry_def() -> ValidatingEntryType {
+      organization::entry_def()
+    }
+
+    /*************** Helper Functions */
+    #[zome_fn("hc_public")]
+    fn new() -> ZomeApiResult<Address> {
+      organization::new(String::from("My Company"), String::from("Santiagos"), AGENT_ADDRESS.clone())
     }
 
 }

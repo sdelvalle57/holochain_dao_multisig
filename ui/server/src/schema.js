@@ -71,11 +71,15 @@ const typeDefs = gql`
 
 
     type Mutation {
+        #******* Multisig *******
         start: Entry!,
         changeRequirement(new_requirement: Int!, description: String!): Entry!,
         addMember(name: String!, description: String!, address: String!): Entry!,
         signTransaction(entry_address: String!): Entry!,
         executeTransaction(entry_address: String!): Entry!,
+        
+        #******* Organizations ******* 
+        new: String!
     }
 `;
 

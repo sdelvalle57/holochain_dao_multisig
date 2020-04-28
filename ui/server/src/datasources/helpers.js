@@ -19,22 +19,22 @@ class MyAddressAPI extends RESTDataSource {
     }
 
     async getMyAddress() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, getMyAddress)({})
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, getMyAddress)({})
         return this.reducer(JSON.parse(response))
     }
 
     async getHardcodedMembers() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, "get_hardcoded_members")({})
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_hardcoded_members")({})
         return this.reducer(JSON.parse(response))
     }
 
     async dnaAddress() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, dnaAddress)({})
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, dnaAddress)({})
         return this.reducer(JSON.parse(response))
     }
 
     async members() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_CREATE_MULTISIG, getMembers)({})
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, getMembers)({})
         return this.reducer(JSON.parse(response))
     }
 }

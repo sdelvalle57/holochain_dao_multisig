@@ -12,8 +12,6 @@ module.exports = {
       },
       getMembers: async (_, { multisig_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMembers(multisig_address);
-        console.log(res)
-
         return handleResponse(res, "Cannot fetch members")
       },
       getMultisigAddress: async (_, __, { dataSources }) => {
@@ -38,6 +36,7 @@ module.exports = {
       },
     },
     Mutation: {
+        //*********Multisig**********
         start: async (_, __, { dataSources }) => {
           const res = await dataSources.multisigAPI.start()
           return handleResponse(res, "Unable to create Multisig")
@@ -56,8 +55,14 @@ module.exports = {
         },
         executeTransaction: async (_, {entry_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.executeTransaction(entry_address)
-          console.log(res)
           return handleResponse(res, "Unable to execute transaction")
+        },
+
+        //*********Organizations**********
+        new: async (_, __, { dataSources }) => {
+          const res = await dataSources.organizationsAPI.new()
+          console.log(res)
+          return handleResponse(res, "Unable to create Organization")
         },
     },
   };

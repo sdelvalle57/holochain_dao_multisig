@@ -15,32 +15,32 @@
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm-gc",
-      "arguments": ["$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wasm"]
+      "arguments": ["$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wasm"]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm-opt",
       "arguments": [
         "-Oz",
         "--vacuum",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wasm"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wasm"
       ]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wasm2wat",
       "arguments": [
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wasm",
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wasm",
         "-o",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wat"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wat"
       ]
     },
     {
       "command": "CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-/tmp/my_first_app/target} && wat2wasm",
       "arguments": [
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wat",
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wat",
         "-o",
-        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/companies.wasm"
+        "$CARGO_TARGET_DIR/wasm32-unknown-unknown/release/organizations.wasm"
       ]
     }
   ],
-  "artifact": "${CARGO_TARGET_DIR:-/tmp/my_first_app/target}/wasm32-unknown-unknown/release/companies.wasm"
+  "artifact": "${CARGO_TARGET_DIR:-/tmp/my_first_app/target}/wasm32-unknown-unknown/release/organizations.wasm"
 }

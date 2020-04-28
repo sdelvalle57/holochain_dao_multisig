@@ -1,0 +1,17 @@
+[package]
+name = "decoders"
+version = "0.1.0"
+authors = ["sdelvalle57"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0"
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde_derive = "1.0"
+hdk = "=0.0.46-alpha1"
+holochain_json_derive = "0.0"
+
+[lib]
+crate-type = ["lib"]
