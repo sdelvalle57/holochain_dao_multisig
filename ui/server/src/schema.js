@@ -17,9 +17,13 @@ const typeDefs = gql`
         required: Int!
     }
 
-    type Member {
+    type Person {
         name: String!,
         address: String!
+    }
+
+    type Member {
+        member: Person!
     }
 
     type LinkData {
@@ -51,9 +55,6 @@ const typeDefs = gql`
         COMMIT 
         UPDATE
     }
-
- 
-
 
     type VerifiedMember {
         member: Member!,

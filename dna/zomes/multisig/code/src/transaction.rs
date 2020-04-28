@@ -133,7 +133,7 @@ pub fn entry_def() -> ValidatingEntryType {
                         return Err(String::from("Cannot delete entry, entry already executed"));
                     } else if old_entry.signed.len() > 1 {
                         return Err(String::from("Cannot delete entry, already signed for more than one members"));
-                    } else if old_entry.signed.len() == 0 && old_entry.creator.address != AGENT_ADDRESS.clone() {
+                    } else if old_entry.signed.len() == 0 && old_entry.creator.member.address != AGENT_ADDRESS.clone() {
                         return Err(String::from("Cannot delete entry, signer is not creator"));
                     }
                     Ok(())
@@ -196,7 +196,7 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
     let transaction = Transaction::get(entry_address.clone())?;
 
     for verified_member in transaction.clone().signed {
-        if verified_member.member.address == AGENT_ADDRESS.clone() {
+        if verified_member.member.member.address == AGENT_ADDRESS.clone() {
             return Err(ZomeApiError::from(String::from("User has already signed the transaction")));
         }
     }
@@ -287,7 +287,7 @@ fn can_execute(transaction: &Transaction) -> Option<ZomeApiError> {
         return Some(ZomeApiError::Internal("Transaction already executed".into()));
     }
     for verified_member in &transaction.signed {
-        if verified_member.member.address == AGENT_ADDRESS.clone() {
+        if verified_member.member.member.address == AGENT_ADDRESS.clone() {
             // No error.transaction can be executed
             return None
         }
@@ -297,7 +297,7 @@ fn can_execute(transaction: &Transaction) -> Option<ZomeApiError> {
 
 fn verify_signature(transaction: Transaction, verified_member: VerifiedMember) -> ZomeApiResult<Option<String>> {
     let signature = verified_member.signature.unwrap();
-    let member_address = verified_member.member.address;
+    let member_address = verified_member.member.member.address;
     let data_to_string = data_to_string(transaction.entry_data, transaction.entry_links)?;
     let provenance = Provenance::new(member_address, Signature::from(signature.clone()));
     let verified = hdk::verify_signature(provenance, data_to_string)?;

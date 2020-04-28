@@ -31,15 +31,16 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Member {
-    pub name: String,
-    pub address: Address
+    pub member: structures::Person
 }
 
 impl Member {
     pub fn new(name: String, address: Address) -> Self {
         Member {
-            name,
-            address
+            member: structures::Person {
+                name,
+                address
+            }
         }
     }
 
@@ -101,7 +102,7 @@ pub fn get_member(address: Address) -> ZomeApiResult<Member> {
     let members = get_members(multisig_address)?;
 
     for member in members {
-        if member.address == address {
+        if member.member.address == address {
             return Ok(member)
         }
     }
