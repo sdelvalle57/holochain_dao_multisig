@@ -21,23 +21,28 @@ use std::convert::TryFrom;
 use serde_json::json;
 
 use constants::{ADD_MEMBER};
+
+use structures::{
+    Person,
+    LinkData,
+    EntryAction
+};
 /******************************************* */
 
 use crate::{
     transaction,
-    multisig,
-    structures
+    multisig
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Member {
-    pub member: structures::Person
+    pub member: Person
 }
 
 impl Member {
     pub fn new(name: String, address: Address) -> Self {
         Member {
-            member: structures::Person {
+            member: Person {
                 name,
                 address
             }
@@ -57,18 +62,8 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | validation_data: hdk::EntryValidationData<Member> | {
-            match validation_data {
-                EntryValidationData::Create { .. } => {
-                    Ok(())
-                },
-                EntryValidationData::Modify { .. } => {
-                    Ok(())
-                },
-                EntryValidationData::Delete { .. } => {
-                    Ok(())
-                }
-            }
+        validation: | _validation_data: hdk::EntryValidationData<Member> | {
+            Ok(())
         } 
     )
 }
@@ -77,8 +72,8 @@ pub fn add_member(name: String, description: String, address: Address) -> ZomeAp
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
     let multisig_address = multisig::get_multisig_address()?;
-    let link_data = structures::LinkData::new(Some(multisig_address), None, "multisig->members".into(), None);
-    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, structures::EntryAction::COMMIT, Some(vec![link_data]))
+    let link_data = LinkData::new(Some(multisig_address), None, "multisig->members".into(), None);
+    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]))
 }
 
 pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {

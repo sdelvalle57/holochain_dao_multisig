@@ -15,7 +15,7 @@ const InfoContainer: React.FC<ModalProps> = ({ members }) => {
                     <ColValue>Address</ColValue>
                 </Row>
             </WalletInfo>
-            <Note>Below is a list of individuals and companies part of the Beefledger community</Note>
+            <Note>Below is a list of individuals and companies part of the Community</Note>
             <MembersContainer>
                 <MembersHeader>Members</MembersHeader>
                 <MembersDiv>

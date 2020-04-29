@@ -3,14 +3,47 @@ const { gql } = require('apollo-server');
 const typeDefs = gql`
     
     type Query {
+        #**** Helpers *****
         myAddress: String,
         getHardcodedMembers: [Member!]!,
+
+        #**** Multisig *****
         getMembers(multisig_address: String!): [Member!]!,
         getMultisigAddress: Entry!,
         getMultisig: Multisig!,
         getTransaction(entry_address: String!): Transaction!,
         getTransactionList: [String]!,
-        getTransactionMemberList: [String]!
+        getTransactionMemberList: [String]!,
+
+        #**** Organizations *****
+        getOrganizations: [String]!,
+        getOrganization(address: String!): Organization!
+        getMyOrganizations: [String]!
+    }
+
+    type Mutation {
+        #******* Multisig *******
+        start: Entry!,
+        changeRequirement(new_requirement: Int!, description: String!): Entry!,
+        addMember(name: String!, description: String!, address: String!): Entry!,
+        signTransaction(entry_address: String!): Entry!,
+        executeTransaction(entry_address: String!): Entry!,
+        
+        #******* Organizations ******* 
+        newOrganization(name: String!, description: String!, owner: String!): String!,
+        newMultisig: String!
+
+    }
+
+    #***************************************************************************************************
+    #***************************************************************************************************
+    #***************************************************************************************************
+
+    type Organization {
+        name: String!,
+        description: String!,
+        owner: String!,
+        permissions: [String]!
     }
 
     type Multisig {
@@ -70,17 +103,7 @@ const typeDefs = gql`
     }
 
 
-    type Mutation {
-        #******* Multisig *******
-        start: Entry!,
-        changeRequirement(new_requirement: Int!, description: String!): Entry!,
-        addMember(name: String!, description: String!, address: String!): Entry!,
-        signTransaction(entry_address: String!): Entry!,
-        executeTransaction(entry_address: String!): Entry!,
-        
-        #******* Organizations ******* 
-        new: String!
-    }
+    
 `;
 
 

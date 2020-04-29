@@ -21,8 +21,11 @@ use std::convert::TryFrom;
 use serde_json::json;
 
 use crate::{
-    member::Member,
-    structures::Person
+    member::Member
+};
+
+pub use structures::{
+    Person
 };
 /******************************************* */
 

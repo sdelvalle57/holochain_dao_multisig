@@ -1,9 +1,11 @@
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
-
+use holochain_json_api::{ json::JsonString, error::JsonError };
+use holochain_json_derive::{ DefaultJson };
 use hdk::holochain_persistence_api::cas::content::Address;
-
-use hdk::holochain_json_api::{error::JsonError, json::JsonString};
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct LinkData {

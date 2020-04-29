@@ -44,19 +44,34 @@ mod my_zome {
 
     /*************** Entry Definitions */
     #[entry_def]
-    fn anchor_entry_def() -> ValidatingEntryType {
-      organization::anchor_entry_def()
-    }
-
-    #[entry_def]
     fn entry_def() -> ValidatingEntryType {
       organization::entry_def()
     }
 
-    /*************** Helper Functions */
+    /*************** Setter Functions */
     #[zome_fn("hc_public")]
-    fn new() -> ZomeApiResult<Address> {
-      organization::new(String::from("My Company"), String::from("Santiagos"), AGENT_ADDRESS.clone())
+    fn new(name: String, description: String, owner: Address) -> ZomeApiResult<Address> {
+      organization::new(name, description, owner)
     }
 
+    #[zome_fn("hc_public")]
+    fn create_multisig(title: String, description: String, organization_address: Address) -> ZomeApiResult<Address> {
+      organization::new_multisig(title, description, organization_address)
+    }
+
+    /*************** Getter Functions */
+    #[zome_fn("hc_public")]
+    fn get_all() -> ZomeApiResult<Vec<Address>> {
+      organization::get_all()
+    }
+
+    #[zome_fn("hc_public")]
+    fn get(address: Address) -> ZomeApiResult<organization::Organization> {
+      organization::get(address)
+    } 
+
+    #[zome_fn("hc_public")]
+    fn get_my_organizations() -> ZomeApiResult<Vec<Address>> {
+      organization::get_my_organizations()
+    }
 }

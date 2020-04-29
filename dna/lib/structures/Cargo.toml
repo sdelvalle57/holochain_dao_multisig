@@ -1,8 +1,10 @@
 [package]
-name = "create_multisig"
+name = "structures"
 version = "0.1.0"
-authors = ["hc-scaffold-framework"]
+authors = ["sdelvalle57"]
 edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = "1.0"
@@ -12,9 +14,7 @@ hdk = "=0.0.46-alpha1"
 hdk_proc_macros = "=0.0.46-alpha1"
 holochain_wasm_utils = "=0.0.46-alpha1"
 holochain_json_derive = "0.0"
-constants = { path = "../../../lib/constants/" }
-structures = { path = "../../../lib/structures/" }
+holochain_json_api = "0.0.23"
 
 [lib]
-path = "src/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["lib"]

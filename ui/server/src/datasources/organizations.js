@@ -17,12 +17,36 @@ class OrganizationAPI extends RESTDataSource {
         }
     }
 
-    async new() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "new")({})
+    async newOrganization(name, description, owner) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "new")({
+            name,
+            description, 
+            owner
+        })
         return this.reducer(JSON.parse(response))
     }
 
-    
+    async newMultisig() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "create_multisig")({})
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getOrganization(address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "get")({
+            address
+        })
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getOrganizations() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "get_all")({})
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getMyOrganizations() {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "get_my_organizations")({})
+        return this.reducer(JSON.parse(response))
+    }
 }
 
 module.exports = OrganizationAPI;

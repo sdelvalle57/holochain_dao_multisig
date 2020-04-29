@@ -24,24 +24,39 @@ use constants::{
     ADD_MEMBER,
     CHANGE_REQUIREMENT
 };
+
+use structures::{
+    EntryAction
+};
 /******************************************* */
 
 use crate::{
     helpers,
     member,
-    transaction,
-    structures
+    transaction
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Multisig {
+    pub title: String,
+    pub description: String,
     pub required: u64
 }
 
 impl Multisig{
     pub fn start_default() -> Self {
         Multisig {
+            title: String::from("Master Multisig"),
+            description: String::from("Master managed multisig"),
             required: 2
+        }
+    }
+    
+    pub fn new(title: String, description: String) -> Self {
+        Multisig {
+            title,
+            description,
+            required: 1
         }
     }
 
@@ -51,6 +66,10 @@ impl Multisig{
 
     pub fn entry(&self) -> Entry {
         Entry::App("multisig".into(), self.into())
+    }
+
+    pub fn org_entry(&self) -> Entry {
+        Entry::App("org_multisig".into(), self.into())
     }
 }
 
@@ -159,6 +178,26 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
+pub fn org_entry_def() -> ValidatingEntryType {
+    entry!(
+        name: "org_multisig",
+        description: "multisig entry def",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+        validation: | validation_data: hdk::EntryValidationData<Multisig> | {
+            match validation_data {
+                EntryValidationData::Create { validation_data, .. } => {
+                    hdk::debug(format!("entry_def_val_data {:?}", validation_data))?;
+                    Ok(())
+                }
+                _ => Ok(())
+            }
+        }
+    )
+}
+
 pub fn start_multisig() -> ZomeApiResult<Address> {
     let anchor_entry = anchor_entry();
     let anchor_address = hdk::commit_entry(&anchor_entry)?; // if Anchor exist, it returns the commited one.
@@ -177,6 +216,14 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
 
     hdk::link_entries(&anchor_address, &multisig_address, "multisig_list", "")?; 
 
+    Ok(multisig_address)
+}
+
+pub fn create_for_organization(title: String, description: String) -> ZomeApiResult<Address> {
+    hdk::debug(format!("m_sig_token {:?}", hdk::PUBLIC_TOKEN.to_string()))?;
+    let multisig = Multisig::new(title, description);
+    let multisig_entry = multisig.org_entry();
+    let multisig_address = hdk::commit_entry(&multisig_entry)?;
     Ok(multisig_address)
 }
 
@@ -202,7 +249,6 @@ pub fn get_multisig_address() -> ZomeApiResult<Address> {
         LinkMatch::Exactly("multisig_list"), 
         LinkMatch::Any
     )?;
-    hdk::debug(format!("anchor_address_link {:?}", links))?;
     if &links.addresses().len() > &usize::min_value() {
         let link = &links.links()[0];
         return Ok(link.address.clone());

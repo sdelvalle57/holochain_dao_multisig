@@ -2,6 +2,7 @@ const { ApolloError } = require('apollo-server')
 
 module.exports = {
     Query: {
+      //*********Helpers**********
       myAddress: async (_, __, { dataSources }) => {
         const res = await dataSources.helpersAPI.getMyAddress()
         return handleResponse(res, "Cannot fetch user Address")
@@ -10,6 +11,8 @@ module.exports = {
         const res = await dataSources.helpersAPI.getHardcodedMembers();
         return handleResponse(res, "Cant fetch members")
       },
+
+      //*********Multisig**********
       getMembers: async (_, { multisig_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMembers(multisig_address);
         return handleResponse(res, "Cannot fetch members")
@@ -33,6 +36,20 @@ module.exports = {
       getTransactionMemberList: async (_, __, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransactionMemberList();
         return handleResponse(res, "Cannot fetch Multisig")
+      },
+
+      //*********Organizations**********
+      getOrganizations: async (_, __, { dataSources }) => {
+        const res = await dataSources.organizationsAPI.getOrganizations();
+        return handleResponse(res, "Cannot fetch Organizations")
+      },
+      getOrganization: async (_, {address}, { dataSources }) => {
+        const res = await dataSources.organizationsAPI.getOrganization(address);
+        return handleResponse(res, "Cannot fetch Organization")
+      },
+      getMyOrganizations: async (_, __, { dataSources }) => {
+        const res = await dataSources.organizationsAPI.getMyOrganizations();
+        return handleResponse(res, "Cannot fetch my Organizations")
       },
     },
     Mutation: {
@@ -59,9 +76,12 @@ module.exports = {
         },
 
         //*********Organizations**********
-        new: async (_, __, { dataSources }) => {
-          const res = await dataSources.organizationsAPI.new()
-          console.log(res)
+        newOrganization: async (_, {name, description, owner}, { dataSources }) => {
+          const res = await dataSources.organizationsAPI.newOrganization(name, description, owner)
+          return handleResponse(res, "Unable to create Organization")
+        },
+        newMultisig: async (_, __, { dataSources }) => {
+          const res = await dataSources.organizationsAPI.newMultisig()
           return handleResponse(res, "Unable to create Organization")
         },
     },

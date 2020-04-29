@@ -19,7 +19,15 @@ use hdk::prelude::LinkMatch;
 use hdk::ValidationData;
 use serde_json::json;
 
-use decoders::decode_zome_call;
+use decoders::{
+    decode_zome_call,
+    tx_to_json
+};
+
+pub use structures::{
+    LinkData,
+    EntryAction
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Organization {
@@ -49,31 +57,6 @@ impl Organization {
 }
 
 //// Entry Definitions
-pub fn anchor_entry_def() -> ValidatingEntryType {
-    entry!(
-        name: "anchor",
-        description: "Anchor for organizations",
-        sharing: Sharing::Public,
-        validation_package: || {
-            hdk::ValidationPackageDefinition::Entry
-        },
-        validation: |_validation_data : hdk::EntryValidationData<String>| {
-            Ok(())
-        },
-        links: [
-            to!(
-                "organization",
-                link_type: "organizations_list",
-                validation_package:|| {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation:| _validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
-            )
-        ] 
-    )
-}
 
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
@@ -87,13 +70,44 @@ pub fn entry_def() -> ValidatingEntryType {
             Ok(())
         },
         links: [
+            from!(
+                "%agent_id",
+                link_type: "owner->organizations",
+                validation_package:|| {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation:| _validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
+            from!(
+                "multisig",
+                link_type: "multisig->organizations",
+                validation_package:|| {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation:| _validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
             to!(
-                "member",
+                "employee",
                 link_type: "organization->employees",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
                 validation: | _validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
+            to!(
+                "employee",
+                link_type: "organization->multisigs",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData | {
+                    //TODO: validate agent is owner
                     Ok(())
                 }
             )
@@ -102,19 +116,74 @@ pub fn entry_def() -> ValidatingEntryType {
 }
 
 pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<Address> {
+    let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
     let organization = Organization::new(name, description, owner);
-    let _organization_entry = organization.entry();
-    //read_from_zome(hdk::THIS_INSTANCE, "multisig", Address::from(hdk::PUBLIC_TOKEN.to_string()), "get_multisig_address", JsonString::from("{}"))
-    let rpc_response = hdk::call(hdk::THIS_INSTANCE, "multisig", Address::from(hdk::PUBLIC_TOKEN.to_string()), "get_multisig_address", JsonString::from("{}"));
-    decode_zome_call(rpc_response)
-    
+    let organization_entry = organization.entry();
+    let rpc_call_msig_address = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "get_multisig_address", JsonString::from("{}"));
+    let multisig_address: Address = decode_zome_call(rpc_call_msig_address.clone())?;
+
+    let tx_title = String::from("Add new organization");
+    let tx_description = String::from("New organization");
+    let tx_entry_data = organization_entry;
+    let tx_entry_action = EntryAction::COMMIT;
+    let tx_link_data_msig = LinkData::new(Some(multisig_address), None, String::from("multisig->organizations"), None);
+    let tx_link_data_owner = LinkData::new(Some(AGENT_ADDRESS.clone()), None, String::from("owner->organizations"), None);
+    let tx_entry_links = vec![tx_link_data_msig, tx_link_data_owner];
+    let args = tx_to_json(tx_title, tx_description, tx_entry_data, tx_entry_action, Some(tx_entry_links))?;
+    let rpc_call_transaction = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "submit_transaction", args);
+    let rpc_call_transaction_address: Address = decode_zome_call(rpc_call_transaction.clone())?;
+    Ok(rpc_call_transaction_address)
+}
+
+// TODO: create a multisig sending the organization address, should be sent from the organization owner
+
+pub fn new_multisig(title: String, description: String, _organization_address: Address) -> ZomeApiResult<Address> {
+
+    #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
+    pub struct MSIG {
+        pub title: String,
+        pub description: String,
+    }
+    let to_send = MSIG { title, description };
+
+    let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
+    hdk::debug(format!("org_pub_token {:?}", token_cap.clone()))?;
+    let rpc_call_new_msig = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "create_for_organization", to_send.into());
+    let multisig_address: Address = decode_zome_call(rpc_call_new_msig.clone())?;
+    Ok(multisig_address)
+
+}
+
+pub fn get_all() -> ZomeApiResult<Vec<Address>> {
+    let rpc_call_msig_address = hdk::call(hdk::THIS_INSTANCE, "multisig", Address::from(hdk::PUBLIC_TOKEN.to_string()), "get_multisig_address", JsonString::from("{}"));
+    let multisig_address: Address = decode_zome_call(rpc_call_msig_address)?;
+    let links = hdk::get_links(
+        &multisig_address, 
+        LinkMatch::Exactly("multisig->organizations"), 
+        LinkMatch::Any
+    )?;
+    Ok(links.addresses())
+} 
+
+pub fn get(address: Address) -> ZomeApiResult<Organization> {
+    let organization: Organization = hdk::utils::get_as_type(address.clone())?;
+    Ok(organization)
+} 
+
+pub fn get_my_organizations() -> ZomeApiResult<Vec<Address>> {
+    let links = hdk::get_links(
+        &AGENT_ADDRESS, 
+        LinkMatch::Exactly("owner->organizations"), 
+        LinkMatch::Any
+    )?;
+    Ok(links.addresses())
 }
 
 
 
 /*
 pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<Address> {
-    let organization = Organization::new(name, description, owner);
+    
     let _organization_entry = organization.entry();
     hdk::call(hdk::THIS_INSTANCE, "multisig", Address::from(hdk::PUBLIC_TOKEN.to_string()), "get_multisig_address", JsonString::from("{}"))?;
     

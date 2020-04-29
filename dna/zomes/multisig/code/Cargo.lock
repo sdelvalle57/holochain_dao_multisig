@@ -146,6 +146,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
+ "structures 0.1.0",
 ]
 
 [[package]]
@@ -1152,6 +1153,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "snowflake"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "structures"
+version = "0.1.0"
+dependencies = [
+ "hdk 0.0.46-alpha1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hdk_proc_macros 0.0.46-alpha1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "holochain_json_api 0.0.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "holochain_json_derive 0.0.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "holochain_wasm_utils 0.0.46-alpha1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "syn"

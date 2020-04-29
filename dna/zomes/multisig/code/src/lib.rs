@@ -22,6 +22,10 @@ use hdk::holochain_json_api::{error::JsonError, json::JsonString};
 use hdk::holochain_persistence_api::cas::content::Address;
 use hdk::{AGENT_ADDRESS, THIS_INSTANCE};
 use hdk_proc_macros::zome;
+use structures::{
+    LinkData,
+    EntryAction
+};
 
 //use std::convert::TryInto;
 
@@ -31,7 +35,6 @@ mod member;
 mod transaction;
 mod helpers;
 mod multisig;
-mod structures;
 
 
 #[zome]
@@ -56,6 +59,11 @@ mod my_zome {
     #[entry_def]
     fn multisig_entry_definition() -> ValidatingEntryType {
       multisig::entry_def()
+    }
+
+    #[entry_def]
+    fn open_multisig_entry_definition() -> ValidatingEntryType {
+      multisig::org_entry_def()
     }
 
     #[entry_def]
@@ -91,6 +99,11 @@ mod my_zome {
         multisig::change_requirement(new_requirement, description)
     }
 
+    #[zome_fn("hc_public")]
+    fn create_for_organization(title: String, description: String) -> ZomeApiResult<Address> {
+        multisig::create_for_organization(title, description)
+    }
+
     /*********** member.rs */
     #[zome_fn("hc_public")]
     fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
@@ -108,7 +121,10 @@ mod my_zome {
         transaction::execute_transaction(entry_address)
     }
 
-
+    #[zome_fn("hc_public")]
+    fn submit_transaction(title: String, description: String, entry_data: Entry, entry_action: EntryAction, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<Address> {
+        transaction::submit(title, description, entry_data, entry_action, entry_links)
+    }
     /************ Getters */
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]

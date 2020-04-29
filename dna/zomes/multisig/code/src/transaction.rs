@@ -32,10 +32,14 @@ use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
 
+use structures::{
+    LinkData,
+    EntryAction
+};
+
 use crate::{
     multisig,
-    member,
-    structures
+    member
 };
 /******************************************* */
 
@@ -48,8 +52,8 @@ pub struct Transaction {
     creator: member::Member,
     pub executed: bool,
     entry_data: Entry,
-    entry_action: structures::EntryAction,
-    entry_links: Option<Vec<structures::LinkData>>, 
+    entry_action: EntryAction,
+    entry_links: Option<Vec<LinkData>>, 
     response_address: Option<Address>
 }
 
@@ -62,8 +66,8 @@ impl Transaction {
         required: u64, 
         signer: VerifiedMember, 
         entry_data: Entry, 
-        entry_action: structures::EntryAction,
-        entry_links: Option<Vec<structures::LinkData>>
+        entry_action: EntryAction,
+        entry_links: Option<Vec<LinkData>>
     ) -> Self {
         Transaction {
             title,
@@ -159,8 +163,8 @@ pub fn submit(
     title: String, 
     description: String, 
     entry_data: Entry,
-    entry_action: structures::EntryAction,
-    entry_links: Option<Vec<structures::LinkData>>, 
+    entry_action: EntryAction,
+    entry_links: Option<Vec<LinkData>>, 
 ) -> ZomeApiResult<Address> {
     let signer = member::get_member(AGENT_ADDRESS.clone())?;
     let multisig = multisig::get_multisig()?;
@@ -225,10 +229,10 @@ pub fn execute_transaction(entry_address: Address) -> ZomeApiResult<Address> {
             let data: Entry = transaction.entry_data.clone();
             let data_address;
             match transaction.entry_action.clone() {
-                structures::EntryAction::COMMIT => {
+                EntryAction::COMMIT => {
                     data_address = hdk::commit_entry(&data)?;
                 },
-                structures::EntryAction::UPDATE(base_address) => {
+                EntryAction::UPDATE(base_address) => {
                     data_address = hdk::update_entry(data, &base_address)?; //should update
                 }
             }
@@ -267,7 +271,7 @@ pub fn execute_transaction(entry_address: Address) -> ZomeApiResult<Address> {
     }
 }
 
-fn data_to_string(entry_data: Entry, entry_links: Option<Vec<structures::LinkData>>) -> ZomeApiResult<String> {
+fn data_to_string(entry_data: Entry, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<String> {
     let mut data_s = String::from(JsonString::try_from(entry_data).unwrap());
     if let Some(links) = entry_links {
         let mut all_links = String::from("");
