@@ -10,10 +10,10 @@ const typeDefs = gql`
         #**** Multisig *****
         getMembers(multisig_address: String!): [Member!]!,
         getMultisigAddress: Entry!,
-        getMultisig: Multisig!,
-        getTransaction(entry_address: String!): Transaction!,
-        getTransactionList: [String]!,
-        getTransactionMemberList: [String]!,
+        getMultisig(multisig_address: String!): Multisig!,
+        getTransaction(entry_address: String!, multisig_address: String!): Transaction!,
+        getTransactionList(multisig_address: String!): [String]!,
+        getTransactionMemberList(multisig_address: String!): [String]!,
 
         #**** Organizations *****
         getOrganizations: [String]!,
@@ -24,14 +24,14 @@ const typeDefs = gql`
     type Mutation {
         #******* Multisig *******
         start: Entry!,
-        changeRequirement(new_requirement: Int!, description: String!): Entry!,
-        addMember(name: String!, description: String!, address: String!): Entry!,
-        signTransaction(entry_address: String!): Entry!,
-        executeTransaction(entry_address: String!): Entry!,
+        changeRequirement(new_requirement: Int!, description: String!, multisig_address: String!): Entry!,
+        addMember(name: String!, description: String!, address: String!, multisig_address: String!): Entry!,
+        signTransaction(entry_address: String!, multisig_address: String!): Entry!,
+        executeTransaction(entry_address: String!, multisig_address: String!): Entry!,
         
         #******* Organizations ******* 
         newOrganization(name: String!, description: String!, owner: String!): String!,
-        newMultisig: String!
+        newMultisig(title: String!, description: String!, organization_address: String!): String!
 
     }
 
@@ -47,6 +47,8 @@ const typeDefs = gql`
     }
 
     type Multisig {
+        title: String!,
+        description: String!,
         required: Int!
     }
 

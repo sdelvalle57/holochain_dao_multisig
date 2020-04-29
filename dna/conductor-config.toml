@@ -24,7 +24,7 @@ public_address = 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3ko
 
 [[dnas]]
 file = '/home/holomachine/projects/holo-beefledger/dna/dist/dna.dna.json'
-hash = 'QmaJtk8vVTh2xbX1idE18fYGSdCGAknJHYUAsrJLHh32vp'
+hash = 'QmWMbqEa3X82Vv5oXWphuyXUtBeg8oeGhGZ1EhLkFCWaWs'
 id = 'hc-multisig'
 
 # Alice

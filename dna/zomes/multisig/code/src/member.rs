@@ -68,12 +68,11 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
-pub fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
+pub fn add_member(name: String, description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
-    let multisig_address = multisig::get_multisig_address()?;
-    let link_data = LinkData::new(Some(multisig_address), None, "multisig->members".into(), None);
-    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]))
+    let link_data = LinkData::new(Some(multisig_address.clone()), None, "multisig->members".into(), None);
+    transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]), multisig_address)
 }
 
 pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
@@ -92,8 +91,7 @@ pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
     Ok(members)
 }
 
-pub fn get_member(address: Address) -> ZomeApiResult<Member> {
-    let multisig_address = multisig::get_multisig_address()?;
+pub fn get_member(address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
     let members = get_members(multisig_address)?;
 
     for member in members {

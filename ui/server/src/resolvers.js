@@ -21,20 +21,20 @@ module.exports = {
         const res = await dataSources.multisigAPI.getMultisigAddress();
         return handleResponse(res, "Cannot fetch Multisig")
       },
-      getMultisig: async (_, __, { dataSources }) => {
-        const res = await dataSources.multisigAPI.getMultisig();
+      getMultisig: async (_, { multisig_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMultisig(multisig_address);
         return handleResponse(res, "Cannot fetch Multisig")
       },
-      getTransaction: async (_, { entry_address }, { dataSources }) => {
-        const res = await dataSources.multisigAPI.getTransaction(entry_address);
+      getTransaction: async (_, { entry_address, multisig_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransaction(entry_address, multisig_address);
         return handleResponse(res, "Cannot fetch Transaction")
       },
-      getTransactionList: async (_, __, { dataSources }) => {
-        const res = await dataSources.multisigAPI.getTransactionList();
+      getTransactionList: async (_, {multisig_address}, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransactionList(multisig_address);
         return handleResponse(res, "Cannot fetch Multisig")
       },
-      getTransactionMemberList: async (_, __, { dataSources }) => {
-        const res = await dataSources.multisigAPI.getTransactionMemberList();
+      getTransactionMemberList: async (_, {multisig_address}, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getTransactionMemberList(multisig_address);
         return handleResponse(res, "Cannot fetch Multisig")
       },
 
@@ -58,20 +58,20 @@ module.exports = {
           const res = await dataSources.multisigAPI.start()
           return handleResponse(res, "Unable to create Multisig")
         },
-        changeRequirement: async (_, {new_requirement, description}, { dataSources }) => {
-          const res = await dataSources.multisigAPI.changeRequirement(new_requirement, description)
+        changeRequirement: async (_, {new_requirement, description, multisig_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.changeRequirement(new_requirement, description, multisig_address)
           return handleResponse(res, "Unable to create Multisig")
         },
-        addMember: async (_, {name, description, address}, { dataSources }) => {
-          const res = await dataSources.multisigAPI.addMember(name, description, address)
+        addMember: async (_, {name, description, address, multisig_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.addMember(name, description, address, multisig_address)
           return handleResponse(res, "Unable to create transaction")
         },
-        signTransaction: async (_, {entry_address}, { dataSources }) => {
-          const res = await dataSources.multisigAPI.signTransaction(entry_address)
+        signTransaction: async (_, {entry_address, multisig_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.signTransaction(entry_address, multisig_address)
           return handleResponse(res, "Unable to create transaction")
         },
-        executeTransaction: async (_, {entry_address}, { dataSources }) => {
-          const res = await dataSources.multisigAPI.executeTransaction(entry_address)
+        executeTransaction: async (_, {entry_address, multisig_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.executeTransaction(entry_address, multisig_address)
           return handleResponse(res, "Unable to execute transaction")
         },
 
@@ -80,8 +80,8 @@ module.exports = {
           const res = await dataSources.organizationsAPI.newOrganization(name, description, owner)
           return handleResponse(res, "Unable to create Organization")
         },
-        newMultisig: async (_, __, { dataSources }) => {
-          const res = await dataSources.organizationsAPI.newMultisig()
+        newMultisig: async (_, {title, description, organization_address}, { dataSources }) => {
+          const res = await dataSources.organizationsAPI.newMultisig(title, description, organization_address)
           return handleResponse(res, "Unable to create Organization")
         },
     },

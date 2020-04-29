@@ -95,8 +95,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn change_requirement(new_requirement: u64, description: String) -> ZomeApiResult<Address> {
-        multisig::change_requirement(new_requirement, description)
+    fn change_requirement(new_requirement: u64, description: String, multisig_address: Address) -> ZomeApiResult<Address> {
+        multisig::change_requirement(new_requirement, description, multisig_address)
     }
 
     #[zome_fn("hc_public")]
@@ -106,40 +106,47 @@ mod my_zome {
 
     /*********** member.rs */
     #[zome_fn("hc_public")]
-    fn add_member(name: String, description: String, address: Address) -> ZomeApiResult<Address> {
-        member::add_member(name, description, address)
+    fn add_member(name: String, description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+        member::add_member(name, description, address, multisig_address)
     }
 
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
-    fn sign_transaction(entry_address: Address) -> ZomeApiResult<Address> {
-        transaction::sign_entry(entry_address)
+    fn sign_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+        transaction::sign_entry(entry_address, multisig_address)
     }
 
     #[zome_fn("hc_public")]
-    fn execute_transaction(entry_address: Address ) -> ZomeApiResult<Address> {
-        transaction::execute_transaction(entry_address)
+    fn execute_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+        transaction::execute_transaction(entry_address, multisig_address)
     }
 
     #[zome_fn("hc_public")]
-    fn submit_transaction(title: String, description: String, entry_data: Entry, entry_action: EntryAction, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<Address> {
-        transaction::submit(title, description, entry_data, entry_action, entry_links)
+    fn submit_transaction(
+        title: String, 
+        description: String, 
+        entry_data: Entry, 
+        entry_action: EntryAction, 
+        entry_links: Option<Vec<LinkData>>,
+        multisig_address: Address
+    ) -> ZomeApiResult<Address> {
+        transaction::submit(title, description, entry_data, entry_action, entry_links, multisig_address)
     }
     /************ Getters */
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
-    fn get_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
-        transaction::get(entry_address)
+    fn get_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<transaction::Transaction> {
+        transaction::get(entry_address, multisig_address)
     }
 
     #[zome_fn("hc_public")]
-    fn get_transaction_list() -> ZomeApiResult<Vec<Address>> {
-        transaction::list()
+    fn get_transaction_list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
+        transaction::list(multisig_address)
     }
 
     #[zome_fn("hc_public")]
-    fn get_transaction_member_list() -> ZomeApiResult<Vec<Address>> {
-        transaction::member_list()
+    fn get_transaction_member_list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
+        transaction::member_list(multisig_address)
     }
 
     /*********** member.rs */
@@ -160,7 +167,7 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_multisig() -> ZomeApiResult<multisig::Multisig> {
-        multisig::get_multisig()
+    fn get_multisig(multisig_address: Address) -> ZomeApiResult<multisig::Multisig> {
+        multisig::get_multisig(multisig_address)
     }
 }

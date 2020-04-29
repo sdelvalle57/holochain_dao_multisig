@@ -34,33 +34,37 @@ class MyAddressAPI extends RESTDataSource {
         return this.entryReducer(JSON.parse(response))
     }
 
-    async addMember(name, description, address) {
+    async addMember(name, description, address, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "add_member")({
             name, 
             description, 
-            address
+            address,
+            multisig_address
         })
         return this.entryReducer(JSON.parse(response))
     }
 
-    async changeRequirement(new_requirement, description) {
+    async changeRequirement(new_requirement, description, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "change_requirement")({
             new_requirement, 
-            description
+            description,
+            multisig_address
         })
         return this.entryReducer(JSON.parse(response))
     }
 
-    async signTransaction(entry_address) {
+    async signTransaction(entry_address, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "sign_transaction")({
-            entry_address
+            entry_address,
+            multisig_address
         })
         return this.entryReducer(JSON.parse(response))
     }
 
-    async executeTransaction(entry_address) {
+    async executeTransaction(entry_address, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "execute_transaction")({
-            entry_address
+            entry_address,
+            multisig_address
         })
         console.log(response)
         return this.entryReducer(JSON.parse(response))
@@ -80,26 +84,33 @@ class MyAddressAPI extends RESTDataSource {
         return this.entryReducer(JSON.parse(response))
     }
 
-    async getMultisig() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_multisig")({})
+    async getMultisig(multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_multisig")({
+            multisig_address
+        })
         return this.reducer(JSON.parse(response))
     }
 
-    async getTransaction(entry_address) {
+    async getTransaction(entry_address, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction")({
-            entry_address
+            entry_address,
+            multisig_address
         })
         console.log(response)
         return this.reducer(JSON.parse(response))
     }
 
-    async getTransactionList() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction_list")({})
+    async getTransactionList(multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction_list")({
+            multisig_address
+        })
         return this.reducer(JSON.parse(response))
     }
 
-    async getTransactionMemberList() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction_member_list")({})
+    async getTransactionMemberList(multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction_member_list")({
+            multisig_address
+        })
         return this.reducer(JSON.parse(response))
     }
    

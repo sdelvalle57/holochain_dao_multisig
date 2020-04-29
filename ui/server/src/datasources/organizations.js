@@ -26,8 +26,12 @@ class OrganizationAPI extends RESTDataSource {
         return this.reducer(JSON.parse(response))
     }
 
-    async newMultisig() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "create_multisig")({})
+    async newMultisig(title, description, organization_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "create_multisig")({
+            title,
+            description,
+            organization_address
+        })
         return this.reducer(JSON.parse(response))
     }
 

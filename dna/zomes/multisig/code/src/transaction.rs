@@ -120,11 +120,11 @@ pub fn entry_def() -> ValidatingEntryType {
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
                 EntryValidationData::Create { .. } => {
-                    member::get_member(AGENT_ADDRESS.clone())?;
+                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
                     Ok(())
                 },
                 EntryValidationData::Modify { old_entry, .. } => {
-                    member::get_member(AGENT_ADDRESS.clone())?;
+                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
                     if old_entry.executed {
                         return Err(String::from("Cannot modify entry, entry already executed"));
                     }
@@ -132,7 +132,7 @@ pub fn entry_def() -> ValidatingEntryType {
                     Ok(())
                 },
                 EntryValidationData::Delete { old_entry, .. } => {
-                    member::get_member(AGENT_ADDRESS.clone())?;
+                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
                     if old_entry.executed {
                         return Err(String::from("Cannot delete entry, entry already executed"));
                     } else if old_entry.signed.len() > 1 {
@@ -165,9 +165,10 @@ pub fn submit(
     entry_data: Entry,
     entry_action: EntryAction,
     entry_links: Option<Vec<LinkData>>, 
+    multisig_address: Address
 ) -> ZomeApiResult<Address> {
-    let signer = member::get_member(AGENT_ADDRESS.clone())?;
-    let multisig = multisig::get_multisig()?;
+    let signer = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+    let multisig = multisig::get_multisig(multisig_address.clone())?;
     
     //TODO: also sign entry_action
     let data_to_string = data_to_string(entry_data.clone(), entry_links.clone())?;
@@ -188,15 +189,14 @@ pub fn submit(
     let new_tx_entry = new_tx.entry();
     
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    let multisig_address = multisig::get_multisig_address()?;
     hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
     hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
     
     Ok(new_tx_address)
 }
 
-pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
-    let member = member::get_member(AGENT_ADDRESS.clone())?;
+pub fn sign_entry(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
     let transaction = Transaction::get(entry_address.clone())?;
 
     for verified_member in transaction.clone().signed {
@@ -219,8 +219,8 @@ pub fn sign_entry(entry_address: Address) -> ZomeApiResult<Address> {
 }
 
 
-pub fn execute_transaction(entry_address: Address) -> ZomeApiResult<Address> {
-    member::get_member(AGENT_ADDRESS.clone())?;
+pub fn execute_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
     let mut transaction = Transaction::get(entry_address.clone())?;
     let can_execute = can_execute(&transaction.clone());
     match can_execute {
@@ -313,8 +313,8 @@ fn verify_signature(transaction: Transaction, verified_member: VerifiedMember) -
 
 
 //Clones the transaction and verifies each member who has signed it
-pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
-    member::get_member(AGENT_ADDRESS.clone())?;
+pub fn get(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Transaction> {
+    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
     let transaction: Transaction = Transaction::get(entry_address)?;
     let mut transaction_response = transaction.clone();
     transaction_response.signed = Vec::default();
@@ -327,9 +327,8 @@ pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
     Ok(transaction_response)
 }
 
-pub fn list() -> ZomeApiResult<Vec<Address>> {
-    member::get_member(AGENT_ADDRESS.clone())?;
-    let multisig_address = multisig::get_multisig_address()?;
+pub fn list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
+    member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->transactions"), 
@@ -338,8 +337,8 @@ pub fn list() -> ZomeApiResult<Vec<Address>> {
     Ok(links.addresses())
 }
 
-pub fn member_list() -> ZomeApiResult<Vec<Address>> {
-    member::get_member(AGENT_ADDRESS.clone())?;
+pub fn member_list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
+    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
     let links = hdk::get_links(
         &AGENT_ADDRESS, 
         LinkMatch::Exactly("member->transactions"), 

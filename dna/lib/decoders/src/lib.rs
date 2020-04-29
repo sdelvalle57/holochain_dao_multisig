@@ -19,17 +19,26 @@ pub struct JSONRPC {
     pub description: String,
     pub entry_data: Entry,
     pub entry_action: EntryAction,
-    pub entry_links: Option<Vec<LinkData>>
+    pub entry_links: Option<Vec<LinkData>>,
+    pub multisig_address: Address
 }
 
 impl JSONRPC{
-    pub fn new(title: String, description: String, entry_data: Entry, entry_action: EntryAction, entry_links: Option<Vec<LinkData>>) -> Self {
+    pub fn new(
+        title: String, 
+        description: String, 
+        entry_data: Entry, 
+        entry_action: EntryAction, 
+        entry_links: Option<Vec<LinkData>>,
+        multisig_address: Address
+    ) -> Self {
         JSONRPC {
             title,
             description,
             entry_data,
             entry_action,
-            entry_links
+            entry_links,
+            multisig_address
         }
     }
 }
@@ -47,7 +56,14 @@ pub fn decode_zome_call<R>(rpc_response: Result<JsonString, ZomeApiError>) -> Zo
     }
 }
 
-pub fn tx_to_json(title: String, description: String, entry_data: Entry, entry_action: EntryAction, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<JsonString> {
-    let json_rpc = JSONRPC::new(title, description, entry_data, entry_action, entry_links);
+pub fn tx_to_json(
+    title: String, 
+    description: String, 
+    entry_data: Entry, 
+    entry_action: EntryAction, 
+    entry_links: Option<Vec<LinkData>>,
+    multisig_address: Address
+) -> ZomeApiResult<JsonString> {
+    let json_rpc = JSONRPC::new(title, description, entry_data, entry_action, entry_links, multisig_address);
     Ok(json_rpc.into())
 }
