@@ -54,14 +54,14 @@ const Img = styled('img')({
     border: '1px solid #C49E57',
     boxSizing: 'border-box',
     margin: '15px auto',
-    padding: '14px',
+    padding: '12px',
 })
 
 const Title = styled('div')({
     fontFamily: 'Avenir',
     fontStyle: 'normal',
     fontWeight: 800,
-    fontSize: '14px',
+    fontSize: '12px',
     lineHeight: '19px',
     textAlign: 'center',
     color: '#C49E57',

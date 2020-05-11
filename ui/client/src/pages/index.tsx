@@ -21,4 +21,6 @@ const Pages: React.FC<DashboardProps> = () => {
   );
 }
 
+
+
 export default Pages;

@@ -135,6 +135,11 @@ pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<A
     Ok(rpc_call_transaction_address)
 }
 
+// TODO
+// pub fn newSuborganization(name: String, description: String, owner: Address, parent: String) -> ZomeApiResult<Address> {
+
+// }
+
 pub fn new_multisig(title: String, description: String, organization_address: Address) -> ZomeApiResult<Address> {
     let organization: Organization = hdk::utils::get_as_type(organization_address.clone())?;
     if organization.owner != AGENT_ADDRESS.clone() {
@@ -167,6 +172,10 @@ pub fn get_all() -> ZomeApiResult<Vec<Address>> {
     )?;
     Ok(links.addresses())
 } 
+
+// TODO
+// pub fn get_all_suborganizations(parent: Address) -> ZomeApiResult<Vec<Address>> {
+// }
 
 pub fn get(address: Address) -> ZomeApiResult<Organization> {
     let organization: Organization = hdk::utils::get_as_type(address.clone())?;

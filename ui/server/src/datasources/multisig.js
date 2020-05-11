@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { RESTDataSource } = require('apollo-datasource-rest');
-const {createMultisig, get, getAll} = require('../config');
 const {Error} = require('../global-reducers');
 
 class MyAddressAPI extends RESTDataSource {
@@ -71,11 +70,17 @@ class MyAddressAPI extends RESTDataSource {
     }
 
     /**Getters */
+    async isMember(multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "is_member")({
+            multisig_address
+        })
+        return this.reducer(JSON.parse(response))
+    }
+
     async getMembers(multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_members")({
             multisig_address
         })
-        console.log(response)
         return this.reducer(JSON.parse(response))
     }
 

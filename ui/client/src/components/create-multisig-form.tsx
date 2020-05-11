@@ -7,11 +7,11 @@ import { StyledForm, StyledInput} from './global-containers'
 import { ReactComponent as Logo } from '../assets/logo.svg';
 import { ReactComponent as Reload } from '../assets/reload.svg';
 import { colors, unit } from '../styles';
-import { CreateMultisigVariables } from '../__generated__/CreateMultisig';
+import { NewMultisigVariables } from '../__generated__/NewMultisig';
 import { ApolloError } from 'apollo-client';
 
 interface LoginFormProps {
-  createMultisig: (a: { variables: CreateMultisigVariables }) => void;
+  newMultisig: (a: { variables: NewMultisigVariables }) => void;
   error: ApolloError | undefined;
   loading: boolean ;
 }
@@ -19,6 +19,7 @@ interface LoginFormProps {
 interface LoginFormState {
   title: string;
   description: string;
+  organization_address: String;
   error: boolean;
 }
 
@@ -26,6 +27,7 @@ export default class LoginForm extends Component<LoginFormProps, LoginFormState>
   state = { 
     title: '', 
     description: '',
+    organization_address: '',
     error: this.props.error !== undefined
   };
 
@@ -38,7 +40,13 @@ export default class LoginForm extends Component<LoginFormProps, LoginFormState>
 
   onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    this.props.createMultisig({ variables: { title: this.state.title, description: this.state.description } });
+    const {title, description, organization_address} = this.state;
+    this.props.newMultisig({ 
+      variables: { 
+        title, 
+        description,
+        organization_address
+      } });
   };
 
   componentWillReceiveProps = ({error}: {error: ApolloError | undefined}) => {

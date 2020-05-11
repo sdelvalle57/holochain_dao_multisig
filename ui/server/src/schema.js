@@ -5,9 +5,12 @@ const typeDefs = gql`
     type Query {
         #**** Helpers *****
         myAddress: String,
+        getDnaAddress: String,
         getHardcodedMembers: [Member!]!,
+        isHardcodedMember: Boolean!,
 
         #**** Multisig *****
+        isMember(multisig_address: String!): Boolean!,
         getMembers(multisig_address: String!): [Member!]!,
         getMultisigAddress: Entry!,
         getMultisig(multisig_address: String!): Multisig!,

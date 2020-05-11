@@ -11,8 +11,20 @@ module.exports = {
         const res = await dataSources.helpersAPI.getHardcodedMembers();
         return handleResponse(res, "Cant fetch members")
       },
+      getDnaAddress: async (_, __, { dataSources }) => {
+        const res = await dataSources.helpersAPI.dnaAddress();
+        return handleResponse(res, "Cant DNA address")
+      },
+      isHardcodedMember: async (_, __, { dataSources }) => {
+        const res = await dataSources.helpersAPI.isHardcodedMember();
+        return handleResponse(res, "Cant DNA address")
+      },
 
       //*********Multisig**********
+      isMember: async (_, { multisig_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.isMember(multisig_address);
+        return handleResponse(res, "Cannot fetch members")
+      },
       getMembers: async (_, { multisig_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMembers(multisig_address);
         return handleResponse(res, "Cannot fetch members")

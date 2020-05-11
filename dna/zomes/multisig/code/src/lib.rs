@@ -20,7 +20,7 @@ use hdk::prelude::*;
 
 use hdk::holochain_json_api::{error::JsonError, json::JsonString};
 use hdk::holochain_persistence_api::cas::content::Address;
-use hdk::{AGENT_ADDRESS, THIS_INSTANCE};
+use hdk::{AGENT_ADDRESS, THIS_INSTANCE, DNA_ADDRESS};
 use hdk_proc_macros::zome;
 use structures::{
     LinkData,
@@ -87,6 +87,16 @@ mod my_zome {
         helpers::get_hardcoded_members()
     }
 
+    #[zome_fn("hc_public")]
+    fn get_dna_address() -> ZomeApiResult<Address> {
+        Ok(DNA_ADDRESS.clone())
+    }
+
+    #[zome_fn("hc_public")]
+    fn check_is_member() -> ZomeApiResult<bool> {
+        helpers::check_is_member()
+    }
+
     /*************** Setters */
     /*********** multisig.rs */
     #[zome_fn("hc_public")]
@@ -134,6 +144,16 @@ mod my_zome {
     }
     /************ Getters */
     /*********** Transaction.rs */
+
+    #[zome_fn("hc_public")]
+    fn is_member(multisig_address: Address) -> ZomeApiResult<bool> {
+        let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address);
+        match member {
+            Ok(_) => return Ok(true),
+            _ => return Ok(false)
+        }
+    }
+
     #[zome_fn("hc_public")]
     fn get_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<transaction::Transaction> {
         transaction::get(entry_address, multisig_address)
