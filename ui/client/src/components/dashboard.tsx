@@ -18,7 +18,7 @@ import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
 import {GET_MY_ADDRESS, GET_MULTISIG_MEMBERS, GET_MASTER_MULTISIG_ADDRESS} from '../queries';
 import { VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
 import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
-import { GetMultisigMembers } from '../__generated__/GetMultisigMembers';
+import { GetMultisigMembers, GetMultisigMembersVariables } from '../__generated__/GetMultisigMembers';
 
 
 interface ModalContent {
@@ -42,26 +42,45 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
 
   const onCardClick = (cardName: string) => {
-    console.log(multisigAddress)
     if(cardName === VIEW_WALLET_INFO) {
       // const membersContent = members?.length > 0 ? 
       setModalContent({
         headerTitle: "ADN",
         header: multisigAddress.data?.getMultisigAddress?.entry || "",
-        bodyContent: <Info members={members.data} />
+        bodyContent: <Info members={members} />
       })
       setShow(true)
     }
   }
 
   const appData = useQuery<AppData>(GET_MY_ADDRESS);
-  const multisigAddress = useQuery<MasterMultisigAddress>(GET_MASTER_MULTISIG_ADDRESS);
-  const members = useQuery<GetMultisigMembers>(GET_MULTISIG_MEMBERS);
-
-  if (appData.loading || multisigAddress.loading || members.loading) return <Loading />;
+  if (appData.loading) return <Loading />;
   if (appData.error) return <Error error={appData.error} />;
-  if (multisigAddress.error) return <Error error={multisigAddress.error} />;
-  if (members.error) return <Error error={members.error} />;
+
+  let members: GetMultisigMembers;
+
+  const multisigAddress = useQuery<MasterMultisigAddress>(GET_MASTER_MULTISIG_ADDRESS, {
+    
+    onCompleted: data => {
+      constmembers = useQuery<GetMultisigMembers, GetMultisigMembersVariables>(
+        GET_MULTISIG_MEMBERS,
+        {
+          variables:{
+            multisig_address: data.getMultisigAddress.entry
+          }
+        }
+      );
+      if (multisigAddress.loading || members.loading) return <Loading />;
+      if (members.error) return <Error error={members.error} />;
+    },
+    onError: error => {
+      return <Error error={error} />;
+    }
+    
+  });
+  
+
+  
 
   //const enabled = appData.data?.isMember || false
   const enabled = true;
