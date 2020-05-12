@@ -8,3 +8,6 @@ export { default as Error} from './error';
 export { default as Card } from './card';
 export { default as Modal } from './modal';
 export { default as Info } from './info-container';
+export { default as Dashboard } from './dashboard';
+export { default as Start } from './start';
+export { default as Alert } from './alert';

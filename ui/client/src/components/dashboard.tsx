@@ -5,8 +5,8 @@ import { RouteComponentProps } from '@reach/router';
 
 import { AppData } from '../__generated__/AppData';
 
-import {Container} from '../components/global-containers';
-import {Card, Loading, Error, Modal, Info} from '../components'
+import {Container} from './global-containers';
+import {Card, Loading, Error, Modal, Info} from '.'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'

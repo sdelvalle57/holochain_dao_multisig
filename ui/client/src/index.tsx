@@ -9,12 +9,12 @@ import styled from 'react-emotion';
 
 import {typeDefs} from './resolvers';
 
-import Pages from './pages';
+import {Main} from './pages';
 import injectStyles from './styles';
-import { GET_HARDCODED_MEMBERS, GET_MY_ADDRESS, IS_HARDCODED_MEMBER, GET_MASTER_MULTISIG_ADDRESS } from './queries';
-import { Loading, Error } from './components';
-import { AppData } from './__generated__/AppData';
+import { IS_HARDCODED_MEMBER, GET_MASTER_MULTISIG_ADDRESS } from './queries';
+import { Loading, Error, Start, Alert } from './components';
 import { MasterMultisigAddress } from './__generated__/MasterMultisigAddress';
+import { Type } from './components/alert';
 
 
 const cache = new InMemoryCache();
@@ -50,15 +50,18 @@ function RenderPage() {
       const err = multisigAddress.error.graphQLErrors[j];
       if(err.extensions?.exception.error === "Multisig has not been started or user is not Member") {
         if(isHardcodedMember.data) {
-          //TODO: show start buttn
+          return (
+            <Start />
+
+          )
         } else {
-          //TODO: show hasnt started 
+          return <Alert type={Type.Danger} text = "Multisig Has not yet started, requires a Hardcoded Member"/>
         }
       }
     }
   }
   
-  return  <Pages />  
+  return  <Main />  
 }
 
 const Global = styled('div')({
