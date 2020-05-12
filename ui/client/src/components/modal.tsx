@@ -3,24 +3,27 @@ import styled, { css } from 'react-emotion';
 
 interface ModalProps {
   content: any;
+  headerTitle?: String;
+  header: String;
   onClose: any;
   show: boolean
 }
 
-const Modal: React.FC<ModalProps> = ({ content, onClose, show }) => {
+const Modal: React.FC<ModalProps> = ({ content, headerTitle, header, onClose, show }) => {
     return (
         <Container onClick={onClose} className={show? Enabled : Disabled}>
             <Content>
-            <CloseIcon onClick={onClose}>&times;</CloseIcon>
+                <CloseIcon onClick={onClose}>&times;</CloseIcon>
                 <HeaderContainer>
                     <ModalHeader>
-                        <HeaderTitle>{content.headerTitle}</HeaderTitle>
+                        {headerTitle ? <HeaderTitle>{headerTitle}</HeaderTitle> : null} 
+                        
                         <HeaderValueContainer>
-                            <HeaderValue>{content.header}</HeaderValue>
+                            <HeaderValue>{header}</HeaderValue>
                         </HeaderValueContainer>
                     </ModalHeader>
                 </HeaderContainer>
-                {content.bodyContent}
+                {content}
             </Content>
 
         </Container>

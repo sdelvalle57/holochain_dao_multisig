@@ -1,15 +1,19 @@
 import React from 'react';
 import styled, { css } from 'react-emotion';
+import Loading from './loading';
 
 interface CardProps {
   image: string;
   title: string;
   enabled: boolean;
   onClick: any;
+  loading?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({ image, title, onClick, enabled }) => {
-    const className = enabled ? Enabled : Disabled;
+const Card: React.FC<CardProps> = ({ image, title, onClick, enabled, loading }) => {
+  const className = enabled ? Enabled : Disabled;
+
+  if(loading) return <Loading />
 
   return (
     <Container onClick={enabled ? onClick : null} className = {className}>

@@ -22,8 +22,19 @@ export const GET_MULTISIG_MEMBERS = gql`
 
 `
 
+export const GET_MULTISIG = gql`
+    query GetMultisig($multisig_address: String!) {
+        getMultisig(multisig_address: $multisig_address) {
+            title
+            description
+            required
+        }
+    }
+
+`
+
 /*****Helpers */
-export const GET_MY_ADDRESS = gql`
+export const GET_APP_DATA = gql`
     query AppData {
         myAddress 
         getDnaAddress

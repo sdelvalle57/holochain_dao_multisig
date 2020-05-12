@@ -9,7 +9,7 @@ export interface ErrorProps {
     error: ApolloError
 }
 
-const Error: React.FC<ErrorProps> = ({ error}) => {
+const Error: React.FC<ErrorProps> = ({ error }) => {
   return (
     <Container>
       <InnerContainer>

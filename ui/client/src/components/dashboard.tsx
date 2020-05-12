@@ -1,12 +1,14 @@
-import React, { Fragment, useState } from 'react';
-import { useQuery } from '@apollo/react-hooks';
+import React, { Fragment, Component } from 'react';
 import styled from 'react-emotion';
-import { RouteComponentProps } from '@reach/router';
 
-import { AppData } from '../__generated__/AppData';
+import {withApollo, WithApolloClient} from 'react-apollo';
+
+import { GetMultisig, GetMultisigVariables, GetMultisig_getMultisig } from '../__generated__/GetMultisig';
+import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
+import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
 
 import {Container} from './global-containers';
-import {Card, Loading, Error, Modal, Info} from '.'
+import {Card, Alert, Error, Modal, Info} from '.'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -15,94 +17,133 @@ import FunctionsIcon from '../assets/images/functionsIcon.png'
 import PendingTxIcon from '../assets/images/pendingTxIcon.png'
 import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
 
-import {GET_MY_ADDRESS, GET_MULTISIG_MEMBERS, GET_MASTER_MULTISIG_ADDRESS} from '../queries';
+import {GET_MULTISIG_MEMBERS, GET_MASTER_MULTISIG_ADDRESS, GET_MULTISIG} from '../queries';
 import { VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
-import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
-import { GetMultisigMembers, GetMultisigMembersVariables } from '../__generated__/GetMultisigMembers';
 
+import {Type} from './alert';
 
-interface ModalContent {
-  headerTitle: string;
-  header: string;
-  bodyContent: any
+interface ModalProps {
+  headerTitle: Object | undefined;
+  header: String;
+  content: any;
+  show: boolean;
+  loading: boolean;
 }
 
-interface DashboardProps extends RouteComponentProps {
-}
+class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
 
-const Dashboard: React.FC<DashboardProps> = () => {
-
-  const [show, setShow] = useState(false);
-  const modalInitalState = {
-    headerTitle: "",
+  state = {
+    headerTitle: undefined,
     header: "",
-    bodyContent: ""
-  }
-  const [modalContent, setModalContent] = useState(modalInitalState as ModalContent);
-
-
-  const onCardClick = (cardName: string) => {
-    if(cardName === VIEW_WALLET_INFO) {
-      // const membersContent = members?.length > 0 ? 
-      setModalContent({
-        headerTitle: "ADN",
-        header: multisigAddress.data?.getMultisigAddress?.entry || "",
-        bodyContent: <Info members={members} />
-      })
-      setShow(true)
-    }
+    content: "",
+    show: false,
+    showError: false,
+    loading: false
   }
 
-  const appData = useQuery<AppData>(GET_MY_ADDRESS);
-  if (appData.loading) return <Loading />;
-  if (appData.error) return <Error error={appData.error} />;
+  getMultisigAddress = async (): Promise<string> => {
+    const { client } = this.props;
+    const multisigAddress = await client.query<MasterMultisigAddress>({
+      query: GET_MASTER_MULTISIG_ADDRESS
+    })
+    return multisigAddress.data.getMultisigAddress.entry;
+  }
 
-  let members: GetMultisigMembers;
+  getMultisigData = async (multisigAddress: string): Promise<GetMultisig_getMultisig> => {
+    const { client } = this.props;
+    const multisigData = await client.query<GetMultisig, GetMultisigVariables>({
+      query: GET_MULTISIG,
+      variables: { multisig_address: multisigAddress}
+    })
+    return multisigData.data.getMultisig
+  }
 
-  const multisigAddress = useQuery<MasterMultisigAddress>(GET_MASTER_MULTISIG_ADDRESS, {
-    
-    onCompleted: data => {
-      constmembers = useQuery<GetMultisigMembers, GetMultisigMembersVariables>(
-        GET_MULTISIG_MEMBERS,
-        {
-          variables:{
-            multisig_address: data.getMultisigAddress.entry
+  getMembers = async (multisigAddress: string): Promise<GetMultisigMembers_getMembers[]> => {
+    const { client } = this.props;
+    const members = await client.query<GetMultisigMembers, GetMultisigMembersVariables>({
+      query: GET_MULTISIG_MEMBERS,
+      variables: { multisig_address: multisigAddress }
+    })
+    return members.data.getMembers
+  }
+
+  fetchMultisigData = async () => {
+    try { 
+      const multisigAddress = await this.getMultisigAddress();
+
+      if(multisigAddress) {
+        const multisigData = await this.getMultisigData(multisigAddress);
+
+        if(multisigData) {
+          const members = await this.getMembers(multisigAddress);
+
+          if(members.length > 0) {
+            const info = <Info members={members} multisigData={multisigData}/>
+            this.setState({
+              header: multisigAddress,
+              headerTitle: "Multisig",
+              show: true, 
+              content: info})
+            return;
           }
         }
-      );
-      if (multisigAddress.loading || members.loading) return <Loading />;
-      if (members.error) return <Error error={members.error} />;
-    },
-    onError: error => {
-      return <Error error={error} />;
-    }
-    
-  });
-  
+      }
+      const error = <Alert text="Internal Error" type={Type.Danger} />
+      this.setState({show: true, content: error, header: "Error"})
+     
+    } catch (err) { 
+      const error = <Error error={err} />
+      this.setState({show: true, content: error, header: "Error"})
+    } 
+  }
 
-  
+
+  onCardClick =  async(cardName: string) => {
+    
+    
+  }
+
+  onHide = () => {
+    this.setState({
+      header: "",
+      headerTitle: undefined,
+      content: "",
+      show: false,
+    })
+  }
 
   //const enabled = appData.data?.isMember || false
-  const enabled = true;
 
-  return (
+  render() {
+  const enabled = true;
+  const {content, header, headerTitle, show, loading} = this.state;
+
+    return (
     <Fragment>
         <Container>
           <CardContainer>
-            <Card onClick={() => onCardClick(VIEW_WALLET_INFO)} image={InfoIcon} title={VIEW_WALLET_INFO} enabled={enabled} />
-            <Card onClick={() => onCardClick(ADD_NEW_MEMBER)} image={AddMemberIcon} title={ADD_NEW_MEMBER} enabled={enabled} />
-            <Card onClick={() => onCardClick(REMOVE_MEMBER)} image={RemoveIcon} title={REMOVE_MEMBER} enabled={enabled} />
-            <Card onClick={() => onCardClick(CHANGE_REQUIREMENTS)} image={FunctionsIcon} title={CHANGE_REQUIREMENTS} enabled={enabled} />
-            <Card onClick={() => onCardClick(PENDING_TRASACTIONS)} image={PendingTxIcon} title={PENDING_TRASACTIONS} enabled={enabled} />
-            <Card onClick={() => onCardClick(APPROVED_TRANSACTIONS)} image={ApprovedTxIcon} title={APPROVED_TRANSACTIONS} enabled={enabled} />
+            {/* TODO: Add loading to cards when onCLick */}
+            <Card onClick={() => this.fetchMultisigData()} image={InfoIcon} title={VIEW_WALLET_INFO} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(ADD_NEW_MEMBER)} image={AddMemberIcon} title={ADD_NEW_MEMBER} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(REMOVE_MEMBER)} image={RemoveIcon} title={REMOVE_MEMBER} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(CHANGE_REQUIREMENTS)} image={FunctionsIcon} title={CHANGE_REQUIREMENTS} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(PENDING_TRASACTIONS)} image={PendingTxIcon} title={PENDING_TRASACTIONS} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(APPROVED_TRANSACTIONS)} image={ApprovedTxIcon} title={APPROVED_TRANSACTIONS} enabled={enabled} />
           </CardContainer>
         </Container>
-        <Modal onClose={() => setShow(false)} content={modalContent} show={show} />
+        <Modal 
+          header={header}
+          headerTitle={headerTitle}
+          onClose={() => this.onHide()} 
+          content={content} 
+          show={show} />
       </Fragment>
   )
+  }
+  
 }
 
-export default Dashboard;
+export default withApollo(StartMultisigForm);
 
 
 const CardContainer = styled('div')({

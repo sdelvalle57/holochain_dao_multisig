@@ -1,28 +1,38 @@
 import React from 'react';
-import styled, { css } from 'react-emotion';
-import { GetMultisigMembers } from '../__generated__/GetMultisigMembers';
+import styled from 'react-emotion';
+import { GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
+import { GetMultisig_getMultisig } from '../__generated__/GetMultisig';
 
 interface ModalProps {
-  members: GetMultisigMembers | undefined
+  members: GetMultisigMembers_getMembers[];
+  multisigData: GetMultisig_getMultisig
 }
 
-const InfoContainer: React.FC<ModalProps> = ({ members }) => {
+const InfoContainer: React.FC<ModalProps> = ({ members, multisigData }) => {
     return (
         <div >
             <WalletInfo>
                 <Row>
-                    <ColTitle>Address: </ColTitle>
-                    <ColValue>Address</ColValue>
+                    <ColTitle>Title </ColTitle>
+                    <ColValue>{multisigData.title}</ColValue>
+                </Row>
+                <Row>
+                    <ColTitle>Description </ColTitle>
+                    <ColValue>{multisigData.description}</ColValue>
+                </Row>
+                <Row>
+                    <ColTitle>Required Signatories: </ColTitle>
+                    <ColValue>{multisigData.required}</ColValue>
                 </Row>
             </WalletInfo>
-            <Note>Below is a list of individuals and companies part of the Community</Note>
+            <Note>Below is a list of individuals part of the Community</Note>
             <MembersContainer>
                 <MembersHeader>Members</MembersHeader>
                 <MembersDiv>
                     {
-                        members?.getMembers.map(m => {
+                        members.map((m, index) => {
                             return (
-                                <MembersRow>
+                                <MembersRow key={index}>
                                     <MembersColTitle>{m.member.name}</MembersColTitle>
                                     <MembersColValue>{m.member.address}</MembersColValue>
                                 </MembersRow>
