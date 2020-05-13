@@ -43,6 +43,28 @@ interface PageProps extends RouteComponentProps {
  
 }
 
+const appDataContent = (appData: AppData | undefined) => {
+return  (
+    <>
+       <Header>
+          <Row>
+            <HeaderTitle>DNA</HeaderTitle>
+            <HeaderContainer>
+              <HeaderValue>{appData?.getDnaAddress}</HeaderValue>
+            </HeaderContainer>
+          </Row>
+          <Row>
+            <HeaderTitle>My Address</HeaderTitle>
+            <HeaderContainer>
+              <HeaderValue>{appData?.myAddress}</HeaderValue>
+            </HeaderContainer>
+          </Row>
+      </Header>
+      <Dashboard />  
+    </>
+  )
+}
+
 const RenderPage: React.FC<PageProps> = () => {
   const isHardcodedMember = useQuery(IS_HARDCODED_MEMBER);
   const multisigAddress = useQuery<MasterMultisigAddress>(GET_MASTER_MULTISIG_ADDRESS);
@@ -52,50 +74,25 @@ const RenderPage: React.FC<PageProps> = () => {
   if (isHardcodedMember.error) return <Error error={isHardcodedMember.error} />;
   if (appData.error) return <Error error={appData.error} />;
 
+  console.log(multisigAddress)
+
   if(multisigAddress.error) {
     for(let j = 0; j < multisigAddress.error.graphQLErrors.length; j++) {
       const err = multisigAddress.error.graphQLErrors[j];
       if(err.extensions?.exception.error === "Multisig has not been started or user is not Member") {
         if(isHardcodedMember.data) {
-          return (
-            <>
-              <Header>
-                  <HeaderTitle>DNA</HeaderTitle>
-                  <HeaderContainer>
-                    <HeaderValue>{appData.data?.getDnaAddress}</HeaderValue>
-                  </HeaderContainer>
-              </Header>
-              <Start />
-            </>
-
-
-          )
+          return appDataContent(appData.data)
         } else {
           return <Alert type={Type.Danger} text = "Multisig Has not yet started, requires a Hardcoded Member"/>
         }
       }
     }
   }
+  if(multisigAddress.data && Object.keys(multisigAddress.data).length === 0) {
+
+  }
+  return appDataContent(appData.data)
   
-  return  (
-    <>
-       <Header>
-          <Row>
-            <HeaderTitle>DNA</HeaderTitle>
-            <HeaderContainer>
-              <HeaderValue>{appData.data?.getDnaAddress}</HeaderValue>
-            </HeaderContainer>
-          </Row>
-          <Row>
-            <HeaderTitle>My Address</HeaderTitle>
-            <HeaderContainer>
-              <HeaderValue>{appData.data?.myAddress}</HeaderValue>
-            </HeaderContainer>
-          </Row>
-      </Header>
-      <Dashboard />  
-    </>
-  )
 }
 
 const Global = styled('div')({
