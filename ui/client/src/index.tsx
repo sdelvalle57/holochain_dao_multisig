@@ -14,12 +14,9 @@ import { Router } from '@reach/router';
 import { Selector } from './pages';
 import { AppData } from './__generated__/AppData';
 
-import { resolvers, typeDefs } from './resolvers';
-
 /*Start initialization */
 const cache = new InMemoryCache();
 const SERVER_PORT = process.env.REACT_APP_SERVER_PORT ? process.env.REACT_APP_SERVER_PORT : 4000;
-console.log(SERVER_PORT, process.env.REACT_APP_SERVER_PORT, process.env.PORT)
 const link = new HttpLink({
   uri: `http://localhost:${SERVER_PORT}/graphql`
 });
@@ -27,18 +24,6 @@ const link = new HttpLink({
 const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
   cache,
   link,
-  resolvers,
-  typeDefs
-});
-
-
-const data:{ multisigAddress: String | null, appData: AppData | null } = {
-  multisigAddress: null,
-  appData: null
-}
-
-client.cache.writeData({
-    data
 });
 
 /*********End Initialization */

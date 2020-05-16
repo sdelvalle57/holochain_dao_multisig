@@ -1,13 +1,17 @@
 
 import React, { Fragment, Component } from 'react';
-import { WithApolloClient } from 'react-apollo';
+import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import Error, { ErrorProps } from '../components/error';
 import { AppData } from '../__generated__/AppData';
 import styled from 'react-emotion';
-import { Dashboard } from '../components';
+import { Dashboard, Loading, Start, Alert } from '../components';
 import ApolloClient, { ApolloError } from 'apollo-client';
-import { GET_APP_DATA } from "../queries";
+import { GET_APP_DATA, GET_MASTER_MULTISIG_ADDRESS, IS_HARDCODED_MEMBER } from "../queries";
+import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
+import { IsHardcodedMember } from '../__generated__/IsHardcodedMember';
+import { Type } from '../components/alert';
+import { threadId } from 'worker_threads';
 
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
@@ -16,34 +20,113 @@ interface PageProps extends WithApolloClient<RouteComponentProps> {
 }
 
 interface StateProps{
-  isHardcodedMember: {
-    loading: Boolean,
-    error: ErrorProps | undefined,
-    data: any
-  }
+    multisigAddress: string | null;
+    error: boolean;
+    loading: boolean;
 }
 
 
 export default class Selector extends Component<PageProps, StateProps> {
 
   state = {
-    isHardcodedMember: {
-      loading: false,
-      error: undefined,
-      data: undefined
-    }
+    multisigAddress: null,
+    error: false,
+    loading: true
   }
 
-  componentDidMount = async () => {
-      const { client } = this.props;
-      console.log(client.cache)
-      const appData = await client.query<AppData>({
-        query: GET_APP_DATA
+  componentDidMount = async (): Promise<void> => {
+        await this.fetchMultisig();
+  }
+
+  setMultisig = (multisigAddress: string) => {
+      this.setState({
+          multisigAddress,
+          error: false,
+          loading: false
       })
-      console.log("aca2")
-      console.log(appData)
   }
 
+  fetchMultisig = async (): Promise<void> => {
+        const { client } = this.props;
+        try {
+            const response = await client.query<MasterMultisigAddress>({
+                query: GET_MASTER_MULTISIG_ADDRESS,
+            });
+            const multisigAddress = response.data.getMultisigAddress.entry;
+            if(multisigAddress) {
+                this.setState({
+                    multisigAddress, 
+                    error: false,
+                    loading: false
+                });
+            }
+        } catch (e) {
+            for(let j = 0; j < e.graphQLErrors.length; j++) {
+                const err = e.graphQLErrors[j];
+                if(err.extensions?.exception.error === "Multisig has not been started or user is not Member") {
+                    this.setState({
+                        multisigAddress: null,
+                        error: false,
+                        loading: false
+                    })
+                    return;
+                }
+                this.setState({
+                    multisigAddress: null,
+                    error: true,
+                    loading: false
+                })
+            }
+        }
+  }
+
+  renderAppData = () => {
+      return(
+          <Query<AppData> query = { GET_APP_DATA } >
+              {({data, error, loading}) => {
+                  if(error) return <Error error={error} />;
+                  if(loading) return <Loading />
+                  if(!data?.getDnaAddress || !data.myAddress) return <Alert type={Type.Danger} text = "Error trying to fetch AppData"/>
+                  return  (
+                    <>
+                      <Header>
+                          <Row>
+                            <HeaderTitle>DNA</HeaderTitle>
+                            <HeaderContainer>
+                              <HeaderValue>{data?.getDnaAddress}</HeaderValue>
+                            </HeaderContainer>
+                          </Row>
+                          <Row>
+                            <HeaderTitle>My Address</HeaderTitle>
+                            <HeaderContainer>
+                              <HeaderValue>{data?.myAddress}</HeaderValue>
+                            </HeaderContainer>
+                          </Row>
+                      </Header>
+                    </>
+                  )
+              }}
+          </Query>
+      )
+  }
+
+  renderStartContent = () => {
+    return (
+        <Query<IsHardcodedMember> query = { IS_HARDCODED_MEMBER }>
+            {({data, error, loading}) => {
+                if(error) return <Error error={error} />;
+                if(loading) return <Loading />
+                if(!data?.isHardcodedMember) return <Alert type={Type.Danger} text = "Multisig Has not yet started, requires a Hardcoded Member"/>
+                return (
+                    <>
+                        {this.renderAppData()}
+                        <Start setMultisig = {this.setMultisig} />
+                    </>
+                )
+            }}
+        </Query>
+    )
+  }
 
 
   appDataContent = (appData: AppData | undefined) => {
@@ -69,14 +152,22 @@ export default class Selector extends Component<PageProps, StateProps> {
   }
 
   render() {
-      const {client} = this.props;
+    const { multisigAddress, error, loading } = this.state;
+    if(loading) return <Loading />
+    if(multisigAddress) {
+        return (
+            <>
+                {this.renderAppData()}
+                <Dashboard />
+            </>
+        )
+    } 
 
-    //   if(appData instanceof ApolloError) {
-    //       return <Error error={appData} />;
-    //   }
-    //   console.log(multisigAddress);
-    //   console.log(appData)
-    return (<></>)
+    if(error) {
+        return <Alert type={Type.Danger} text = "Multisig Has not yet started, requires a Hardcoded Member"/>
+    }
+
+    return this.renderStartContent()
   }
 }
 

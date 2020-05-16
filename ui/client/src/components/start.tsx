@@ -8,13 +8,18 @@ import {Button, Loading, Error} from '.';
 import { START_MULTISIG } from '../mutations';
 import { Start } from '../__generated__/Start';
 
-interface StartMultisigProps extends RouteComponentProps {
-}
+interface StartMultisigProps {
+  setMultisig: (multisigAddress: string) => void
+} 
 
-const StartMultisig: React.FC<StartMultisigProps> = () => {
+const StartMultisig: React.FC<StartMultisigProps> = (props) => {
 
 
-  const [start, {loading, error}] = useMutation<Start>(START_MULTISIG);
+  const [start, {loading, error}] = useMutation<Start>(START_MULTISIG, {
+    onCompleted: (data) => {
+      props.setMultisig(data.start.entry);
+    }
+  });
   if(loading) return <Loading />
   if(error) return <Error error={error} />
   return <StartButton start={start}/>;
