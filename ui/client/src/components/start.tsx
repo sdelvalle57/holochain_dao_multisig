@@ -12,10 +12,13 @@ interface StartMultisigProps extends RouteComponentProps {
 }
 
 const StartMultisig: React.FC<StartMultisigProps> = () => {
+
+
   const [start, {loading, error}] = useMutation<Start>(START_MULTISIG);
   if(loading) return <Loading />
   if(error) return <Error error={error} />
-  return <StartMultisigForm start={start}/>;
+  return <StartButton start={start}/>;
+
 }
 
 /******* Form *********/
@@ -24,7 +27,7 @@ interface Startprops {
   start: () => void
 }
 
-class StartMultisigForm extends Component<Startprops> {
+class StartButton extends Component<Startprops> {
 
   onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -1,56 +1,94 @@
 import gql from 'graphql-tag';
+import { Resolvers } from 'apollo-client';
+import { ApolloCache } from 'apollo-cache';
+import { AppData } from './__generated__/AppData';
+import { GET_APP_DATA, GET_MASTER_MULTISIG_ADDRESS } from './queries';
 // import { ApolloCache } from 'apollo-cache';
 // import { Resolvers } from 'apollo-client'
 
 export const typeDefs = gql`
   extend type Query {
-    multisigCreated: MultisigCreated
+    multisigAddress: string
+    appData: AppData
   }
 
-  type MultisigCreated {
-    entry: String
+  extend type GetAppData {
+    getAppData: AppData
   }
-`;
 
-// type ResolverFn = (
-//   parent: any, 
-//   args: any, 
-//   { cache } : { cache: ApolloCache<any> }
-// ) => any;
+  extend type SetAppData {
+    setAppData(appData: AppData)
+  }
+`
 
-// interface ResolverMap {
-//   [field: string]: ResolverFn;
-// }
+type ResolverFn = (
+  parent: any,
+  args: any,
+  { cache } : { cache: ApolloCache<any> }
+) => any;
 
-// interface AppResolvers extends Resolvers {
-//   Launch: ResolverMap;
-//   Mutation: ResolverMap;
-// }
+interface ResolverMap {
+  [field: string]: ResolverFn;
+}
 
-// export const resolvers: AppResolvers = {
-//   Launch: {
-//     isInCart: (launch: LaunchTileTypes.LaunchTile, _, { cache }): boolean => {
-//       const queryResult = cache.readQuery<GetCartItemTypes.GetCartItems>({ query: GET_CART_ITEMS });
-//       if (queryResult) {
-//         return queryResult.cartItems.includes(launch.id)
-//       } 
-//       return false;
-//     }
-//   },
-//   Mutation: {
-//     addOrRemoveFromCart: (_, { id }: { id: string }, { cache }): string[] => {
-//       const queryResult = cache.readQuery<GetCartItemTypes.GetCartItems>({ query: GET_CART_ITEMS });
-//       if (queryResult) {
-//         const { cartItems } = queryResult;
-//         const data = {
-//           cartItems: cartItems.includes(id)
-//             ? cartItems.filter((i) => i !== id)
-//             : [...cartItems, id],
-//         };
-//         cache.writeQuery({ query: GET_CART_ITEMS, data });
-//         return data.cartItems;
-//       }
-//       return [];
-//     },
-//   },
+interface AppResolvers extends Resolvers {
+  GetAppData: ResolverMap;
+  SetAppData: ResolverMap
+}
+
+export const resolvers: AppResolvers = {
+  GetMultisigAddress: {
+    getMultisigAddress: (_, __, { cache }): string | null => {
+      const queryResult = cache.readQuery<string>({ query: GET_MASTER_MULTISIG_ADDRESS});
+      return queryResult;
+    }
+  }
+  GetAppData: {
+    getAppData: (__, _, { cache }): AppData | null => {
+      const queryResult = cache.readQuery<AppData>({ query: GET_APP_DATA });
+      return queryResult;
+    }
+  },
+  SetAppData: {
+    setAppData: (_, { appData }: { appData: AppData }, { cache }) => {
+      cache.writeQuery({ query: GET_APP_DATA, data: {appData} });
+    },
+  }
+
 // };
+
+
+/*
+let multisigAddress: string | undefined = undefined;
+let notStarted = false;
+let appData: AppData | ApolloError | undefined = undefined;
+
+const m = client.query<MasterMultisigAddress>({
+  query: GET_MASTER_MULTISIG_ADDRESS
+})
+m.then(res => {
+  if(res.data.getMultisigAddress.entry) {
+    multisigAddress = res.data.getMultisigAddress.entry;
+  }
+})
+m.catch((error: ApolloError) => {
+  for(let j = 0; j < error.graphQLErrors.length; j++) {
+    const err = error.graphQLErrors[j];
+    if(err.extensions?.exception.error === "Multisig has not been started or user is not Member") {
+      notStarted = true;
+    }
+  }
+})
+
+const a = client.query<AppData>({
+  query: GET_APP_DATA
+})
+a.then(res => {
+  appData = res.data;
+})
+a.catch((error: ApolloError) => {
+  appData = error;
+})
+
+
+*/
