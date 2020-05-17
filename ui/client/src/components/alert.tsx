@@ -18,7 +18,7 @@ export enum Type {
 
 export interface AlertProps {
     type: Type,
-    text: string,
+    text: string | object,
 }
 
 

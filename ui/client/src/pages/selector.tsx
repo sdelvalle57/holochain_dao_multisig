@@ -1,22 +1,18 @@
 
-import React, { Fragment, Component } from 'react';
+import React, { Component } from 'react';
 import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
-import Error, { ErrorProps } from '../components/error';
+import Error  from '../components/error';
 import { AppData } from '../__generated__/AppData';
 import styled from 'react-emotion';
 import { Dashboard, Loading, Start, Alert } from '../components';
-import ApolloClient, { ApolloError } from 'apollo-client';
 import { GET_APP_DATA, GET_MASTER_MULTISIG_ADDRESS, IS_HARDCODED_MEMBER } from "../queries";
 import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
 import { IsHardcodedMember } from '../__generated__/IsHardcodedMember';
 import { Type } from '../components/alert';
-import { threadId } from 'worker_threads';
 
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
-//   appData: AppData | ApolloError | undefined;
-//   multisigAddress: string | undefined;
 }
 
 interface StateProps{
@@ -116,7 +112,7 @@ export default class Selector extends Component<PageProps, StateProps> {
             {({data, error, loading}) => {
                 if(error) return <Error error={error} />;
                 if(loading) return <Loading />
-                if(!data?.isHardcodedMember) return <Alert type={Type.Danger} text = "Multisig Has not yet started, requires a Hardcoded Member"/>
+                if(!data?.isHardcodedMember) return <Alert type={Type.Danger} text = "Multisig has not yet started, requires a Hardcoded Member"/>
                 return (
                     <>
                         {this.renderAppData()}
@@ -130,6 +126,7 @@ export default class Selector extends Component<PageProps, StateProps> {
 
 
   appDataContent = (appData: AppData | undefined) => {
+
     return  (
       <>
         <Header>
@@ -146,7 +143,6 @@ export default class Selector extends Component<PageProps, StateProps> {
               </HeaderContainer>
             </Row>
         </Header>
-        <Dashboard />  
       </>
     )
   }
@@ -158,7 +154,10 @@ export default class Selector extends Component<PageProps, StateProps> {
         return (
             <>
                 {this.renderAppData()}
-                <Dashboard />
+                <Dashboard
+                    client = {this.props.client}
+                    multisigAddress = {multisigAddress}
+                />
             </>
         )
     } 

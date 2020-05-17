@@ -55,7 +55,6 @@ import { lighten } from 'polished';
     maxWidth: 406,
     padding: unit * 3.5,
     borderRadius: 3,
-    boxShadow: '6px 6px 1px rgba(0, 0, 0, 0.25)',
     color: colors.text,
     backgroundColor: 'white',
   });

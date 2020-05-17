@@ -11,7 +11,7 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({ content, headerTitle, header, onClose, show }) => {
     return (
-        <Container onClick={onClose} className={show? Enabled : Disabled}>
+        <Container className={show? Enabled : Disabled}>
             <Content>
                 <CloseIcon onClick={onClose}>&times;</CloseIcon>
                 <HeaderContainer>

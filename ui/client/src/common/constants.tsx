@@ -1,4 +1,5 @@
 
+export const GET_MULTISIG_INFO = "Get Multisig Info";
 export const ADD_NEW_MEMBER = "Add new Member";
 export const REMOVE_MEMBER = "Remove Member"
 export const CHANGE_REQUIREMENTS = "Change Signing Requirements"

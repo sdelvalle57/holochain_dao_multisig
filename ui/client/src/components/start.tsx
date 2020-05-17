@@ -1,5 +1,4 @@
 import React, { Fragment, Component } from 'react';
-import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
 import { useMutation } from '@apollo/react-hooks';
 
@@ -13,8 +12,6 @@ interface StartMultisigProps {
 } 
 
 const StartMultisig: React.FC<StartMultisigProps> = (props) => {
-
-
   const [start, {loading, error}] = useMutation<Start>(START_MULTISIG, {
     onCompleted: (data) => {
       props.setMultisig(data.start.entry);
@@ -25,6 +22,9 @@ const StartMultisig: React.FC<StartMultisigProps> = (props) => {
   return <StartButton start={start}/>;
 
 }
+
+export default StartMultisig;
+
 
 /******* Form *********/
 
@@ -69,5 +69,3 @@ const StyledForm = styled('form')({
   backgroundColor: 'white',
   margin: "auto"
 });
-
-export default StartMultisig;

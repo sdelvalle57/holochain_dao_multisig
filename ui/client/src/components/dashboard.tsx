@@ -1,14 +1,13 @@
 import React, { Fragment, Component } from 'react';
 import styled from 'react-emotion';
 
-import {withApollo, WithApolloClient} from 'react-apollo';
+import { WithApolloClient} from 'react-apollo';
 
 import { GetMultisig, GetMultisigVariables, GetMultisig_getMultisig } from '../__generated__/GetMultisig';
-import { MasterMultisigAddress } from '../__generated__/MasterMultisigAddress';
 import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
 
 import {Container} from './global-containers';
-import {Card, Alert, Error, Modal, Info} from '.'
+import {Card, Alert, Error, Modal, Info, AddMemberForm} from '.'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -17,10 +16,14 @@ import FunctionsIcon from '../assets/images/functionsIcon.png'
 import PendingTxIcon from '../assets/images/pendingTxIcon.png'
 import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
 
-import {GET_MULTISIG_MEMBERS, GET_MASTER_MULTISIG_ADDRESS, GET_MULTISIG} from '../queries';
-import { VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
+import {GET_MULTISIG_MEMBERS, GET_MULTISIG} from '../queries';
+import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
 
 import {Type} from './alert';
+
+interface PageProps extends WithApolloClient<{}> {
+  multisigAddress: string | null;
+}
 
 interface ModalProps {
   headerTitle: Object | undefined;
@@ -30,7 +33,7 @@ interface ModalProps {
   loading: boolean;
 }
 
-class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
+class StartMultisigForm extends Component<PageProps, ModalProps> {
 
   state = {
     headerTitle: undefined,
@@ -41,13 +44,6 @@ class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
     loading: false
   }
 
-  getMultisigAddress = async (): Promise<string> => {
-    const { client } = this.props;
-    const multisigAddress = await client.query<MasterMultisigAddress>({
-      query: GET_MASTER_MULTISIG_ADDRESS
-    })
-    return multisigAddress.data.getMultisigAddress.entry;
-  }
 
   getMultisigData = async (multisigAddress: string): Promise<GetMultisig_getMultisig> => {
     const { client } = this.props;
@@ -68,8 +64,8 @@ class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
   }
 
   fetchMultisigData = async () => {
+    const { multisigAddress } = this.props;
     try { 
-      const multisigAddress = await this.getMultisigAddress();
 
       if(multisigAddress) {
         const multisigData = await this.getMultisigData(multisigAddress);
@@ -97,10 +93,31 @@ class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
     } 
   }
 
+  addNewMember = async () => {
+    const { multisigAddress } = this.props;
+      if(multisigAddress) {
+        const content = <AddMemberForm multisigAddress={multisigAddress} />
+        this.setState({ 
+          header: multisigAddress, 
+          headerTitle: "Add Member",
+          content,
+          show: true
+        });
+        return;
+      }
+      const error = <Alert text="Internal Error" type={Type.Danger} />
+      this.setState({show: true, content: error, header: "Error"})
+  }
 
   onCardClick =  async(cardName: string) => {
-    
-    
+    switch(cardName) {
+      case GET_MULTISIG_INFO:
+        this.fetchMultisigData();
+        break;
+      case ADD_NEW_MEMBER:
+        this.addNewMember();
+        break;
+    }
   }
 
   onHide = () => {
@@ -112,18 +129,16 @@ class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
     })
   }
 
-  //const enabled = appData.data?.isMember || false
-
   render() {
   const enabled = true;
-  const {content, header, headerTitle, show, loading} = this.state;
+  const {content, header, headerTitle, show} = this.state;
 
     return (
     <Fragment>
         <Container>
           <CardContainer>
             {/* TODO: Add loading to cards when onCLick */}
-            <Card onClick={() => this.fetchMultisigData()} image={InfoIcon} title={VIEW_WALLET_INFO} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(GET_MULTISIG_INFO)} image={InfoIcon} title={VIEW_WALLET_INFO} enabled={enabled} />
             <Card onClick={() => this.onCardClick(ADD_NEW_MEMBER)} image={AddMemberIcon} title={ADD_NEW_MEMBER} enabled={enabled} />
             <Card onClick={() => this.onCardClick(REMOVE_MEMBER)} image={RemoveIcon} title={REMOVE_MEMBER} enabled={enabled} />
             <Card onClick={() => this.onCardClick(CHANGE_REQUIREMENTS)} image={FunctionsIcon} title={CHANGE_REQUIREMENTS} enabled={enabled} />
@@ -143,7 +158,7 @@ class StartMultisigForm extends Component<WithApolloClient<{}>, ModalProps> {
   
 }
 
-export default withApollo(StartMultisigForm);
+export default StartMultisigForm;
 
 
 const CardContainer = styled('div')({
