@@ -14,11 +14,18 @@ export const ADD_MEMBER = gql`
             entry
         }
     }
+`;
 
-`
+export const CHANGE_REQUIREMENT = gql`
+    mutation ChangeRequirement($multisig_address: String!, $new_requirement: Int!, $description: String!) {
+        changeRequirement(multisig_address: $multisig_address, new_requirement: $new_requirement, description: $description) {
+            entry
+        }
+    }
+`;
 
 export const CREATE_MULTISIG = gql`
     mutation NewMultisig($title: String!, $description: String!, $organization_address: String!) {
         newMultisig(title: $title, description: $description, organization_address: $organization_address) 
     }
-`
+`;

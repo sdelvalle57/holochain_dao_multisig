@@ -7,7 +7,7 @@ import { GetMultisig, GetMultisigVariables, GetMultisig_getMultisig } from '../_
 import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
 
 import {Container} from './global-containers';
-import {Card, Alert, Error, Modal, Info, AddMemberForm} from '.'
+import {Card, Alert, Error, Modal, Info, AddMemberForm, RemoveMemberForm, ChangeRequirementForm} from '.'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -20,6 +20,7 @@ import {GET_MULTISIG_MEMBERS, GET_MULTISIG} from '../queries';
 import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
 
 import {Type} from './alert';
+import { CHANGE_REQUIREMENT } from '../mutations';
 
 interface PageProps extends WithApolloClient<{}> {
   multisigAddress: string | null;
@@ -93,7 +94,7 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
     } 
   }
 
-  addNewMember = async () => {
+  addNewMember = () => {
     const { multisigAddress } = this.props;
       if(multisigAddress) {
         const content = <AddMemberForm multisigAddress={multisigAddress} />
@@ -109,6 +110,53 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
       this.setState({show: true, content: error, header: "Error"})
   }
 
+  removeMember = () => {
+    const { multisigAddress } = this.props;
+    if(multisigAddress) {
+      const content = <RemoveMemberForm multisigAddress={multisigAddress} />
+      this.setState({ 
+        header: multisigAddress, 
+        headerTitle: "Add Member",
+        content,
+        show: true
+      });
+      return;
+    }
+    const error = <Alert text="Internal Error" type={Type.Danger} />
+    this.setState({show: true, content: error, header: "Error"})
+  }
+
+  changeRequirement = async () => {
+    const { multisigAddress } = this.props;
+    try { 
+
+      if(multisigAddress) {
+        const multisigData = await this.getMultisigData(multisigAddress);
+
+        if(multisigData) {
+          const content = (
+            <ChangeRequirementForm 
+              multisigAddress={multisigAddress} 
+              current={multisigData.required} />
+          )
+          this.setState({
+            show: true,
+            content,
+            header: multisigAddress,
+            headerTitle: "Change Requirement"
+          })
+          return;
+        }
+      }
+      const error = <Alert text="Internal Error" type={Type.Danger} />
+      this.setState({show: true, content: error, header: "Error"})
+     
+    } catch (err) { 
+      const error = <Error error={err} />
+      this.setState({show: true, content: error, header: "Error"})
+    } 
+  }
+
   onCardClick =  async(cardName: string) => {
     switch(cardName) {
       case GET_MULTISIG_INFO:
@@ -116,6 +164,12 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
         break;
       case ADD_NEW_MEMBER:
         this.addNewMember();
+        break;
+      case REMOVE_MEMBER:
+        this.removeMember();
+        break
+      case CHANGE_REQUIREMENTS:
+        this.changeRequirement();
         break;
     }
   }
