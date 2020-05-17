@@ -120,6 +120,11 @@ mod my_zome {
         member::add_member(name, description, address, multisig_address)
     }
 
+    // #[zome_fn("hc_public")]
+    // fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    //     member::remove_member(description, address, multisig_address)
+    // }
+
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
     fn sign_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {

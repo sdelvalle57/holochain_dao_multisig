@@ -25,7 +25,8 @@ use constants::{ADD_MEMBER};
 use structures::{
     Person,
     LinkData,
-    EntryAction
+    EntryAction,
+    LinkAction
 };
 /******************************************* */
 
@@ -71,8 +72,36 @@ pub fn entry_def() -> ValidatingEntryType {
 pub fn add_member(name: String, description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let new_member = Member::new(name, address);
     let new_member_entry = new_member.entry();
-    let link_data = LinkData::new(Some(multisig_address.clone()), None, "multisig->members".into(), None);
+    let link_data = LinkData::new(
+        LinkAction::ADD,
+        Some(multisig_address.clone()), 
+        None, "multisig->members".into(), 
+        None
+    );
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]), multisig_address)
+}
+
+pub fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    let member = get_member(address, multisig_address.clone())?;
+    let member_entry = member.entry();
+    let member_address = hdk::entry_address(&member_entry)?;
+
+    let link_data = LinkData::new(
+        LinkAction::REMOVE,
+        Some(multisig_address.clone()), 
+        Some(member_address.clone()), 
+        "multisig->members".into(), 
+        None
+    );
+
+    transaction::submit(
+        ADD_MEMBER.to_string(), 
+        description, 
+        member_entry, 
+        EntryAction::REMOVE(member_address.clone()), 
+        Some(vec![link_data]), 
+        multisig_address
+    )
 }
 
 pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {

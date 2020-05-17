@@ -34,7 +34,8 @@ use serde_json::json;
 
 use structures::{
     LinkData,
-    EntryAction
+    EntryAction,
+    LinkAction
 };
 
 use crate::{
@@ -106,8 +107,6 @@ impl VerifiedMember {
         }
     }
 }
-
-
 
 pub fn entry_def() -> ValidatingEntryType {
     entry!(
@@ -233,7 +232,10 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
                     data_address = hdk::commit_entry(&data)?;
                 },
                 EntryAction::UPDATE(base_address) => {
-                    data_address = hdk::update_entry(data, &base_address)?; //should update
+                    data_address = hdk::update_entry(data, &base_address)?; 
+                },
+                EntryAction::REMOVE(target_address) => {
+                    data_address = hdk::remove_entry(&target_address)?;
                 }
             }
             transaction.executed = true;
@@ -260,8 +262,14 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
                            Some(tag) => tag_link_data = tag,
                            _ => ()
                        }
-   
-                       hdk::link_entries(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
+                       match link.action {
+                           LinkAction::ADD => {
+                                hdk::link_entries(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
+                           }
+                           LinkAction::REMOVE => {
+                                hdk::remove_link(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
+                           }
+                       }
                     }
                 },
                 None => ()

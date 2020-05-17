@@ -26,7 +26,8 @@ use decoders::{
 
 pub use structures::{
     LinkData,
-    EntryAction
+    EntryAction,
+    LinkAction
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -126,8 +127,20 @@ pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<A
     let tx_description = String::from("New organization");
     let tx_entry_data = organization_entry;
     let tx_entry_action = EntryAction::COMMIT;
-    let tx_link_data_msig = LinkData::new(Some(multisig_address.clone()), None, String::from("multisig->organizations"), None);
-    let tx_link_data_owner = LinkData::new(Some(AGENT_ADDRESS.clone()), None, String::from("owner->organizations"), None);
+    let tx_link_data_msig = LinkData::new(
+        LinkAction::ADD,
+        Some(multisig_address.clone()), 
+        None, 
+        String::from("multisig->organizations"), 
+        None
+    );
+    let tx_link_data_owner = LinkData::new(
+        LinkAction::ADD,
+        Some(AGENT_ADDRESS.clone()), 
+        None, 
+        String::from("owner->organizations"), 
+        None
+    );
     let tx_entry_links = vec![tx_link_data_msig, tx_link_data_owner];
     let args = tx_to_json(tx_title, tx_description, tx_entry_data, tx_entry_action, Some(tx_entry_links), multisig_address.clone())?;
     let rpc_call_transaction = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "submit_transaction", args);
