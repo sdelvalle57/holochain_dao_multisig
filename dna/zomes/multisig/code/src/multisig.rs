@@ -209,7 +209,8 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
     let multisig_address = hdk::commit_entry(&multisig_entry)?; 
 
     let hardcoded_members = helpers::get_hardcoded_members()?;
-    for member in hardcoded_members {
+    for person in hardcoded_members {
+        let member = member::Member::new(person.name, person.address, multisig_address.clone());
         let member_entry = member.entry();
         let member_address = hdk::commit_entry(&member_entry)?;
         hdk::link_entries(&multisig_address, &member_address, "multisig->members", "")?; 

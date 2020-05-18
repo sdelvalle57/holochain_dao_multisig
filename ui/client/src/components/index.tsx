@@ -11,6 +11,3 @@ export { default as Info } from './info-container';
 export { default as Dashboard } from './dashboard';
 export { default as Start } from './start';
 export { default as Alert } from './alert';
-export { default as AddMemberForm } from './add_new_member';
-export { default as RemoveMemberForm } from './remove_member';
-export { default as ChangeRequirementForm } from './change_requirement';

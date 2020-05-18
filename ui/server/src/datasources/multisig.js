@@ -43,6 +43,15 @@ class MyAddressAPI extends RESTDataSource {
         return this.entryReducer(JSON.parse(response))
     }
 
+    async removeMember(description, address, multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "remove_member")({
+            description, 
+            address,
+            multisig_address
+        })
+        return this.entryReducer(JSON.parse(response))
+    }
+
     async changeRequirement(new_requirement, description, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "change_requirement")({
             new_requirement, 

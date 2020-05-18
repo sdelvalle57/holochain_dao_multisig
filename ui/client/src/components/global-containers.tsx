@@ -71,6 +71,18 @@ import { lighten } from 'polished';
     },
   });
 
+  export const StyledSelector = styled('select')({
+    width: '100%',
+    marginBottom: unit * 2,
+    padding: `${unit * 1.25}px ${unit * 2.5}px`,
+    border: `1px solid ${colors.grey}`,
+    fontSize: 16,
+    outline: 'none',
+    ':focus': {
+      borderColor: colors.primary,
+    },
+  })
+
   
 
   

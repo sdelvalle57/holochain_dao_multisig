@@ -1,15 +1,13 @@
 import React, { Component } from 'react';
 import styled from 'react-emotion';
 
-import {Button} from '.';
-import { StyledForm, StyledInput} from './global-containers'
-import { unit } from '../styles';
+import { StyledForm, StyledInput} from '../global-containers'
+import { unit } from '../../styles';
 import { useMutation } from 'react-apollo';
-import { CHANGE_REQUIREMENT } from '../mutations';
-import Loading from './loading';
-import Error from './error';
-import Alert, { Type } from './alert';
-import { ChangeRequirement, ChangeRequirementVariables } from '../__generated__/ChangeRequirement';
+import { CHANGE_REQUIREMENT } from '../../mutations';
+import { Loading, Button, Error } from '../index';
+import Alert, { Type } from '../alert';
+import { ChangeRequirement, ChangeRequirementVariables } from '../../__generated__/ChangeRequirement';
 
 interface MainProps {
     multisigAddress: string;

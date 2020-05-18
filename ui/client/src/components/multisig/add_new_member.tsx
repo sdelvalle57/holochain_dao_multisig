@@ -1,23 +1,19 @@
 import React, { Component } from 'react';
 import styled from 'react-emotion';
 
-import {Button} from '.';
-import { StyledForm, StyledInput} from './global-containers'
-import { unit } from '../styles';
-import { AddMemberVariables, AddMember } from '../__generated__/AddMember';
+import { StyledForm, StyledInput} from '../global-containers'
+import { unit } from '../../styles';
+import { AddMemberVariables, AddMember } from '../../__generated__/AddMember';
 import { useMutation } from 'react-apollo';
-import { START_MULTISIG, ADD_MEMBER } from '../mutations';
-import Loading from './loading';
-import Error from './error';
-import Alert, { Type } from './alert';
+import { ADD_MEMBER } from '../../mutations';
+import {Loading, Error, Button} from '../index';
+import Alert, { Type } from '../alert';
 
 interface MainProps {
     multisigAddress: string;
 }
 
-
-//TODO; implement in rust
-const RemoveMember: React.FC<MainProps> = (props) => {
+const AddNewMember: React.FC<MainProps> = (props) => {
     const { multisigAddress } = props;
     const [addNewMember, {loading, error, data}] = useMutation<AddMember, AddMemberVariables>(ADD_MEMBER);
     if(loading) return <Loading />
@@ -29,7 +25,7 @@ const RemoveMember: React.FC<MainProps> = (props) => {
     return <AddNewMemberForm addNewMember={addNewMember} multisig={multisigAddress} />
 }
 
-export default RemoveMember;
+export default AddNewMember;
 
 
 /******* Form *********/
@@ -41,6 +37,7 @@ interface AddNewMemberFormProps {
 
 interface AddNewMemberFormState {
   name: string;
+  description: string;
   address: string;
 }
 

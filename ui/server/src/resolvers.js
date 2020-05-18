@@ -78,6 +78,10 @@ module.exports = {
           const res = await dataSources.multisigAPI.addMember(name, description, address, multisig_address)
           return handleResponse(res, "Unable to create transaction")
         },
+        removeMember: async (_, {description, address, multisig_address}, { dataSources }) => {
+          const res = await dataSources.multisigAPI.removeMember(description, address, multisig_address)
+          return handleResponse(res, "Unable to create transaction")
+        },
         signTransaction: async (_, {entry_address, multisig_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.signTransaction(entry_address, multisig_address)
           return handleResponse(res, "Unable to create transaction")

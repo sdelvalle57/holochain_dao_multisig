@@ -29,6 +29,7 @@ const typeDefs = gql`
         start: Entry!,
         changeRequirement(new_requirement: Int!, description: String!, multisig_address: String!): Entry!,
         addMember(name: String!, description: String!, address: String!, multisig_address: String!): Entry!,
+        removeMember(description: String!, address: String!, multisig_address: String!): Entry!,
         signTransaction(entry_address: String!, multisig_address: String!): Entry!,
         executeTransaction(entry_address: String!, multisig_address: String!): Entry!,
         
@@ -61,7 +62,8 @@ const typeDefs = gql`
     }
 
     type Member {
-        member: Person!
+        member: Person!,
+        multisig_address: String!
     }
 
     type LinkData {
@@ -106,9 +108,6 @@ const typeDefs = gql`
     type AppEntry {
         App: [String!]!
     }
-
-
-    
 `;
 
 

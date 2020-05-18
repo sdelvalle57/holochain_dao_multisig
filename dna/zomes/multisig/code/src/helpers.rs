@@ -29,27 +29,22 @@ pub use structures::{
 };
 /******************************************* */
 
-fn get_valid_members() -> ZomeApiResult<Vec<Member>> {
+fn get_valid_members() -> ZomeApiResult<Vec<Person>> {
     let valid_members_json = hdk::property("valid_members")?;
     let persons: Result<Vec<Person>, _> = serde_json::from_str(&valid_members_json.to_string());
     
-    
     match persons {
         Ok(persons) => {
-            let mut valid_members: Vec<Member> = Vec::default();
-            for person in persons  {
-                valid_members.push(Member::new(person.name, person.address));
-            }
-            Ok(valid_members)
+            Ok(persons)
         },
         Err(_) => Err(ZomeApiError::from(String::from("Could not load members")))
     }
 }
 
-pub fn get_hardcoded_members() -> ZomeApiResult<Vec<Member>> {
+pub fn get_hardcoded_members() -> ZomeApiResult<Vec<Person>> {
     let valid_members = get_valid_members()?;
     for m in &valid_members {
-        if m.member.address == AGENT_ADDRESS.clone() {
+        if m.address == AGENT_ADDRESS.clone() {
             return Ok(valid_members.clone());
         }
     }
@@ -60,7 +55,7 @@ pub fn get_hardcoded_members() -> ZomeApiResult<Vec<Member>> {
 pub fn check_is_member() -> ZomeApiResult<bool> {
     let valid_members = get_valid_members()?;
     for m in valid_members {
-        if m.member.address == AGENT_ADDRESS.clone() {
+        if m.address == AGENT_ADDRESS.clone() {
             return Ok(true);
         }
     }

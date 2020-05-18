@@ -37,16 +37,18 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Member {
-    pub member: Person
+    pub member: Person,
+    pub multisig_address: Address
 }
 
 impl Member {
-    pub fn new(name: String, address: Address) -> Self {
+    pub fn new(name: String, address: Address, multisig_address: Address) -> Self {
         Member {
             member: Person {
                 name,
-                address
-            }
+                address,
+            },
+            multisig_address
         }
     }
 
@@ -63,14 +65,30 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Member> | {
-            Ok(())
+        validation: | validation_data: hdk::EntryValidationData<Member> | {
+            match validation_data {
+                EntryValidationData::Create { .. } => {
+                    Ok(())
+                },
+                EntryValidationData::Delete { old_entry, .. } => {
+                    let multisig_address = old_entry.multisig_address;
+                    let multisig = multisig::get_multisig(multisig_address.clone())?;
+                    let multisig_members = get_members(multisig_address.clone())?;
+                    if multisig.required > (multisig_members.len() as u64) - 1 {
+                        return Err(String::from("Requirement exceeds number of members"));
+                    }
+                    Ok(())
+                },
+                _ => {
+                    return Err(String::from("Member operation not permitted"));
+                }
+            }
         } 
     )
 }
 
 pub fn add_member(name: String, description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-    let new_member = Member::new(name, address);
+    let new_member = Member::new(name, address, multisig_address.clone());
     let new_member_entry = new_member.entry();
     let link_data = LinkData::new(
         LinkAction::ADD,
@@ -82,14 +100,15 @@ pub fn add_member(name: String, description: String, address: Address, multisig_
 }
 
 pub fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    
     let member = get_member(address, multisig_address.clone())?;
     let member_entry = member.entry();
-    let member_address = hdk::entry_address(&member_entry)?;
+    let entry_address = hdk::entry_address(&member_entry)?;
 
     let link_data = LinkData::new(
         LinkAction::REMOVE,
         Some(multisig_address.clone()), 
-        Some(member_address.clone()), 
+        Some(entry_address.clone()), 
         "multisig->members".into(), 
         None
     );
@@ -98,7 +117,7 @@ pub fn remove_member(description: String, address: Address, multisig_address: Ad
         ADD_MEMBER.to_string(), 
         description, 
         member_entry, 
-        EntryAction::REMOVE(member_address.clone()), 
+        EntryAction::REMOVE(entry_address.clone()), 
         Some(vec![link_data]), 
         multisig_address
     )

@@ -7,7 +7,8 @@ import { GetMultisig, GetMultisigVariables, GetMultisig_getMultisig } from '../_
 import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
 
 import {Container} from './global-containers';
-import {Card, Alert, Error, Modal, Info, AddMemberForm, RemoveMemberForm, ChangeRequirementForm} from '.'
+import {Card, Alert, Error, Modal, Info } from '.'
+import { AddMemberForm, ChangeRequirementForm, RemoveMemberForm, PendingTxs} from './multisig'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -16,11 +17,12 @@ import FunctionsIcon from '../assets/images/functionsIcon.png'
 import PendingTxIcon from '../assets/images/pendingTxIcon.png'
 import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
 
-import {GET_MULTISIG_MEMBERS, GET_MULTISIG} from '../queries';
+import {GET_MULTISIG_MEMBERS, GET_MULTISIG, GET_TRANSACTIONS} from '../queries';
 import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
 
 import {Type} from './alert';
-import { CHANGE_REQUIREMENT } from '../mutations';
+import { GetTransactionList, GetTransactionListVariables } from '../__generated__/GetTransactionList';
+import Loading from './loading';
 
 interface PageProps extends WithApolloClient<{}> {
   multisigAddress: string | null;
@@ -110,20 +112,37 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
       this.setState({show: true, content: error, header: "Error"})
   }
 
-  removeMember = () => {
+  removeMember = async () => {
     const { multisigAddress } = this.props;
     if(multisigAddress) {
-      const content = <RemoveMemberForm multisigAddress={multisigAddress} />
-      this.setState({ 
-        header: multisigAddress, 
-        headerTitle: "Add Member",
-        content,
-        show: true
-      });
-      return;
+      const multisigData = await this.getMultisigData(multisigAddress);
+      if(multisigData) {
+        const members = await this.getMembers(multisigAddress);
+        const content = <RemoveMemberForm members= {members} multisigAddress={multisigAddress} />
+        this.setState({ 
+          header: multisigAddress, 
+          headerTitle: "Remove Member",
+          content,
+          show: true
+        });
+        return;
+      }
+      
     }
     const error = <Alert text="Internal Error" type={Type.Danger} />
     this.setState({show: true, content: error, header: "Error"})
+  }
+
+  pendingTxs = async () => {
+    const { client, multisigAddress } = this.props;
+    console.log(multisigAddress)
+    if(multisigAddress) {
+      const content = <PendingTxs client={client} multisigAddress={multisigAddress} />
+      this.setState({show: true, content, headerTitle: "Pending Transaction", header: multisigAddress})
+      return;
+    }
+    const content = <Alert text="Internal Error" type={Type.Danger} />
+    this.setState({show: true, content, header: "Error"})
   }
 
   changeRequirement = async () => {
@@ -170,6 +189,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
         break
       case CHANGE_REQUIREMENTS:
         this.changeRequirement();
+        break;
+      case PENDING_TRASACTIONS:
+        this.pendingTxs();
         break;
     }
   }

@@ -24,7 +24,8 @@ use hdk::{AGENT_ADDRESS, THIS_INSTANCE, DNA_ADDRESS};
 use hdk_proc_macros::zome;
 use structures::{
     LinkData,
-    EntryAction
+    EntryAction,
+    Person
 };
 
 //use std::convert::TryInto;
@@ -83,7 +84,7 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_hardcoded_members() -> ZomeApiResult<Vec<member::Member>> {
+    fn get_hardcoded_members() -> ZomeApiResult<Vec<Person>> {
         helpers::get_hardcoded_members()
     }
 
@@ -120,10 +121,10 @@ mod my_zome {
         member::add_member(name, description, address, multisig_address)
     }
 
-    // #[zome_fn("hc_public")]
-    // fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-    //     member::remove_member(description, address, multisig_address)
-    // }
+    #[zome_fn("hc_public")]
+    fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+        member::remove_member(description, address, multisig_address)
+    }
 
     /*********** Transaction.rs */
     #[zome_fn("hc_public")]
