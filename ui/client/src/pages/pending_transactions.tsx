@@ -55,8 +55,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                             const transactionData = await client.query<GetTransaction, GetTransactionVariables>({
                                 query: GET_TRANSACTION,
                                 variables: {
-                                    entry_address: tx,
-                                    multisig_address: multisigAddress
+                                    entry_address: tx
                                 }
                             })
     
@@ -65,7 +64,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                             }))
                         }
                     })
-                                
                 }
             } catch (error) {
                 this.setState({error: <Error error={error} />})
@@ -182,8 +180,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
 
                         {this.getLinks(tx.getTransaction.entry_links)}
 
-
-
                     </Content>
                 </CardContainer>
             </Card>
@@ -219,8 +215,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                 }
             </Container>
         )
-        
-        
     }
 }
 

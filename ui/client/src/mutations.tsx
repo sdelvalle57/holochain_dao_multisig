@@ -32,6 +32,16 @@ export const CHANGE_REQUIREMENT = gql`
     }
 `;
 
+
+export const NEW_ORGANIZATION = gql`
+    mutation NewOrganization($title: String!, $description: String!, $owner: String!, $multisig_address: String!) {
+        newOrganization(title: $title, description: $description, owner: $owner, multisig_address: $multisig_address) 
+    }
+`;
+
+
+
+// not yet implemented
 export const CREATE_MULTISIG = gql`
     mutation NewMultisig($title: String!, $description: String!, $organization_address: String!) {
         newMultisig(title: $title, description: $description, organization_address: $organization_address) 

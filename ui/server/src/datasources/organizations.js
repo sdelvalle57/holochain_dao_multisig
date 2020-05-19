@@ -17,11 +17,12 @@ class OrganizationAPI extends RESTDataSource {
         }
     }
 
-    async newOrganization(name, description, owner) {
+    async newOrganization(name, description, owner, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "new")({
             name,
             description, 
-            owner
+            owner,
+            multisig_address
         })
         return this.reducer(JSON.parse(response))
     }

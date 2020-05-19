@@ -116,12 +116,10 @@ pub fn entry_def() -> ValidatingEntryType {
     )
 }
 
-pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<Address> {
+pub fn new(name: String, description: String, owner: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
     let organization = Organization::new(name, description, owner);
     let organization_entry = organization.entry();
-    let rpc_call_msig_address = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "get_multisig_address", JsonString::from("{}"));
-    let multisig_address: Address = decode_zome_call(rpc_call_msig_address.clone())?;
 
     let tx_title = String::from("Add new organization");
     let tx_description = String::from("New organization");
@@ -142,9 +140,9 @@ pub fn new(name: String, description: String, owner: Address) -> ZomeApiResult<A
         None
     );
     let tx_entry_links = vec![tx_link_data_msig, tx_link_data_owner];
-    let args = tx_to_json(tx_title, tx_description, tx_entry_data, tx_entry_action, Some(tx_entry_links), multisig_address.clone())?;
-    let rpc_call_transaction = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "submit_transaction", args);
-    let rpc_call_transaction_address: Address = decode_zome_call(rpc_call_transaction.clone())?;
+    let args = tx_to_json(tx_title, tx_description, tx_entry_data, tx_entry_action, Some(tx_entry_links), multisig_address)?;
+    let rpc_call_transaction = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap, "submit_transaction", args);
+    let rpc_call_transaction_address: Address = decode_zome_call(rpc_call_transaction)?;
     Ok(rpc_call_transaction_address)
 }
 

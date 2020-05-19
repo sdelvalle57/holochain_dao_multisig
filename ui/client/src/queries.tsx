@@ -39,11 +39,12 @@ export const GET_TRANSACTIONS = gql`
 `;
 
 export const GET_TRANSACTION = gql`
-    query GetTransaction($entry_address: String!, $multisig_address: String!) {
-        getTransaction(entry_address: $entry_address, multisig_address: $multisig_address) {
+    query GetTransaction($entry_address: String!) {
+        getTransaction(entry_address: $entry_address) {
             title
             description
             required
+            multisig_address
             signed {
                 member {
                     member {
@@ -104,5 +105,3 @@ export const IS_HARDCODED_MEMBER = gql`
     }
 
 `
-
-

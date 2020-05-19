@@ -161,8 +161,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<transaction::Transaction> {
-        transaction::get(entry_address, multisig_address)
+    fn get_transaction(entry_address: Address) -> ZomeApiResult<transaction::Transaction> {
+        transaction::get(entry_address)
     }
 
     #[zome_fn("hc_public")]

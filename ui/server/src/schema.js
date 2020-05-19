@@ -14,7 +14,7 @@ const typeDefs = gql`
         getMembers(multisig_address: String!): [Member!]!,
         getMultisigAddress: Entry!,
         getMultisig(multisig_address: String!): Multisig!,
-        getTransaction(entry_address: String!, multisig_address: String!): Transaction!,
+        getTransaction(entry_address: String!): Transaction!,
         getTransactionList(multisig_address: String!): [String]!,
         getTransactionMemberList(multisig_address: String!): [String]!,
 
@@ -34,9 +34,8 @@ const typeDefs = gql`
         executeTransaction(entry_address: String!, multisig_address: String!): Entry!,
         
         #******* Organizations ******* 
-        newOrganization(name: String!, description: String!, owner: String!): String!,
+        newOrganization(name: String!, description: String!, owner: String!, multisig_address: String!): String!,
         newMultisig(title: String!, description: String!, organization_address: String!): String!
-
     }
 
     #***************************************************************************************************
@@ -78,6 +77,7 @@ const typeDefs = gql`
         title: String!,
         description: String!,
         required: Int!,
+        multisig_address: String!,
         signed: [VerifiedMember!],
         creator: Member!,
         executed: Boolean!,

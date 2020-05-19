@@ -49,13 +49,14 @@ pub struct Transaction {
     title: String,
     description: String,
     required: u64,
+    multisig_address: Address,
     pub signed: Vec<VerifiedMember>,
     creator: member::Member,
     pub executed: bool,
     entry_data: Entry,
     entry_action: EntryAction,
     entry_links: Option<Vec<LinkData>>, 
-    response_address: Option<Address>
+    response_address: Option<Address>,
 }
 
 
@@ -65,6 +66,7 @@ impl Transaction {
         title: String, 
         description: String, 
         required: u64, 
+        multisig_address: Address,
         signer: VerifiedMember, 
         entry_data: Entry, 
         entry_action: EntryAction,
@@ -74,6 +76,7 @@ impl Transaction {
             title,
             description,
             required,
+            multisig_address,
             signed: vec![signer.clone()],
             creator: signer.member,
             executed: false,
@@ -179,6 +182,7 @@ pub fn submit(
         title, 
         description, 
         multisig.required, 
+        multisig_address.clone(),
         verified_member, 
         entry_data, 
         entry_action,
@@ -216,7 +220,6 @@ pub fn sign_entry(entry_address: Address, multisig_address: Address) -> ZomeApiR
     hdk::link_entries(&AGENT_ADDRESS, &entry_address, "member->transactions", "")?;
     Ok(entry_address)
 }
-
 
 pub fn execute_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
@@ -321,9 +324,9 @@ fn verify_signature(transaction: Transaction, verified_member: VerifiedMember) -
 
 
 //Clones the transaction and verifies each member who has signed it
-pub fn get(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Transaction> {
-    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
+pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
     let transaction: Transaction = Transaction::get(entry_address)?;
+    member::get_member(AGENT_ADDRESS.clone(), transaction.multisig_address.clone())?;
     let mut transaction_response = transaction.clone();
     transaction_response.signed = Vec::default();
     for verified_member in transaction.clone().signed {

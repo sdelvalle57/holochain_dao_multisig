@@ -105,10 +105,9 @@ class MyAddressAPI extends RESTDataSource {
         return this.reducer(JSON.parse(response))
     }
 
-    async getTransaction(entry_address, multisig_address) {
+    async getTransaction(entry_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_transaction")({
             entry_address,
-            multisig_address
         })
         console.log(response)
         return this.reducer(JSON.parse(response))
