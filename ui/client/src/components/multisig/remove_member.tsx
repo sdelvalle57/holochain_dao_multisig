@@ -32,18 +32,18 @@ export default RemoveMemberFC;
 
 /******* Form *********/
 
-interface AddNewMemberFormProps {
+interface RemoveMemberProps {
     removeMember: (a : {variables: RemoveMemberVariables}) => void;
     multisig: string;
     members: GetMultisigMembers_getMembers[];
 }
 
-interface AddNewMemberFormState {
+interface RemoveMemberFormState {
   description: string;
   address: string;
 }
 
-class RemoveMemberForm extends Component<AddNewMemberFormProps, AddNewMemberFormState> {
+class RemoveMemberForm extends Component<RemoveMemberProps, RemoveMemberFormState> {
   state = { 
     description: '',
     address: ''
@@ -56,7 +56,7 @@ class RemoveMemberForm extends Component<AddNewMemberFormProps, AddNewMemberForm
     this.setState(s => ({ 
         ...this.state, 
         [name]: value 
-    } as Pick<AddNewMemberFormState, keyof AddNewMemberFormState>));
+    } as Pick<RemoveMemberFormState, keyof RemoveMemberFormState>));
   };
 
   onSubmit = (event: React.FormEvent<HTMLFormElement>) => {

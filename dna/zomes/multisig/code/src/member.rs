@@ -20,7 +20,10 @@ use hdk::ValidationData;
 use std::convert::TryFrom;
 use serde_json::json;
 
-use constants::{ADD_MEMBER};
+use constants::{
+    ADD_MEMBER,
+    REMOVE_MEMBER
+};
 
 use structures::{
     Person,
@@ -114,7 +117,7 @@ pub fn remove_member(description: String, address: Address, multisig_address: Ad
     );
 
     transaction::submit(
-        ADD_MEMBER.to_string(), 
+        REMOVE_MEMBER.to_string(), 
         description, 
         member_entry, 
         EntryAction::REMOVE(entry_address.clone()), 

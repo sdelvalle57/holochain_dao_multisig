@@ -8,6 +8,7 @@ export const colors = {
   background: '#f7f8fa',
   grey: '#d8d9e0',
   text: '#343c5a',
+  title: '#C49E57',
   textSecondary: '#747790'
 };
 
@@ -21,6 +22,7 @@ export default () => injectGlobal({
     fontFamily: "'Source Sans Pro', sans-serif",
     backgroundColor: colors.background,
     color: colors.text,
+    fontSize: '12px'
   },
   '#root': {
     display: 'flex',
@@ -32,6 +34,9 @@ export default () => injectGlobal({
   [['h1', 'h2', 'h3', 'h4', 'h5', 'h6']]: {
     margin: 0,
     fontWeight: 600,
+  },
+  small: {
+    fontSize: '8px'
   },
   h1: {
     fontSize: 48,

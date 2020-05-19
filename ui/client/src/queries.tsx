@@ -45,32 +45,34 @@ export const GET_TRANSACTION = gql`
             description
             required
             signed {
-            member {
                 member {
-                name
-                address
+                    member {
+                    name
+                    address
+                    }
                 }
             }
-            }
             creator {
-            member {
-                name
-                address
-            }
+                member {
+                    name
+                    address
+                }
             }
             executed
             entry_data {
-            App
+                App
             }
             entry_action {
-            COMMIT
-            UPDATE
+                COMMIT
+                UPDATE
+                REMOVE
             }
             entry_links {
-            base
-            target
-            link_type
-            link_tag
+                action
+                base
+                target
+                link_type
+                link_tag
             }
         }
     }

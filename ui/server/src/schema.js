@@ -67,6 +67,7 @@ const typeDefs = gql`
     }
 
     type LinkData {
+        action: LinkAction,
         base: String,
         target: String,
         link_type: String!,
@@ -88,12 +89,14 @@ const typeDefs = gql`
 
     type EntryAction {
         COMMIT: String,
-        UPDATE: String
+        UPDATE: String,
+        REMOVE: String,
     }
 
     enum _EntryAction {
         COMMIT 
         UPDATE
+        REMOVE
     }
 
     type VerifiedMember {
@@ -108,6 +111,11 @@ const typeDefs = gql`
     type AppEntry {
         App: [String!]!
     }
+
+    enum LinkAction {
+        ADD,
+        REMOVE
+    } 
 `;
 
 

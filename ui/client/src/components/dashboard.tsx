@@ -8,7 +8,7 @@ import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_get
 
 import {Container} from './global-containers';
 import {Card, Alert, Error, Modal, Info } from '.'
-import { AddMemberForm, ChangeRequirementForm, RemoveMemberForm, PendingTxs} from './multisig'
+import { AddMemberForm, ChangeRequirementForm, RemoveMemberForm} from './multisig'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -17,12 +17,11 @@ import FunctionsIcon from '../assets/images/functionsIcon.png'
 import PendingTxIcon from '../assets/images/pendingTxIcon.png'
 import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
 
-import {GET_MULTISIG_MEMBERS, GET_MULTISIG, GET_TRANSACTIONS} from '../queries';
+import {GET_MULTISIG_MEMBERS, GET_MULTISIG} from '../queries';
 import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
 
 import {Type} from './alert';
-import { GetTransactionList, GetTransactionListVariables } from '../__generated__/GetTransactionList';
-import Loading from './loading';
+import { navigate } from '@reach/router';
 
 interface PageProps extends WithApolloClient<{}> {
   multisigAddress: string | null;
@@ -134,15 +133,8 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
   }
 
   pendingTxs = async () => {
-    const { client, multisigAddress } = this.props;
-    console.log(multisigAddress)
-    if(multisigAddress) {
-      const content = <PendingTxs client={client} multisigAddress={multisigAddress} />
-      this.setState({show: true, content, headerTitle: "Pending Transaction", header: multisigAddress})
-      return;
-    }
-    const content = <Alert text="Internal Error" type={Type.Danger} />
-    this.setState({show: true, content, header: "Error"})
+    const { multisigAddress } = this.props;
+    navigate(`/pending_transactions/${multisigAddress}`)
   }
 
   changeRequirement = async () => {

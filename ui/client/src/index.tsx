@@ -11,7 +11,7 @@ import injectStyles from './styles';
 import { PageContainer } from './components';
 import { Router } from '@reach/router';
 
-import { Selector } from './pages';
+import { Selector, PendingTxs } from './pages';
 
 /*Start initialization */
 const cache = new InMemoryCache();
@@ -27,24 +27,23 @@ const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
 
 /*********End Initialization */
 
-const Global = styled('div')({
-  fontSize: '12px'
-})
 
 injectStyles();
 ReactDOM.render(
     <ApolloProvider client={client}>    
-      <Global>
         <Fragment>
           <PageContainer>
             <Router primary={false} component={Fragment}>
               <Selector 
                 path='/' 
                 client={client} />
+
+              <PendingTxs 
+                path='/pending_transactions/:multisigAddress' 
+                client={client} />
             </Router>
           </PageContainer>
         </Fragment>
-      </Global>
     </ApolloProvider>,   
     document.getElementById('root')
 );
