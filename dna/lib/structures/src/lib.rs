@@ -7,6 +7,8 @@ use holochain_json_api::{ json::JsonString, error::JsonError };
 use holochain_json_derive::{ DefaultJson };
 use hdk::holochain_persistence_api::cas::content::Address;
 
+
+/** This is used in the transaction struct **/
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub enum LinkAction {
     ADD,
@@ -21,7 +23,6 @@ pub struct LinkData {
     pub link_type: String,
     pub link_tag: Option<String>
 }
-
 
 impl LinkData {
     pub fn new(
@@ -47,6 +48,8 @@ pub enum EntryAction {
     REMOVE(Address),
     COMMIT
 }
+
+/*************************************/
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Person {

@@ -16,9 +16,10 @@ import RemoveIcon from '../assets/images/removeIcon.png'
 import FunctionsIcon from '../assets/images/functionsIcon.png'
 import PendingTxIcon from '../assets/images/pendingTxIcon.png'
 import ApprovedTxIcon from '../assets/images/approvedTxIcon.png'
+import CreateOrganizationIcon from '../assets/images/createOrganizationIcon.png'
 
 import {GET_MULTISIG_MEMBERS, GET_MULTISIG} from '../queries';
-import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS } from '../common/constants';
+import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS, CREATE_ORGANIZATION } from '../common/constants';
 
 import {Type} from './alert';
 import { navigate } from '@reach/router';
@@ -168,6 +169,10 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
     } 
   }
 
+  createOrganization = async () => {
+    
+  }
+
   onCardClick =  async(cardName: string) => {
     switch(cardName) {
       case GET_MULTISIG_INFO:
@@ -185,6 +190,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
       case PENDING_TRASACTIONS:
         this.pendingTxs();
         break;
+      case CREATE_ORGANIZATION:
+        this.createOrganization();
+        break
     }
   }
 
@@ -212,6 +220,7 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
             <Card onClick={() => this.onCardClick(CHANGE_REQUIREMENTS)} image={FunctionsIcon} title={CHANGE_REQUIREMENTS} enabled={enabled} />
             <Card onClick={() => this.onCardClick(PENDING_TRASACTIONS)} image={PendingTxIcon} title={PENDING_TRASACTIONS} enabled={enabled} />
             <Card onClick={() => this.onCardClick(APPROVED_TRANSACTIONS)} image={ApprovedTxIcon} title={APPROVED_TRANSACTIONS} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(CREATE_ORGANIZATION)} image={CreateOrganizationIcon} title={CREATE_ORGANIZATION} enabled={enabled} />
           </CardContainer>
         </Container>
         <Modal 

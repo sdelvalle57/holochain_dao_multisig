@@ -28,6 +28,7 @@ use hdk_proc_macros::zome;
 /******************************** */
 
 mod organization;
+mod employee;
 
 #[zome]
 mod my_zome {
@@ -50,8 +51,8 @@ mod my_zome {
 
     /*************** Setter Functions */
     #[zome_fn("hc_public")]
-    fn new(name: String, description: String, owner: Address) -> ZomeApiResult<Address> {
-      organization::new(name, description, owner)
+    fn new(name: String, description: String, owner: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+      organization::new(name, description, owner, multisig_address)
     }
 
     #[zome_fn("hc_public")]

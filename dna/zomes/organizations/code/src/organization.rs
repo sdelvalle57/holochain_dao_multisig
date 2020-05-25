@@ -24,6 +24,10 @@ use decoders::{
     tx_to_json
 };
 
+use crate::{
+    employee
+};
+
 pub use structures::{
     LinkData,
     EntryAction,
@@ -118,7 +122,7 @@ pub fn entry_def() -> ValidatingEntryType {
 
 pub fn new(name: String, description: String, owner: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
-    let organization = Organization::new(name, description, owner);
+    let organization = Organization::new(name, description, owner.clone());
     let organization_entry = organization.entry();
 
     let tx_title = String::from("Add new organization");
@@ -134,7 +138,7 @@ pub fn new(name: String, description: String, owner: Address, multisig_address: 
     );
     let tx_link_data_owner = LinkData::new(
         LinkAction::ADD,
-        Some(AGENT_ADDRESS.clone()), 
+        Some(owner), 
         None, 
         String::from("owner->organizations"), 
         None
@@ -153,7 +157,10 @@ pub fn new(name: String, description: String, owner: Address, multisig_address: 
 
 pub fn new_multisig(title: String, description: String, organization_address: Address) -> ZomeApiResult<Address> {
     let organization: Organization = hdk::utils::get_as_type(organization_address.clone())?;
-    if organization.owner != AGENT_ADDRESS.clone() {
+
+    let owner: employee::Employee = hdk::utils::get_as_type(organization.owner)?;
+
+    if owner.person.address != AGENT_ADDRESS.clone() {
         return Err(ZomeApiError::from(String::from("Agent is not organization owner")));
     }
 

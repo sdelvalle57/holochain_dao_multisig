@@ -34,8 +34,8 @@ export const CHANGE_REQUIREMENT = gql`
 
 
 export const NEW_ORGANIZATION = gql`
-    mutation NewOrganization($title: String!, $description: String!, $owner: String!, $multisig_address: String!) {
-        newOrganization(title: $title, description: $description, owner: $owner, multisig_address: $multisig_address) 
+    mutation NewOrganization($name: String!, $description: String!, $owner: String!, $multisig_address: String!) {
+        newOrganization(name: $name, description: $description, owner: $owner, multisig_address: $multisig_address) 
     }
 `;
 
