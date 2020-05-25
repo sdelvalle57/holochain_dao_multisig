@@ -8,7 +8,7 @@ import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_get
 
 import {Container} from './global-containers';
 import {Card, Alert, Error, Modal, Info } from '.'
-import { AddMemberForm, ChangeRequirementForm, RemoveMemberForm} from './multisig'
+import { AddMemberForm, ChangeRequirementForm, RemoveMemberForm, CreateOrganizationForm} from './multisig'
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import AddMemberIcon from '../assets/images/addIcon.png'
@@ -170,7 +170,19 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
   }
 
   createOrganization = async () => {
-    
+    const { multisigAddress } = this.props;
+      if(multisigAddress) {
+        const content = <CreateOrganizationForm multisigAddress={multisigAddress} />
+        this.setState({ 
+          header: multisigAddress, 
+          headerTitle: "New Organization",
+          content,
+          show: true
+        });
+        return;
+      }
+      const error = <Alert text="Internal Error" type={Type.Danger} />
+      this.setState({show: true, content: error, header: "Error"})
   }
 
   onCardClick =  async(cardName: string) => {
@@ -218,9 +230,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
             <Card onClick={() => this.onCardClick(ADD_NEW_MEMBER)} image={AddMemberIcon} title={ADD_NEW_MEMBER} enabled={enabled} />
             <Card onClick={() => this.onCardClick(REMOVE_MEMBER)} image={RemoveIcon} title={REMOVE_MEMBER} enabled={enabled} />
             <Card onClick={() => this.onCardClick(CHANGE_REQUIREMENTS)} image={FunctionsIcon} title={CHANGE_REQUIREMENTS} enabled={enabled} />
+            <Card onClick={() => this.onCardClick(CREATE_ORGANIZATION)} image={CreateOrganizationIcon} title={CREATE_ORGANIZATION} enabled={enabled} />
             <Card onClick={() => this.onCardClick(PENDING_TRASACTIONS)} image={PendingTxIcon} title={PENDING_TRASACTIONS} enabled={enabled} />
             <Card onClick={() => this.onCardClick(APPROVED_TRANSACTIONS)} image={ApprovedTxIcon} title={APPROVED_TRANSACTIONS} enabled={enabled} />
-            <Card onClick={() => this.onCardClick(CREATE_ORGANIZATION)} image={CreateOrganizationIcon} title={CREATE_ORGANIZATION} enabled={enabled} />
           </CardContainer>
         </Container>
         <Modal 

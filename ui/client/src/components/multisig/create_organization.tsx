@@ -3,9 +3,8 @@ import styled from 'react-emotion';
 
 import { StyledForm, StyledInput} from '../global-containers'
 import { unit } from '../../styles';
-import { AddMemberVariables, AddMember } from '../../__generated__/AddMember';
 import { useMutation } from 'react-apollo';
-import { ADD_MEMBER } from '../../mutations';
+import { NEW_ORGANIZATION } from '../../mutations';
 import {Loading, Error, Button} from '../index';
 import Alert, { Type } from '../alert';
 import { NewOrganization, NewOrganizationVariables } from '../../__generated__/NewOrganization';
@@ -16,14 +15,14 @@ interface MainProps {
 
 const CreateOrganization: React.FC<MainProps> = (props) => {
     const { multisigAddress } = props;
-    const [newOrganization, {loading, error, data}] = useMutation<NewOrganization, NewOrganizationVariables>(ADD_MEMBER);
+    const [newOrganization, {loading, error, data}] = useMutation<NewOrganization, NewOrganizationVariables>(NEW_ORGANIZATION);
     if(loading) return <Loading />
     if(error) return <Error error={error} />
     if(data?.newOrganization) {
         const responseObject = <><div>Entry</div><div>{data.newOrganization}</div></> 
         return <Alert text={responseObject} type={Type.Success} />;
     }
-    return <AddNewMemberForm newOrganization={newOrganization} multisig={multisigAddress} />
+    return <CreateOrganizationForm newOrganization={newOrganization} multisig={multisigAddress} />
 }
 
 export default CreateOrganization;
@@ -42,7 +41,7 @@ interface CreateOrganizationFormState {
   owner: string;
 }
 
-class AddNewMemberForm extends Component<CreateOrganizationProps, CreateOrganizationFormState> {
+class CreateOrganizationForm extends Component<CreateOrganizationProps, CreateOrganizationFormState> {
   state = { 
     name: '', 
     description: '',
