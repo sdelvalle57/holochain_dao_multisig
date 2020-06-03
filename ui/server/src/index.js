@@ -36,30 +36,14 @@ const resolvers = require('./resolvers');
         }),
         engine: {
             apiKey: process.env.APOLLO_KEY,
-        },
-      
-        subscriptions: {
-            onConnect: (connectionParams, webSocket) => {
-                console.log('Websocket CONNECTED');
-                return {
-                    hello: 'world'
-                }
-            },
-            onDisconnect: () => {
-                console.log("disc")
-            }
         }
     });
 
     server.applyMiddleware({ app });
 
-    const httpServer = http.createServer(app);
-    server.installSubscriptionHandlers(httpServer);
-
     const port = process.env.PORT ? process.env.PORT : 4000;
     
-    httpServer.listen( port , () => {
+    app.listen( port , () => {
         console.log(`🚀 Server ready at http://localhost:${port}${server.graphqlPath}`);
-        console.log(`🚀 Subscriptions ready at ws://localhost:${port}${server.subscriptionsPath}`);
     })
 })().catch(e => console.log(e))

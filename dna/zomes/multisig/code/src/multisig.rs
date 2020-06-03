@@ -161,8 +161,25 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation_package:|| {
                     hdk::ValidationPackageDefinition::Entry
                 },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
+                validation: | validation_data: hdk::LinkValidationData | {
+                    match validation_data {
+                        LinkValidationData::LinkAdd { link, .. } => {
+                            let multisig_address = link.link.base();
+                            let tx_address = link.link.target();
+                            let links: Vec<Address> = transaction::list(multisig_address.clone())?;
+
+                            if let Some(_) = links.iter().find(|&s| *s == tx_address.clone()) {
+                                return Err(String::from("Transaction already created"));
+                            } else {
+                                return Ok(());
+                            }
+
+                          
+                       },
+                       LinkValidationData::LinkRemove { .. } => {
+                            Err(String::from("Cannot remove link"))
+                       }
+                    }
                 }
             ),
             to!(

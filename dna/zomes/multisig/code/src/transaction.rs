@@ -153,7 +153,7 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
-                validation: | _valudation_data: hdk::LinkValidationData | {
+                validation: | _validation_data: hdk::LinkValidationData | {
                     Ok(())
                 } 
             )
@@ -192,9 +192,8 @@ pub fn submit(
     let new_tx_entry = new_tx.entry();
     
     let new_tx_address = hdk::commit_entry(&new_tx_entry)?;
-    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
     hdk::link_entries(&multisig_address, &new_tx_address, "multisig->transactions", "")?;
-    
+    hdk::link_entries(&AGENT_ADDRESS, &new_tx_address, "member->transactions", "")?;
     Ok(new_tx_address)
 }
 

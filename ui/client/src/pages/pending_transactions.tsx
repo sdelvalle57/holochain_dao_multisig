@@ -2,6 +2,7 @@ import React,  { Component, ReactNode } from 'react';
 import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
+import { Map } from 'immutable';
 
 import { GetTransactionList, GetTransactionListVariables } from '../__generated__/GetTransactionList';
 import { 
@@ -12,7 +13,6 @@ import {
 } from '../__generated__/GetTransaction';
 
 import { GET_TRANSACTIONS, GET_TRANSACTION, GET_APP_DATA } from '../queries';
-import { PENDING_TX_ADDED } from '../susbcriptions';
 
 import Loading from '../components/loading';
 import Error from '../components/error';
@@ -23,10 +23,10 @@ import InfoIcon from '../assets/images/infoIcon.png'
 import { colors } from '../styles';
 import { Button } from '../components';
 import { SignTransaction, SignTransactionVariables } from '../__generated__/SignTransaction';
-import { SIGN_TRANSACTION } from '../mutations';
+import { SIGN_TRANSACTION, EXECUTE_TRANSACTION } from '../mutations';
 import { ApolloError } from 'apollo-client';
 import { AppData } from '../__generated__/AppData';
-import { OnPendinTxAdded, OnPendinTxAddedVariables } from '../__generated__/OnPendinTxAdded';
+import { ExecuteTransaction, ExecuteTransactionVariables } from '../__generated__/ExecuteTransaction';
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
     multisigAddress?: string;
@@ -37,9 +37,7 @@ interface StateProps {
     error?: Object,
     myAddress: string | null;
     transactionList: (string | null)[],
-    txResponse: {
-        [key: string] : boolean | ApolloError | string | null | undefined
-    }
+    txResponseR: Map<any, any>
 
 }
 
@@ -50,7 +48,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         error: undefined,
         myAddress: null,
         transactionList: [],
-        txResponse: {}
+        txResponseR: Map<string, any>()
     }
 
     componentDidMount = async () => {
@@ -59,25 +57,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
 
             try {
 
-                
-
-                client.subscribe<OnPendinTxAdded, OnPendinTxAddedVariables>({
-                    query: PENDING_TX_ADDED,
-                    variables: { multisig_address: multisigAddress}
-                }).subscribe({
-                    next(data) {
-                        console.log("nex", data);
-                    },
-                    complete() {
-                        console.log("complete")
-                    },
-                    start() {
-                        console.log("start")
-                    },
-                    error(err) {
-                        console.log("err", err)
-                    }
-                })
                 const myData = await client.query<AppData>({
                     query: GET_APP_DATA
                 });
@@ -104,8 +83,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
             query: GET_TRANSACTION,
             variables: { entry_address },
         })
-
-        console.log(transactionData.data)
 
         this.setState(prevState => ({
             transactionList: {
@@ -190,50 +167,73 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         )
     }
 
-    signTransaction = async (entry: string, refetch: any) => {
+    updateTxState = (entry: string, value: any) => {
+        if(this.state.txResponseR.has(entry)) {
+            this.setState(({txResponseR}) => ({
+                txResponseR: txResponseR.update(entry, ()=> value)
+            }))
+        } else {
+            this.setState(({txResponseR}) => ({
+                txResponseR: txResponseR.set(entry, value)
+            }))
+        }
+    }
+
+    signTransaction = async (entry: string, refetch: any, type: string) => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
             try {
-                this.setState(prevState => ({
-                    txResponse: {
-                        ...prevState.txResponse, 
-                        [entry] : true
-                    }
-                }))
-                const response = await client.mutate<SignTransaction, SignTransactionVariables>({
+                this.updateTxState(entry, true)
+                
+                const response: any = await client.mutate<SignTransaction, SignTransactionVariables>({
                     mutation: SIGN_TRANSACTION,
                     variables: {
                         entry_address: entry,
                         multisig_address: multisigAddress
                     },
-
                 });
+                
                 if(response.data?.signTransaction.entry) {
-                    this.setState(prevState => ({
-                        txResponse: {
-                            ...prevState.txResponse, 
-                            [entry] : response.data?.signTransaction.entry
-                        }
-                    }))
-                    console.log("refetch")
-                    refetch();
+                    setTimeout(() => {
+                        this.updateTxState(entry, response.data?.signTransaction.entry)
+                        refetch();
+                    }, 3000)
                 }
-                
-                
             } catch(err) {
-                this.setState(prevState => ({
-                    txResponse: {
-                        ...prevState.txResponse, 
-                        [entry] : err
-                    }
-                }))
+                this.updateTxState(entry, err)
+            }
+        }
+    }
+
+    executeTransaction = async (entry: string, refetch: any, type: string) => {
+        const { client, multisigAddress } = this.props;
+        if(multisigAddress) {
+            try {
+                this.updateTxState(entry, true)
+                
+                const response = await client.mutate<ExecuteTransaction, ExecuteTransactionVariables>({
+                    mutation: EXECUTE_TRANSACTION,
+                    variables: {
+                        entry_address: entry,
+                        multisig_address: multisigAddress
+                    },
+                });
+                
+                if(response.data?.executeTransaction.entry) {
+                    setTimeout(() => {
+                        this.updateTxState(entry, response.data?.executeTransaction.entry)
+                        refetch();
+                    }, 3000)
+                }
+            } catch(err) {
+                this.updateTxState(entry, err)
             }
         }
     }
 
 
     renderSignButton = (entryAddress: string, tx: GetTransaction, refetch: any) => {
-        const {myAddress} = this.state;
+        const { myAddress } = this.state;
         if(!myAddress ) return null;
 
         let signed = false;
@@ -241,15 +241,36 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         tx.getTransaction.signed?.map(s => {
             if(s.member.member.address === myAddress) signed = true;
         })
-        if(signed) return null;
+
+        if(signed && tx.getTransaction.signed) {
+            if(tx.getTransaction.signed?.length >= tx.getTransaction.required) {
+                return(
+                    <SignButton onClick={() => this.executeTransaction(entryAddress, refetch, "execute")}>
+                        Execute
+                    </SignButton>
+                )
+            }
+            return null
+        }
+        
         return(
-            <SignButton onClick={() => this.signTransaction(entryAddress, refetch)}>
+            <SignButton onClick={() => this.signTransaction(entryAddress, refetch, "sign")}>
                 Sign
             </SignButton>
         )
     }
 
     renderContent = (entry_address: string) => {
+        const { txResponseR } = this.state;
+
+        if(txResponseR.has(entry_address)){
+            if(txResponseR.get(entry_address) === true) return <Loading />
+            else if(txResponseR.get(entry_address) instanceof ApolloError) {
+                return <Error error={txResponseR.get(entry_address)} />
+            }
+        }  
+            
+
         return(
             <Query<GetTransaction, GetTransactionVariables>
                 query = {GET_TRANSACTION}
@@ -286,7 +307,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                                         </>
                                     )
                                 })}
-                                
                                 <HR />
 
                                 

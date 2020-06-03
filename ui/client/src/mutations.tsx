@@ -55,3 +55,11 @@ export const SIGN_TRANSACTION = gql`
         }
     }
 `
+
+export const EXECUTE_TRANSACTION = gql`
+    mutation ExecuteTransaction($entry_address: String!, $multisig_address: String!) {
+        executeTransaction(entry_address: $entry_address, multisig_address: $multisig_address) {
+            entry
+        }
+    }
+`

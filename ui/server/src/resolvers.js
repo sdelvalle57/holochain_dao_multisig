@@ -1,9 +1,4 @@
-const { ApolloError, PubSub, withFilter } = require('apollo-server')
-
-const { RedisPubSub } = require('graphql-redis-subscriptions');
-const pubsub = new RedisPubSub();
-
-const PENDING_TX_ADDED = 'PENDING_TX_ADDED';
+const { ApolloError } = require('apollo-server')
 
 
 module.exports = {
@@ -37,11 +32,11 @@ module.exports = {
       },
       getMultisigAddress: async (_, __, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMultisigAddress();
-        return handleResponse(res, "Cannot fetch Multisig")
+        return handleResponse(res, "Cannot fetch Multisig Address")
       },
       getMultisig: async (_, { multisig_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMultisig(multisig_address);
-        return handleResponse(res, "Cannot fetch Multisig")
+        return handleResponse(res, "Cannot fetch Multisig Data")
       },
       getTransaction: async (_, { entry_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransaction(entry_address);
@@ -49,11 +44,11 @@ module.exports = {
       },
       getTransactionList: async (_, {multisig_address}, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransactionList(multisig_address);
-        return handleResponse(res, "Cannot fetch Multisig")
+        return handleResponse(res, "Cannot fetch List")
       },
       getTransactionMemberList: async (_, {multisig_address}, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransactionMemberList(multisig_address);
-        return handleResponse(res, "Cannot fetch Multisig")
+        return handleResponse(res, "Cannot fetch Member List")
       },
 
       //*********Organizations**********
@@ -82,7 +77,7 @@ module.exports = {
         },
         addMember: async (_, {name, description, address, multisig_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.addMember(name, description, address, multisig_address)
-          return handleResponse(res, "Unable to create transaction", true)
+          return handleResponse(res, "Unable to create transaction")
         },
         removeMember: async (_, {description, address, multisig_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.removeMember(description, address, multisig_address)
@@ -106,27 +101,12 @@ module.exports = {
           const res = await dataSources.organizationsAPI.newMultisig(title, description, organization_address)
           return handleResponse(res, "Unable to create Organization")
         },
-    },
-    Subscription: {
-      pendingTxAdded: {
-        resolve: (payload) => {
-          console.log("payload", payload)
-          return payload
-        },
-
-        subscribe: () => {
-          return pubsub.asyncIterator([PENDING_TX_ADDED])
-        }
-      }
     }
   };
 
-  const handleResponse = (res, message, subscribe = false) => {
+  const handleResponse = (res, message) => {
     if(res.error) {
       throw new ApolloError(message, "HOLOCHAIN_ERROR", res)
-    }
-    if(subscribe) {
-      pubsub.publish(PENDING_TX_ADDED, {pendingTxAdded: res.entry})
     }
     return res;
   }

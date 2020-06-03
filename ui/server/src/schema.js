@@ -42,12 +42,6 @@ const typeDefs = gql`
     #***************************************************************************************************
     #***************************************************************************************************
 
-    type Subscription {
-        pendingTxAdded(multisig_address: String!): String!,
-        signedTx(multisig_address: String!, entry_address: String!): Entry!,
-        executedTx(multisig_address: String!, entry_address: String!): Entry!,
-    }
-
     type Organization {
         name: String!,
         description: String!,
