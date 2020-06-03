@@ -6,7 +6,7 @@ Installation
 1. `cd ui/client` -> `npm i`
 2. `cd ui/server` -> `npm i`
 3. create `.env` file in both client and server
-4. Set `ENGINE_API_KEY` in the `.env` files, https://engine.apollographql.com/, follow step 4 of the tutorial: https://www.apollographql.com/docs/tutorial/production/
+4. Set `APOLLO_KEY` in the `.env` files, https://engine.apollographql.com/, follow step 4 of the tutorial: https://www.apollographql.com/docs/tutorial/production/
 5. Set service name in `apollo.config.js` :
     
     In the client folder:
@@ -56,3 +56,5 @@ Run the Client
    Navigate to http://localhost:8080 for Alice and http://localhost:8081 for Bob
 
 Notes. To Test queries and mutations go to http://localhost:4000 for Alice and http://localhost:4001 for Bob
+
+npx apollo schema:publish --endpoint=http://localhost:4000/graphql --key=service:multisig-graphql:nxAV0oRibDA1GX4CfVUH1g

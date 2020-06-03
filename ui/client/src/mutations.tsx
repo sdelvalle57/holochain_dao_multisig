@@ -47,3 +47,11 @@ export const CREATE_MULTISIG = gql`
         newMultisig(title: $title, description: $description, organization_address: $organization_address) 
     }
 `;
+
+export const SIGN_TRANSACTION = gql`
+    mutation SignTransaction($entry_address: String!, $multisig_address: String!) {
+        signTransaction(entry_address: $entry_address, multisig_address: $multisig_address) {
+            entry
+        }
+    }
+`

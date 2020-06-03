@@ -1,4 +1,10 @@
-const { ApolloError } = require('apollo-server')
+const { ApolloError, PubSub, withFilter } = require('apollo-server')
+
+const { RedisPubSub } = require('graphql-redis-subscriptions');
+const pubsub = new RedisPubSub();
+
+const PENDING_TX_ADDED = 'PENDING_TX_ADDED';
+
 
 module.exports = {
     Query: {
@@ -39,7 +45,6 @@ module.exports = {
       },
       getTransaction: async (_, { entry_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransaction(entry_address);
-        console.log(res)
         return handleResponse(res, "Cannot fetch Transaction")
       },
       getTransactionList: async (_, {multisig_address}, { dataSources }) => {
@@ -77,7 +82,7 @@ module.exports = {
         },
         addMember: async (_, {name, description, address, multisig_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.addMember(name, description, address, multisig_address)
-          return handleResponse(res, "Unable to create transaction")
+          return handleResponse(res, "Unable to create transaction", true)
         },
         removeMember: async (_, {description, address, multisig_address}, { dataSources }) => {
           const res = await dataSources.multisigAPI.removeMember(description, address, multisig_address)
@@ -102,11 +107,26 @@ module.exports = {
           return handleResponse(res, "Unable to create Organization")
         },
     },
+    Subscription: {
+      pendingTxAdded: {
+        resolve: (payload) => {
+          console.log("payload", payload)
+          return payload
+        },
+
+        subscribe: () => {
+          return pubsub.asyncIterator([PENDING_TX_ADDED])
+        }
+      }
+    }
   };
 
-  const handleResponse = (res, message) => {
+  const handleResponse = (res, message, subscribe = false) => {
     if(res.error) {
       throw new ApolloError(message, "HOLOCHAIN_ERROR", res)
+    }
+    if(subscribe) {
+      pubsub.publish(PENDING_TX_ADDED, {pendingTxAdded: res.entry})
     }
     return res;
   }

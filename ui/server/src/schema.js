@@ -42,11 +42,18 @@ const typeDefs = gql`
     #***************************************************************************************************
     #***************************************************************************************************
 
+    type Subscription {
+        pendingTxAdded(multisig_address: String!): String!,
+        signedTx(multisig_address: String!, entry_address: String!): Entry!,
+        executedTx(multisig_address: String!, entry_address: String!): Entry!,
+    }
+
     type Organization {
         name: String!,
         description: String!,
         owner: String!,
-        permissions: [String]!
+        permissions: [String]!,
+        multisig_address: String!
     }
 
     type Multisig {
@@ -74,6 +81,7 @@ const typeDefs = gql`
     }
 
     type Transaction {
+        entry_address: String!,
         title: String!,
         description: String!,
         required: Int!,

@@ -1,5 +1,5 @@
 import React,  { Component, ReactNode } from 'react';
-import { WithApolloClient } from 'react-apollo';
+import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
 
@@ -11,7 +11,8 @@ import {
     GetTransaction_getTransaction_entry_links
 } from '../__generated__/GetTransaction';
 
-import { GET_TRANSACTIONS, GET_TRANSACTION } from '../queries';
+import { GET_TRANSACTIONS, GET_TRANSACTION, GET_APP_DATA } from '../queries';
+import { PENDING_TX_ADDED } from '../susbcriptions';
 
 import Loading from '../components/loading';
 import Error from '../components/error';
@@ -20,6 +21,12 @@ import { getMethodName } from '../common/helpers';
 
 import InfoIcon from '../assets/images/infoIcon.png'
 import { colors } from '../styles';
+import { Button } from '../components';
+import { SignTransaction, SignTransactionVariables } from '../__generated__/SignTransaction';
+import { SIGN_TRANSACTION } from '../mutations';
+import { ApolloError } from 'apollo-client';
+import { AppData } from '../__generated__/AppData';
+import { OnPendinTxAdded, OnPendinTxAddedVariables } from '../__generated__/OnPendinTxAdded';
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
     multisigAddress?: string;
@@ -27,44 +34,63 @@ interface PageProps extends WithApolloClient<RouteComponentProps> {
 
 interface StateProps {
     loading: boolean,
-    error: Object | null,
-    transactionList: GetTransaction[]
+    error?: Object,
+    myAddress: string | null;
+    transactionList: (string | null)[],
+    txResponse: {
+        [key: string] : boolean | ApolloError | string | null | undefined
+    }
+
 }
 
 export default class PendingTxs extends Component<PageProps, StateProps> {
 
     state = {
         loading: true,
-        error: null,
-        transactionList: []
+        error: undefined,
+        myAddress: null,
+        transactionList: [],
+        txResponse: {}
     }
 
     componentDidMount = async () => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
+
             try {
+
+                
+
+                client.subscribe<OnPendinTxAdded, OnPendinTxAddedVariables>({
+                    query: PENDING_TX_ADDED,
+                    variables: { multisig_address: multisigAddress}
+                }).subscribe({
+                    next(data) {
+                        console.log("nex", data);
+                    },
+                    complete() {
+                        console.log("complete")
+                    },
+                    start() {
+                        console.log("start")
+                    },
+                    error(err) {
+                        console.log("err", err)
+                    }
+                })
+                const myData = await client.query<AppData>({
+                    query: GET_APP_DATA
+                });
+                this.setState({myAddress: myData.data.myAddress})
+
                 const transactions = await client.query<GetTransactionList, GetTransactionListVariables>({
                     query: GET_TRANSACTIONS,
                     variables: {
                         multisig_address: multisigAddress
                     }
                 })
-                if(transactions.data.getTransactionList.length > 0) {
-                    await transactions.data.getTransactionList.map( async tx => {
-                        if(tx) {
-                            const transactionData = await client.query<GetTransaction, GetTransactionVariables>({
-                                query: GET_TRANSACTION,
-                                variables: {
-                                    entry_address: tx
-                                }
-                            })
-    
-                            this.setState(prevState => ({
-                                transactionList: [...prevState.transactionList, transactionData.data]
-                            }))
-                        }
-                    })
-                }
+                this.setState({ transactionList: transactions.data.getTransactionList })
+                
             } catch (error) {
                 this.setState({error: <Error error={error} />})
             }
@@ -72,19 +98,40 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         this.setState({ loading: false })
     }
 
+    getTransactionData = async (entry_address: string) => {
+        const { client } = this.props;
+        const transactionData = await client.query<GetTransaction, GetTransactionVariables>({
+            query: GET_TRANSACTION,
+            variables: { entry_address },
+        })
+
+        console.log(transactionData.data)
+
+        this.setState(prevState => ({
+            transactionList: {
+                ...prevState.transactionList, 
+                [entry_address] : transactionData.data
+            }
+        }))
+    }
+
     sortData = () => {
         const { transactionList } = this.state;
-        const cols = []
+        const cols: any = []
         let rows: any = [];
-        const pendingTxs = transactionList.filter((tx: GetTransaction) => !tx.getTransaction.executed)
-        for(let j = 0; j < pendingTxs.length; j++){
-            const key = pendingTxs[j]
-            rows.push(key);
-            if((j+1) % 4 === 0 || (j + 1) === pendingTxs.length) {
-                cols.push(rows);
-                rows = []
-            }
-        }
+
+        transactionList.map(( entry_address, index) => {
+            // if(tx && !tx.getTransaction.executed) {
+            //     const obj = {
+            //         [key]: tx
+            //     }
+                rows.push(entry_address);
+                if((index + 1) % 4 === 0 || (index + 1) === Object.keys(transactionList).length) {
+                    cols.push(rows);
+                    rows = []
+                }
+            // }
+        })
         return cols
     }
 
@@ -132,10 +179,10 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
             <>
                 <Title>Entry Links</Title>
                 {
-                    links.map(l => {
+                    links.map((l, i) => {
                         delete l?.__typename;
                         return(
-                            <PRE>{JSON.stringify(l, undefined, 3)}</PRE>
+                            <PRE key={i}>{JSON.stringify(l, undefined, 3)}</PRE>
                         )
                     })
                 }
@@ -143,46 +190,136 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         )
     }
 
-    renderContent = (tx: GetTransaction, index: number): ReactNode => {
-        console.log(tx)
+    signTransaction = async (entry: string, refetch: any) => {
+        const { client, multisigAddress } = this.props;
+        if(multisigAddress) {
+            try {
+                this.setState(prevState => ({
+                    txResponse: {
+                        ...prevState.txResponse, 
+                        [entry] : true
+                    }
+                }))
+                const response = await client.mutate<SignTransaction, SignTransactionVariables>({
+                    mutation: SIGN_TRANSACTION,
+                    variables: {
+                        entry_address: entry,
+                        multisig_address: multisigAddress
+                    },
+
+                });
+                if(response.data?.signTransaction.entry) {
+                    this.setState(prevState => ({
+                        txResponse: {
+                            ...prevState.txResponse, 
+                            [entry] : response.data?.signTransaction.entry
+                        }
+                    }))
+                    console.log("refetch")
+                    refetch();
+                }
+                
+                
+            } catch(err) {
+                this.setState(prevState => ({
+                    txResponse: {
+                        ...prevState.txResponse, 
+                        [entry] : err
+                    }
+                }))
+            }
+        }
+    }
+
+
+    renderSignButton = (entryAddress: string, tx: GetTransaction, refetch: any) => {
+        const {myAddress} = this.state;
+        if(!myAddress ) return null;
+
+        let signed = false;
+
+        tx.getTransaction.signed?.map(s => {
+            if(s.member.member.address === myAddress) signed = true;
+        })
+        if(signed) return null;
         return(
-            <Card key={index}>
-                <Title>{getMethodName(tx.getTransaction.title)}</Title> 
-                <ImageCard src = {InfoIcon}/>
-                <CardContainer>
-                    <Content>
-                        <Title>Description</Title>
-                        <Value>{tx.getTransaction.description}</Value>
-                        <HR />
+            <SignButton onClick={() => this.signTransaction(entryAddress, refetch)}>
+                Sign
+            </SignButton>
+        )
+    }
 
-                        <Title>Submitter</Title>
-                        <Value>{tx.getTransaction.creator.member.name}</Value>
-                        <Value><small>{tx.getTransaction.creator.member.address}</small></Value>
-                        <HR />
+    renderContent = (entry_address: string) => {
+        return(
+            <Query<GetTransaction, GetTransactionVariables>
+                query = {GET_TRANSACTION}
+                key={entry_address}
+                notifyOnNetworkStatusChange
+                variables = { { entry_address } }>
+               {({data, error, loading, refetch, networkStatus}) => {
+                    if (networkStatus === 4) return <Loading />
+                    if(error) return <Error error={error} />;
+                    if(loading) return <Loading />
+                    if(!data) return null;
+                    if(data.getTransaction.executed) return null;
+                    return  (
+                      <Card key={entry_address}>
+                        <Title>{getMethodName(data.getTransaction.title)}</Title> 
+                        <ImageCard src = {InfoIcon}/>
+                        <CardContainer>
+                            <Content>
+                                <Title>Description</Title>
+                                <Value>{data.getTransaction.description}</Value>
+                                <HR />
 
-                        
-                        <Title>Entry Data</Title>
-                        <Values>
-                            <ContentTitle>Type</ContentTitle>
-                            <ContentValue>{tx.getTransaction.entry_data.App[0]}</ContentValue>
-                        </Values>
+                                <Title>Submitter</Title>
+                                <Value>{data.getTransaction.creator.member.name}</Value>
+                                <Value><small>{data.getTransaction.creator.member.address}</small></Value>
+                                <HR />
 
-                        <Values>
-                            <ContentTitle>Required</ContentTitle>
-                            <ContentValue>{tx.getTransaction.required}</ContentValue>
-                        </Values>
-                        
-                        {this.getAction(tx.getTransaction.entry_action)}
+                                <Title>Signatures</Title>
+                                {data.getTransaction.signed?.map(({member}) => {
+                                    return(
+                                        <>
+                                        <Value>{member.member.name}</Value>
+                                        <Value><small>{member.member.address}</small></Value>
+                                        </>
+                                    )
+                                })}
+                                
+                                <HR />
 
-                        <PRE>{this.getEntryData(tx.getTransaction.entry_data.App[1])}</PRE>
-                        <HR />
+                                
+                                <Title>Entry Data</Title>
+                                <Values>
+                                    <ContentTitle>Type</ContentTitle>
+                                    <ContentValue>{data.getTransaction.entry_data.App[0]}</ContentValue>
+                                </Values>
+
+                                <Values>
+                                    <ContentTitle>Required</ContentTitle>
+                                    <ContentValue>{data.getTransaction.required}</ContentValue>
+                                </Values>
+                                
+                                {this.getAction(data.getTransaction.entry_action)}
+
+                                <PRE>{this.getEntryData(data.getTransaction.entry_data.App[1])}</PRE>
+                                <HR />
 
 
-                        {this.getLinks(tx.getTransaction.entry_links)}
+                                {this.getLinks(data.getTransaction.entry_links)}
 
-                    </Content>
-                </CardContainer>
-            </Card>
+                                {this.renderSignButton(entry_address, data, refetch)}
+                                
+
+
+                            </Content>
+                        </CardContainer>
+                    </Card> 
+                    )
+                }}
+            
+            </Query>
         )
     }
     
@@ -196,14 +333,14 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         return (
             <Container>
                 {
-                   sorted.map((col, i) => {
+                    sorted.map((col: any, i: number) => {
                        return(
                            <Row key={i}>
                                {
-                                   col.map((tx: GetTransaction, index: number) => {
+                                   col.map((entry_address: string, index: number) => {
                                        return (
                                            <Col key={index}>
-                                                {this.renderContent(tx, index)}
+                                                {this.renderContent(entry_address)} 
                                            </Col>
                                        )
                                    })
@@ -380,4 +517,12 @@ const PRE = styled('pre')({
     overflowX: 'auto',
     background: '#F7F7F7',
     margin: '3px 15px 0px 0px'
+})
+
+
+const SignButton = styled(Button)({
+    minWidth: '150px',
+    height: '40px',
+    lineHeight: '40px',
+    marginTop: '1em'
 })

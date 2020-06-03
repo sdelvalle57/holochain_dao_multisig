@@ -39,16 +39,18 @@ pub struct Organization {
     pub name: String,
     pub description: String,
     pub owner: Address,
-    pub permissions: Vec<String>
+    pub permissions: Vec<String>,
+    pub multisig_address: Address,
 }
 
 impl Organization {
-    pub fn new(name: String, description: String, owner: Address) -> Self {
+    pub fn new(name: String, description: String, owner: Address, multisig_address: Address) -> Self {
         Organization {
             name,
             description,
             owner,
-            permissions: Vec::default()
+            permissions: Vec::default(),
+            multisig_address
         }
     }
 
@@ -122,7 +124,7 @@ pub fn entry_def() -> ValidatingEntryType {
 
 pub fn new(name: String, description: String, owner: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
-    let organization = Organization::new(name, description, owner.clone());
+    let organization = Organization::new(name, description, owner.clone(), multisig_address.clone());
     let organization_entry = organization.entry();
 
     let tx_title = String::from("Add new organization");
