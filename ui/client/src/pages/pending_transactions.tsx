@@ -95,7 +95,6 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                 entry_address,
             }
         })
-        console.log(transactionData)
         this.updateTxList(entry_address, transactionData.data)
     }
 
