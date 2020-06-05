@@ -179,7 +179,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         }
     }
 
-    signTransaction = async (entry: string, refetch: any, type: string) => {
+    signTransaction = async (entry: string, refetch: any) => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
             try {
@@ -194,10 +194,10 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                 });
                 
                 if(response.data?.signTransaction.entry) {
-                    setTimeout(() => {
-                        this.updateTxState(entry, response.data?.signTransaction.entry)
+                    await setTimeout(() => {
+                        //this.updateTxState(entry, response.data?.signTransaction.entry)
                         refetch();
-                    }, 3000)
+                    }, 1000)
                 }
             } catch(err) {
                 this.updateTxState(entry, err)
@@ -205,7 +205,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         }
     }
 
-    executeTransaction = async (entry: string, refetch: any, type: string) => {
+    executeTransaction = async (entry: string, refetch: any) => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
             try {
@@ -221,9 +221,9 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                 
                 if(response.data?.executeTransaction.entry) {
                     setTimeout(() => {
-                        this.updateTxState(entry, response.data?.executeTransaction.entry)
+                        //this.updateTxState(entry, response.data?.executeTransaction.entry)
                         refetch();
-                    }, 3000)
+                    }, 1000)
                 }
             } catch(err) {
                 this.updateTxState(entry, err)
@@ -245,7 +245,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         if(signed && tx.getTransaction.signed) {
             if(tx.getTransaction.signed?.length >= tx.getTransaction.required) {
                 return(
-                    <SignButton onClick={() => this.executeTransaction(entryAddress, refetch, "execute")}>
+                    <SignButton onClick={() => this.executeTransaction(entryAddress, refetch)}>
                         Execute
                     </SignButton>
                 )
@@ -254,7 +254,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         }
         
         return(
-            <SignButton onClick={() => this.signTransaction(entryAddress, refetch, "sign")}>
+            <SignButton onClick={() => this.signTransaction(entryAddress, refetch)}>
                 Sign
             </SignButton>
         )

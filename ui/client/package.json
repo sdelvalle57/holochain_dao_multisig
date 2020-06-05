@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@apollo/react-hooks": "3.0.0",
+    "@apollo/react-hooks": "3.1.5",
     "@reach/router": "^1.2.1",
     "@types/node": "^12.12.14",
     "@types/reach__router": "^1.2.6",
