@@ -36,7 +36,8 @@ interface StateProps {
     loading: boolean,
     error?: Object,
     myAddress: string | null;
-    transactionList: (string | null)[],
+    transactionsEntryList: (string | null)[];
+    transactionList: Map<any, any>,
     txResponseR: Map<any, any>
 
 }
@@ -47,7 +48,8 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         loading: true,
         error: undefined,
         myAddress: null,
-        transactionList: [],
+        transactionsEntryList: [],
+        transactionList: Map<string, any>(),
         txResponseR: Map<string, any>()
     }
 
@@ -68,7 +70,14 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                         multisig_address: multisigAddress
                     }
                 })
-                this.setState({ transactionList: transactions.data.getTransactionList })
+                if(transactions.data.getTransactionList.length > 0) {
+                this.setState({transactionsEntryList: transactions.data.getTransactionList})
+                    transactions.data.getTransactionList.map( async entry_address => {
+                        if(entry_address) {
+                            this.fetchTransactionData(entry_address)
+                        }
+                    })
+                }
                 
             } catch (error) {
                 this.setState({error: <Error error={error} />})
@@ -77,38 +86,32 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         this.setState({ loading: false })
     }
 
-    getTransactionData = async (entry_address: string) => {
+    fetchTransactionData = async (entry_address: string) => {
         const { client } = this.props;
         const transactionData = await client.query<GetTransaction, GetTransactionVariables>({
             query: GET_TRANSACTION,
-            variables: { entry_address },
-        })
-
-        this.setState(prevState => ({
-            transactionList: {
-                ...prevState.transactionList, 
-                [entry_address] : transactionData.data
+            fetchPolicy: 'network-only',
+            variables: {
+                entry_address,
             }
-        }))
+        })
+        console.log(transactionData)
+        this.updateTxList(entry_address, transactionData.data)
     }
 
     sortData = () => {
-        const { transactionList } = this.state;
+        const { transactionsEntryList } = this.state;
         const cols: any = []
         let rows: any = [];
-
-        transactionList.map(( entry_address, index) => {
-            // if(tx && !tx.getTransaction.executed) {
-            //     const obj = {
-            //         [key]: tx
-            //     }
-                rows.push(entry_address);
-                if((index + 1) % 4 === 0 || (index + 1) === Object.keys(transactionList).length) {
-                    cols.push(rows);
-                    rows = []
-                }
-            // }
-        })
+        
+        for(let j = 0; j < transactionsEntryList.length; j++){
+            const key = transactionsEntryList[j];
+            rows.push(key);
+            if((j+1) % 4 === 0 || (j + 1) === transactionsEntryList.length) {
+                cols.push(rows);
+                rows = []
+            }
+        }
         return cols
     }
 
@@ -179,60 +182,71 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         }
     }
 
-    signTransaction = async (entry: string, refetch: any) => {
+    updateTxList= (entry: string, value: any) => {
+        if(this.state.transactionList.has(entry)) {
+            this.setState(({transactionList}) => ({
+                transactionList: transactionList.update(entry, ()=> value)
+            }))
+        } else {
+            this.setState(({transactionList}) => ({
+                transactionList: transactionList.set(entry, value)
+            }))
+        }
+    }
+
+    signTransaction = async (entry_address: string) => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
             try {
-                this.updateTxState(entry, true)
+                this.updateTxState(entry_address, true)
                 
                 const response: any = await client.mutate<SignTransaction, SignTransactionVariables>({
                     mutation: SIGN_TRANSACTION,
                     variables: {
-                        entry_address: entry,
+                        entry_address,
                         multisig_address: multisigAddress
                     },
                 });
                 
                 if(response.data?.signTransaction.entry) {
                     await setTimeout(() => {
-                        //this.updateTxState(entry, response.data?.signTransaction.entry)
-                        refetch();
+                        this.updateTxState(entry_address, response.data?.signTransaction.entry)
+                        this.fetchTransactionData(entry_address)
                     }, 1000)
                 }
             } catch(err) {
-                this.updateTxState(entry, err)
+                this.updateTxState(entry_address, err)
             }
         }
     }
 
-    executeTransaction = async (entry: string, refetch: any) => {
+    executeTransaction = async (entry_address: string) => {
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
             try {
-                this.updateTxState(entry, true)
+                this.updateTxState(entry_address, true)
                 
                 const response = await client.mutate<ExecuteTransaction, ExecuteTransactionVariables>({
                     mutation: EXECUTE_TRANSACTION,
                     variables: {
-                        entry_address: entry,
+                        entry_address,
                         multisig_address: multisigAddress
                     },
                 });
                 
                 if(response.data?.executeTransaction.entry) {
                     setTimeout(() => {
-                        //this.updateTxState(entry, response.data?.executeTransaction.entry)
-                        refetch();
+                        this.updateTxState(entry_address, response.data?.executeTransaction.entry)
+                        this.fetchTransactionData(entry_address)
                     }, 1000)
                 }
             } catch(err) {
-                this.updateTxState(entry, err)
+                this.updateTxState(entry_address, err)
             }
         }
     }
 
-
-    renderSignButton = (entryAddress: string, tx: GetTransaction, refetch: any) => {
+    renderSignButton = (entryAddress: string, tx: GetTransaction) => {
         const { myAddress } = this.state;
         if(!myAddress ) return null;
 
@@ -245,7 +259,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         if(signed && tx.getTransaction.signed) {
             if(tx.getTransaction.signed?.length >= tx.getTransaction.required) {
                 return(
-                    <SignButton onClick={() => this.executeTransaction(entryAddress, refetch)}>
+                    <SignButton onClick={() => this.executeTransaction(entryAddress)}>
                         Execute
                     </SignButton>
                 )
@@ -254,93 +268,89 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         }
         
         return(
-            <SignButton onClick={() => this.signTransaction(entryAddress, refetch)}>
+            <SignButton onClick={() => this.signTransaction(entryAddress)}>
                 Sign
             </SignButton>
         )
     }
 
-    renderContent = (entry_address: string) => {
+    renderContent = (data: GetTransaction, entry_address: string) => {
         const { txResponseR } = this.state;
 
         if(txResponseR.has(entry_address)){
-            if(txResponseR.get(entry_address) === true) return <Loading />
+            if(txResponseR.get(entry_address) === true) return <Card key={entry_address}><Loading /></Card>
             else if(txResponseR.get(entry_address) instanceof ApolloError) {
-                return <Error error={txResponseR.get(entry_address)} />
+                return <Card key={entry_address}><Error error={txResponseR.get(entry_address)} /></Card>
             }
         }  
-            
 
         return(
-            <Query<GetTransaction, GetTransactionVariables>
-                query = {GET_TRANSACTION}
-                key={entry_address}
-                notifyOnNetworkStatusChange
-                variables = { { entry_address } }>
-               {({data, error, loading, refetch, networkStatus}) => {
-                    if (networkStatus === 4) return <Loading />
-                    if(error) return <Error error={error} />;
-                    if(loading) return <Loading />
-                    if(!data) return null;
-                    if(data.getTransaction.executed) return null;
-                    return  (
-                      <Card key={entry_address}>
-                        <Title>{getMethodName(data.getTransaction.title)}</Title> 
-                        <ImageCard src = {InfoIcon}/>
-                        <CardContainer>
-                            <Content>
-                                <Title>Description</Title>
-                                <Value>{data.getTransaction.description}</Value>
-                                <HR />
+            <Card key={entry_address}>
+            <Title>{getMethodName(data.getTransaction.title)}</Title> 
+            <ImageCard src = {InfoIcon}/>
+            <CardContainer>
+                <Content>
+                    <Title>Description</Title>
+                    <Value>{data.getTransaction.description}</Value>
+                    <HR />
 
-                                <Title>Submitter</Title>
-                                <Value>{data.getTransaction.creator.member.name}</Value>
-                                <Value><small>{data.getTransaction.creator.member.address}</small></Value>
-                                <HR />
+                    <Title>Submitter</Title>
+                    <Value>{data.getTransaction.creator.member.name}</Value>
+                    <Value><small>{data.getTransaction.creator.member.address}</small></Value>
+                    <HR />
 
-                                <Title>Signatures</Title>
-                                {data.getTransaction.signed?.map(({member}) => {
-                                    return(
-                                        <>
-                                        <Value>{member.member.name}</Value>
-                                        <Value><small>{member.member.address}</small></Value>
-                                        </>
-                                    )
-                                })}
-                                <HR />
+                    <Title>Signatures</Title>
+                    {data.getTransaction.signed?.map(({member}) => {
+                        return(
+                            <>
+                            <Value>{member.member.name}</Value>
+                            <Value><small>{member.member.address}</small></Value>
+                            </>
+                        )
+                    })}
+                    <HR />
 
-                                
-                                <Title>Entry Data</Title>
-                                <Values>
-                                    <ContentTitle>Type</ContentTitle>
-                                    <ContentValue>{data.getTransaction.entry_data.App[0]}</ContentValue>
-                                </Values>
+                    <Title>Entry Data</Title>
+                    <Values>
+                        <ContentTitle>Type</ContentTitle>
+                        <ContentValue>{data.getTransaction.entry_data.App[0]}</ContentValue>
+                    </Values>
 
-                                <Values>
-                                    <ContentTitle>Required</ContentTitle>
-                                    <ContentValue>{data.getTransaction.required}</ContentValue>
-                                </Values>
-                                
-                                {this.getAction(data.getTransaction.entry_action)}
+                    <Values>
+                        <ContentTitle>Required</ContentTitle>
+                        <ContentValue>{data.getTransaction.required}</ContentValue>
+                    </Values>
+                    
+                    {this.getAction(data.getTransaction.entry_action)}
 
-                                <PRE>{this.getEntryData(data.getTransaction.entry_data.App[1])}</PRE>
-                                <HR />
+                    <PRE>{this.getEntryData(data.getTransaction.entry_data.App[1])}</PRE>
+                    <HR />
 
 
-                                {this.getLinks(data.getTransaction.entry_links)}
+                    {this.getLinks(data.getTransaction.entry_links)}
 
-                                {this.renderSignButton(entry_address, data, refetch)}
-                                
+                    {this.renderSignButton(entry_address, data)}
 
+                </Content>
+            </CardContainer>
+        </Card> 
 
-                            </Content>
-                        </CardContainer>
-                    </Card> 
-                    )
-                }}
-            
-            </Query>
         )
+    }
+
+    renderTransaction = (entry_address: string, index: number) => {
+        const {transactionList} = this.state;
+        const transaction: GetTransaction = transactionList.get(entry_address);
+        if(transaction && !transaction.getTransaction.executed) {
+            return (
+                <Col key={index}>
+                    {
+                        this.renderContent(transaction, entry_address)
+                    }
+                </Col>
+            )
+        }
+        return null;
     }
     
     render() {
@@ -358,11 +368,8 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                            <Row key={i}>
                                {
                                    col.map((entry_address: string, index: number) => {
-                                       return (
-                                           <Col key={index}>
-                                                {this.renderContent(entry_address)} 
-                                           </Col>
-                                       )
+                                        return this.renderTransaction(entry_address, index)   
+                                    
                                    })
                                }
 
