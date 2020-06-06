@@ -232,11 +232,14 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
             match transaction.entry_action.clone() {
                 EntryAction::COMMIT => {
                     data_address = hdk::commit_entry(&data)?;
+                    perform_add_update(data_address.clone(), transaction.entry_links.clone())?;
                 },
                 EntryAction::UPDATE(base_address) => {
                     data_address = hdk::update_entry(data, &base_address)?; 
+                    perform_add_update(data_address.clone(), transaction.entry_links.clone())?;
                 },
                 EntryAction::REMOVE(target_address) => {
+                    perform_remove(transaction.entry_links.clone())?;
                     data_address = hdk::remove_entry(&target_address)?;
                 }
             }
@@ -244,41 +247,59 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
             transaction.response_address = Some(data_address.clone());
             let transaction_entry = transaction.entry();
             hdk::update_entry(transaction_entry.clone(), &entry_address)?;
-            
-            let mut base_link_data = data_address.clone();
-            let mut target_link_data = data_address.clone();
-            let mut tag_link_data = "".to_string();
-
-            match transaction.entry_links {
-                Some(links) => { 
-                    for link in links {
-                        match link.base {
-                            Some(base) => base_link_data = base.clone(),
-                            _ => (),
-                       }
-                       match link.target {
-                           Some(target) => target_link_data = target.clone(),
-                            _ => (),
-                       }
-                       match link.link_tag {
-                           Some(tag) => tag_link_data = tag,
-                           _ => ()
-                       }
-                       match link.action {
-                           LinkAction::ADD => {
-                                hdk::link_entries(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
-                           }
-                           LinkAction::REMOVE => {
-                                hdk::remove_link(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
-                           }
-                       }
-                    }
-                },
-                None => ()
-            }
             return Ok(entry_address);
         }
     }
+}
+
+fn perform_add_update(data_address: Address, link_data: Option<Vec<structures::LinkData>>) -> ZomeApiResult<()> {
+    let mut base_link_data = data_address.clone();
+    let mut target_link_data = data_address.clone();
+    let mut tag_link_data = "".to_string();
+
+    match link_data {
+        Some(links) => { 
+            for link in links {
+                match link.base {
+                    Some(base) => base_link_data = base.clone(),
+                    _ => (),
+               }
+               match link.target {
+                   Some(target) => target_link_data = target.clone(),
+                    _ => (),
+               }
+               match link.link_tag {
+                   Some(tag) => tag_link_data = tag,
+                   _ => ()
+               }
+               match link.action {
+                   LinkAction::ADD => {
+                        hdk::link_entries(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
+                   }
+                   _ => return Err(ZomeApiError::Internal("Only Add Links is Allowed".to_string()))
+               }
+            }
+        },
+        None => ()
+    }
+    Ok(())
+}
+ 
+fn perform_remove(link_data: Option<Vec<structures::LinkData>>) -> ZomeApiResult<()> {
+    match link_data {
+        Some(links) => { 
+            for link in links {
+                match link.action {
+                    LinkAction::REMOVE => {
+                        hdk::remove_link(&link.base.unwrap(), &link.target.unwrap(), link.link_type, link.link_tag.unwrap())?;
+                   }
+                   _ => return Err(ZomeApiError::Internal("Only Remove Links is Allowed".to_string()))
+                }
+            }
+        },
+        None => ()
+    }
+    Ok(())
 }
 
 fn data_to_string(entry_data: Entry, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<String> {

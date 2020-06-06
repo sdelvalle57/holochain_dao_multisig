@@ -1,9 +1,9 @@
 {
-  "name": "Holochain App Name",
-  "description": "A Holochain app",
+  "name": "DAO Multisig",
+  "description": "A DAO app",
   "authors": [
     {
-      "identifier": "Author Name <author@name.com>",
+      "identifier": "Author Name sdelvalle57@gmail.com",
       "public_key_source": "",
       "signature": ""
     }

@@ -188,8 +188,24 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation_package:|| {
                     hdk::ValidationPackageDefinition::Entry
                 },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
+                validation: | validation_data: hdk::LinkValidationData | {
+                    match validation_data {
+                       LinkValidationData::LinkRemove { link, .. } => {
+                            let multisig_address = link.link.base();
+                            let multisig = get_multisig(multisig_address.clone())?;
+                            let links = hdk::get_links_count(
+                                &multisig_address, 
+                                LinkMatch::Exactly("multisig->members"), 
+                                LinkMatch::Any
+                            )?;
+                            if multisig.required > (links.count as u64 - 1) {
+                                return Err(String::from("Requirement exceeds number of members"));
+                            }
+                            Ok(())
+
+                       },
+                       _ => Ok(())
+                    }
                 }
             )
         ]

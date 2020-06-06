@@ -77,7 +77,8 @@ pub fn entry_def() -> ValidatingEntryType {
                     let multisig_address = old_entry.multisig_address;
                     let multisig = multisig::get_multisig(multisig_address.clone())?;
                     let multisig_members = get_members(multisig_address.clone())?;
-                    if multisig.required > (multisig_members.len() as u64) - 1 {
+                    //The link "multisig-members" has previously been removed
+                    if multisig.required > (multisig_members.len() as u64) {
                         return Err(String::from("Requirement exceeds number of members"));
                     }
                     Ok(())
@@ -97,7 +98,7 @@ pub fn add_member(name: String, description: String, address: Address, multisig_
         LinkAction::ADD,
         Some(multisig_address.clone()), 
         None, "multisig->members".into(), 
-        None
+        Some("".into())
     );
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]), multisig_address)
 }
@@ -113,7 +114,7 @@ pub fn remove_member(description: String, address: Address, multisig_address: Ad
         Some(multisig_address.clone()), 
         Some(entry_address.clone()), 
         "multisig->members".into(), 
-        None
+        Some("".into())
     );
 
     transaction::submit(

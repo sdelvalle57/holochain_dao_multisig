@@ -40,7 +40,6 @@ module.exports = {
       },
       getTransaction: async (_, { entry_address }, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransaction(entry_address);
-        console.log(res)
         return handleResponse(res, "Cannot fetch Transaction")
       },
       getTransactionList: async (_, {multisig_address}, { dataSources }) => {
