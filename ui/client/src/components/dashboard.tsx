@@ -138,6 +138,11 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
     navigate(`/pending_transactions/${multisigAddress}`)
   }
 
+  approvedTxs = async () => {
+    const { multisigAddress } = this.props;
+    navigate(`/approved_transactions/${multisigAddress}`)
+  }
+
   changeRequirement = async () => {
     const { multisigAddress } = this.props;
     try { 
@@ -202,6 +207,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
       case PENDING_TRASACTIONS:
         this.pendingTxs();
         break;
+      case APPROVED_TRANSACTIONS:
+          this.approvedTxs();
+          break;
       case CREATE_ORGANIZATION:
         this.createOrganization();
         break

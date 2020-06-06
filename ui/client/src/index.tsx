@@ -9,7 +9,7 @@ import injectStyles from './styles';
 import { PageContainer } from './components';
 import { Router } from '@reach/router';
 
-import { Selector, PendingTxs } from './pages';
+import { Selector, PendingTxs, ApprovedTxs } from './pages';
 
 /*Start initialization */
 const cache = new InMemoryCache();
@@ -38,6 +38,10 @@ ReactDOM.render(
 
               <PendingTxs 
                 path='/pending_transactions/:multisigAddress' 
+                client={client} />
+
+              <ApprovedTxs 
+                path='/approved_transactions/:multisigAddress' 
                 client={client} />
             </Router>
           </PageContainer>

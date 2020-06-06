@@ -24,7 +24,7 @@ public_address = 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3ko
 
 [[dnas]]
 file = './dist/dna.dna.json'
-hash = 'QmThoG1Tjq9kUQagz5vuzkEPbmYuqrqk6t2jEU5NaADxak'
+hash = 'Qma87U3rdvCEmjesjNGsp6atngErfBhMUFYUHhKFgwWGii'
 id = 'hc-multisig'
 
 # Alice
