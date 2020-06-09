@@ -12,6 +12,7 @@ hdk = "=0.0.49-alpha1"
 hdk_proc_macros = "=0.0.49-alpha1"
 holochain_wasm_utils = "=0.0.49-alpha1"
 holochain_json_derive = "0.0.23"
+constants = { path = "../../../lib/constants/" }
 decoders = { path = "../../../lib/decoders" }
 structures = { path = "../../../lib/structures" }
 

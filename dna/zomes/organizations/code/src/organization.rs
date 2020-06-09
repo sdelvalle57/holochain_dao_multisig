@@ -28,6 +28,10 @@ use crate::{
     employee
 };
 
+use constants::{
+    REMOVE_ORGANIZATION
+};
+
 pub use structures::{
     LinkData,
     EntryAction
@@ -39,6 +43,7 @@ pub struct Organization {
     pub description: String,
     pub owner: Address,
     pub multisig_address: Address,
+    pub active: bool
 }
 
 impl Organization {
@@ -47,7 +52,8 @@ impl Organization {
             name,
             description,
             owner,
-            multisig_address
+            multisig_address,
+            active: true
         }
     }
 
@@ -111,7 +117,6 @@ pub fn entry_def() -> ValidatingEntryType {
                     hdk::ValidationPackageDefinition::Entry
                 },
                 validation: | _validation_data: hdk::LinkValidationData | {
-                    
                     Ok(())
                 }
             )
@@ -120,7 +125,7 @@ pub fn entry_def() -> ValidatingEntryType {
 }
 
 pub fn new(name: String, description: String, owner: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-    let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
+    
     let organization = Organization::new(name, description, owner.clone(), multisig_address.clone());
     let organization_entry = organization.entry();
 
@@ -142,6 +147,29 @@ pub fn new(name: String, description: String, owner: Address, multisig_address: 
     );
     let tx_entry_links = vec![tx_link_data_msig, tx_link_data_owner];
     let args = tx_to_json(tx_title, tx_description, tx_entry_data, tx_entry_action, Some(tx_entry_links), multisig_address)?;
+    send_transaction(args)
+}
+
+pub fn remove(description: String, entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+    let mut organization: Organization = hdk::utils::get_as_type(entry_address.clone())?;
+    if organization.multisig_address != multisig_address.clone() {
+        return Err(ZomeApiError::from(String::from("Organization does not belong to Multisig")))
+    } else if !organization.active {
+        return Err(ZomeApiError::from(String::from("Organization already removed")))
+    }
+    organization.active = false;
+    let organization_entry = organization.entry();
+
+    let tx_title = String::from("Remove organization");
+    let tx_entry_data = organization_entry;
+    let tx_entry_action = EntryAction::UPDATE(entry_address.clone());
+
+    let args = tx_to_json(tx_title, description, tx_entry_data, tx_entry_action, None, multisig_address)?;
+    send_transaction(args)
+}
+
+fn send_transaction(args: JsonString) -> ZomeApiResult<Address> {
+    let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
     let rpc_call_transaction = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap, "submit_transaction", args);
     let rpc_call_transaction_address: Address = decode_zome_call(rpc_call_transaction)?;
     Ok(rpc_call_transaction_address)

@@ -131,6 +131,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "constants"
+version = "0.1.0"
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -796,6 +800,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "organizations"
 version = "0.1.0"
 dependencies = [
+ "constants 0.1.0",
  "decoders 0.1.0",
  "hdk 0.0.49-alpha1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hdk_proc_macros 0.0.49-alpha1 (registry+https://github.com/rust-lang/crates.io-index)",

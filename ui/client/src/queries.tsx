@@ -12,12 +12,18 @@ export const GET_MASTER_MULTISIG_ADDRESS= gql`
 
 export const GET_MULTISIG_MEMBERS = gql`
     query GetMultisigMembers($multisig_address: String!) {
-        getMembers(multisig_address: $multisig_address) {
+        getMembers(multisig_address: $multisig_address) 
+    }
+`;
+
+export const GET_MEMBER = gql`
+    query GetMember($entry_address: String!) {
+        getMember(entry_address: $entry_address) {
             member {
                 name
                 address
+                active
             }
-            multisig_address
         }
     }
 `;
@@ -48,8 +54,9 @@ export const GET_TRANSACTION = gql`
             signed {
                 member {
                     member {
-                    name
-                    address
+                        name
+                        address
+                        active
                     }
                 }
             }
@@ -57,6 +64,7 @@ export const GET_TRANSACTION = gql`
                 member {
                     name
                     address
+                    active
                 }
             }
             executed
@@ -66,10 +74,8 @@ export const GET_TRANSACTION = gql`
             entry_action {
                 COMMIT
                 UPDATE
-                REMOVE
             }
             entry_links {
-                action
                 base
                 target
                 link_type

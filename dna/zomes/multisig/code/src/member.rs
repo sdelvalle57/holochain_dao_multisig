@@ -69,8 +69,13 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | _validation_data: hdk::EntryValidationData<Member> | {
-            Ok(())
+        validation: | validation_data: hdk::EntryValidationData<Member> | {
+            match validation_data {
+                EntryValidationData::Delete { .. } => {
+                    Err(String::from("Cannot remove member"))
+                }
+                _ => Ok(())
+            }
         } 
     )
 }
@@ -86,49 +91,42 @@ pub fn add_member(name: String, description: String, address: Address, multisig_
     transaction::submit(ADD_MEMBER.to_string(), description, new_member_entry, EntryAction::COMMIT, Some(vec![link_data]), multisig_address)
 }
 
-pub fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+pub fn remove_member(description: String, entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     
-    let member = get_member(address, multisig_address.clone())?;
+    let mut member = get_member(entry_address, multisig_address)?;
+    if member.multisig_address != multisig_address.clone() {
+        return Err(ZomeApiError::from(String::from("Member does not belong to Multisig")))
+    } else if !member.active {
+        return Err(ZomeApiError::from(String::from("Member already removed")))
+    }
+    member.active = false;
     let member_entry = member.entry();
-    let entry_address = hdk::entry_address(&member_entry)?;
-
-    let link_data = LinkData::new(
-        Some(multisig_address.clone()), 
-        Some(entry_address.clone()), 
-        "multisig->members".into(), 
-        Some("".into())
-    );
 
     transaction::submit(
         REMOVE_MEMBER.to_string(), 
         description, 
         member_entry, 
         EntryAction::UPDATE(entry_address.clone()), 
-        Some(vec![link_data]), 
+        None, 
         multisig_address
     )
 }
 
-pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Member>> {
+pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->members"), 
         LinkMatch::Any
     )?;
     hdk::debug(format!("links_members {:?}", links))?;
-
-    let mut members: Vec<Member> = Vec::default();
-    for add in links.addresses() {
-        let member: Member = hdk::utils::get_as_type(add.clone())?;
-        members.push(member);
-    }
-    Ok(members)
+    Ok(links.addresses())
 }
 
 pub fn get_member(address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
     let members = get_members(multisig_address)?;
 
-    for member in members {
+    for member_entry in members {
+        let member = get_member_by_entry(member_entry)?;
         if member.member.address == address {
             return Ok(member)
         }
