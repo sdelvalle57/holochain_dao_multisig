@@ -28,8 +28,7 @@ use constants::{
 use structures::{
     Person,
     LinkData,
-    EntryAction,
-    LinkAction
+    EntryAction
 };
 /******************************************* */
 
@@ -41,7 +40,8 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct Member {
     pub member: Person,
-    pub multisig_address: Address
+    pub multisig_address: Address,
+    pub active: bool
 }
 
 impl Member {
@@ -49,9 +49,10 @@ impl Member {
         Member {
             member: Person {
                 name,
-                address,
+                address
             },
-            multisig_address
+            multisig_address,
+            active: true
         }
     }
 
@@ -68,29 +69,8 @@ pub fn entry_def() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: | validation_data: hdk::EntryValidationData<Member> | {
-            match validation_data {
-                EntryValidationData::Create { .. } => {
-                    Ok(())
-                },
-                EntryValidationData::Delete { old_entry, .. } => {
-                    let multisig_address = old_entry.multisig_address;
-                    hdk::debug(format!("m_sig {:?}", multisig_address.clone()))?;
-                    let multisig = multisig::get_multisig(multisig_address.clone())?;
-                    hdk::debug(format!("m_sig_data {:?}", multisig.clone()))?;
-                    let multisig_members = get_members(multisig_address.clone())?;
-                    hdk::debug(format!("m_sig_members {:?}", multisig_members.clone()))?;
-                    //The link "multisig-members" has previously been removed
-                    if multisig.required > (multisig_members.len() as u64) {
-                        hdk::debug(format!("m_sig_err {:?}", multisig.required.clone()))?;
-                        return Err(String::from("Requirement exceeds number of members"));
-                    }
-                    Ok(())
-                },
-                _ => {
-                    return Err(String::from("Member operation not permitted"));
-                }
-            }
+        validation: | _validation_data: hdk::EntryValidationData<Member> | {
+            Ok(())
         } 
     )
 }
@@ -99,7 +79,6 @@ pub fn add_member(name: String, description: String, address: Address, multisig_
     let new_member = Member::new(name, address, multisig_address.clone());
     let new_member_entry = new_member.entry();
     let link_data = LinkData::new(
-        LinkAction::ADD,
         Some(multisig_address.clone()), 
         None, "multisig->members".into(), 
         Some("".into())
@@ -114,7 +93,6 @@ pub fn remove_member(description: String, address: Address, multisig_address: Ad
     let entry_address = hdk::entry_address(&member_entry)?;
 
     let link_data = LinkData::new(
-        LinkAction::REMOVE,
         Some(multisig_address.clone()), 
         Some(entry_address.clone()), 
         "multisig->members".into(), 
@@ -125,7 +103,7 @@ pub fn remove_member(description: String, address: Address, multisig_address: Ad
         REMOVE_MEMBER.to_string(), 
         description, 
         member_entry, 
-        EntryAction::REMOVE(entry_address.clone()), 
+        EntryAction::UPDATE(entry_address.clone()), 
         Some(vec![link_data]), 
         multisig_address
     )

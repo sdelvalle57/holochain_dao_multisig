@@ -155,7 +155,12 @@ mod my_zome {
     fn is_member(multisig_address: Address) -> ZomeApiResult<bool> {
         let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address);
         match member {
-            Ok(_) => return Ok(true),
+            Ok(member) => {
+                if member.active {
+                    return Ok(true)
+                }
+                return Ok(false)
+            },
             _ => return Ok(false)
         }
     }

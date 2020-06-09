@@ -30,8 +30,7 @@ use crate::{
 
 pub use structures::{
     LinkData,
-    EntryAction,
-    LinkAction
+    EntryAction
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
@@ -130,14 +129,12 @@ pub fn new(name: String, description: String, owner: Address, multisig_address: 
     let tx_entry_data = organization_entry;
     let tx_entry_action = EntryAction::COMMIT;
     let tx_link_data_msig = LinkData::new(
-        LinkAction::ADD,
         Some(multisig_address.clone()), 
         None, 
         String::from("multisig->organizations"), 
         None
     );
     let tx_link_data_owner = LinkData::new(
-        LinkAction::ADD,
         Some(owner), 
         None, 
         String::from("owner->organizations"), 

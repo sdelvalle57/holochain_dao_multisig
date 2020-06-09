@@ -136,7 +136,10 @@ pub fn entry_def() -> ValidatingEntryType {
                 },
                 EntryValidationData::Modify { new_entry, .. } => {
                     let multisig_address = get_multisig_address()?;
-                    member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+                    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+                    if !member.active {
+                        return Err(String::from("Member is not active"));
+                    }
                     let links = hdk::get_links(
                         &multisig_address, 
                         LinkMatch::Exactly("multisig->members"), 

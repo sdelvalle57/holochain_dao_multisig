@@ -10,14 +10,7 @@ use hdk::holochain_persistence_api::cas::content::Address;
 
 /** This is used in the transaction struct **/
 #[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
-pub enum LinkAction {
-    ADD,
-    REMOVE
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, DefaultJson)]
 pub struct LinkData {
-    pub action: LinkAction,
     pub base: Option<Address>,
     pub target: Option<Address>,
     pub link_type: String,
@@ -26,14 +19,12 @@ pub struct LinkData {
 
 impl LinkData {
     pub fn new(
-        action: LinkAction,
         base: Option<Address>, 
         target: Option<Address>, 
         link_type: String, 
         link_tag: Option<String>
     ) -> Self {
         LinkData {
-            action,
             base,
             target,
             link_type,
@@ -45,7 +36,6 @@ impl LinkData {
 #[derive(Serialize, Deserialize, DefaultJson, Clone, Debug)]
 pub enum EntryAction {
     UPDATE(Address),
-    REMOVE(Address),
     COMMIT
 }
 

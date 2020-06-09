@@ -35,7 +35,6 @@ use serde_json::json;
 use structures::{
     LinkData,
     EntryAction,
-    LinkAction
 };
 
 use crate::{
@@ -121,21 +120,28 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Transaction> | {
             match validation_data {
-                EntryValidationData::Create { .. } => {
-                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
-                    
+                EntryValidationData::Create { entry, .. } => {
+                    let member = member::get_member(AGENT_ADDRESS.clone(), entry.multisig_address)?;
+                    if !member.active {
+                        return Err(String::from("Member is not active"));
+                    }
                     Ok(())
                 },
                 EntryValidationData::Modify { old_entry, .. } => {
-                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
+                    let member = member::get_member(AGENT_ADDRESS.clone(), old_entry.multisig_address)?;
+                    if !member.active {
+                        return Err(String::from("Member is not active"));
+                    }
                     if old_entry.executed {
                         return Err(String::from("Cannot modify entry, entry already executed"));
                     }
-                    
                     Ok(())
                 },
                 EntryValidationData::Delete { old_entry, .. } => {
-                    member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
+                    let member = member::get_member(AGENT_ADDRESS.clone(), old_entry.multisig_address)?;
+                    if !member.active {
+                        return Err(String::from("Member is not active"));
+                    }
                     if old_entry.executed {
                         return Err(String::from("Cannot delete entry, entry already executed"));
                     } else if old_entry.signed.len() > 1 {
@@ -170,7 +176,11 @@ pub fn submit(
     entry_links: Option<Vec<LinkData>>, 
     multisig_address: Address
 ) -> ZomeApiResult<Address> {
+    
     let signer = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+    if !signer.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")))
+    }
     let multisig = multisig::get_multisig(multisig_address.clone())?;
     
     //TODO: also sign entry_action
@@ -200,6 +210,9 @@ pub fn submit(
 
 pub fn sign_entry(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
+    if !member.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")));
+    }
     let transaction = Transaction::get(entry_address.clone())?;
 
     for verified_member in transaction.clone().signed {
@@ -222,7 +235,10 @@ pub fn sign_entry(entry_address: Address, multisig_address: Address) -> ZomeApiR
 }
 
 pub fn execute_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
+    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
+    if !member.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")));
+    }
     let mut transaction = Transaction::get(entry_address.clone())?;
     let can_execute = can_execute(&transaction.clone());
     match can_execute {
@@ -238,10 +254,6 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
                 EntryAction::UPDATE(base_address) => {
                     data_address = hdk::update_entry(data, &base_address)?; 
                     perform_add_update(data_address.clone(), transaction.entry_links.clone())?;
-                },
-                EntryAction::REMOVE(target_address) => {
-                    perform_remove(transaction.entry_links.clone())?;
-                    data_address = hdk::remove_entry(&target_address)?;
                 }
             }
             transaction.executed = true;
@@ -254,47 +266,27 @@ pub fn execute_transaction(entry_address: Address, multisig_address: Address) ->
 }
 
 fn perform_add_update(data_address: Address, link_data: Option<Vec<structures::LinkData>>) -> ZomeApiResult<()> {
-    let mut base_link_data = data_address.clone();
-    let mut target_link_data = data_address.clone();
     let mut tag_link_data = "".to_string();
 
     match link_data {
         Some(links) => { 
             for link in links {
+                match link.link_tag {
+                    Some(tag) => tag_link_data = tag,
+                    _ => ()
+                }
                 match link.base {
-                    Some(base) => base_link_data = base.clone(),
+                    Some(base) =>  { 
+                        hdk::link_entries(&base, &data_address, link.link_type, tag_link_data.clone())?;
+                        continue;
+                    },
                     _ => (),
-               }
-               match link.target {
-                   Some(target) => target_link_data = target.clone(),
+                }
+                match link.target {
+                    Some(target) => { 
+                        hdk::link_entries(&data_address, &target, link.link_type, tag_link_data.clone())?;
+                    },
                     _ => (),
-               }
-               match link.link_tag {
-                   Some(tag) => tag_link_data = tag,
-                   _ => ()
-               }
-               match link.action {
-                   LinkAction::ADD => {
-                        hdk::link_entries(&base_link_data, &target_link_data, link.link_type, tag_link_data.clone())?;
-                   }
-                   _ => return Err(ZomeApiError::Internal("Only Add Links is Allowed".to_string()))
-               }
-            }
-        },
-        None => ()
-    }
-    Ok(())
-}
- 
-fn perform_remove(link_data: Option<Vec<structures::LinkData>>) -> ZomeApiResult<()> {
-    match link_data {
-        Some(links) => { 
-            for link in links {
-                match link.action {
-                    LinkAction::REMOVE => {
-                        hdk::remove_link(&link.base.unwrap(), &link.target.unwrap(), link.link_type, link.link_tag.unwrap())?;
-                   }
-                   _ => return Err(ZomeApiError::Internal("Only Remove Links is Allowed".to_string()))
                 }
             }
         },
@@ -302,6 +294,7 @@ fn perform_remove(link_data: Option<Vec<structures::LinkData>>) -> ZomeApiResult
     }
     Ok(())
 }
+ 
 
 fn data_to_string(entry_data: Entry, entry_links: Option<Vec<LinkData>>) -> ZomeApiResult<String> {
     let mut data_s = String::from(JsonString::try_from(entry_data).unwrap());
@@ -347,7 +340,11 @@ fn verify_signature(transaction: Transaction, verified_member: VerifiedMember) -
 //Clones the transaction and verifies each member who has signed it
 pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
     let transaction: Transaction = Transaction::get(entry_address)?;
-    member::get_member(AGENT_ADDRESS.clone(), transaction.multisig_address.clone())?;
+    let member = member::get_member(AGENT_ADDRESS.clone(), transaction.multisig_address.clone())?;
+    if !member.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")));
+    }
+
     let mut transaction_response = transaction.clone();
     transaction_response.signed = Vec::default();
     for verified_member in transaction.clone().signed {
@@ -360,7 +357,11 @@ pub fn get(entry_address: Address) -> ZomeApiResult<Transaction> {
 }
 
 pub fn list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
-    member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+    if !member.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")));
+    }
+
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->transactions"), 
@@ -370,7 +371,11 @@ pub fn list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
 }
 
 pub fn member_list(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
-    member::get_member(AGENT_ADDRESS.clone(), multisig_address)?;
+    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+    if !member.active {
+        return Err(ZomeApiError::from(String::from("Member is not active")));
+    }
+    
     let links = hdk::get_links(
         &AGENT_ADDRESS, 
         LinkMatch::Exactly("member->transactions"), 
