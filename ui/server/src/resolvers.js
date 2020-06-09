@@ -52,8 +52,8 @@ module.exports = {
       },
 
       //*********Organizations**********
-      getOrganizations: async (_, __, { dataSources }) => {
-        const res = await dataSources.organizationsAPI.getOrganizations();
+      getOrganizations: async (_, {multisig_address}, { dataSources }) => {
+        const res = await dataSources.organizationsAPI.getOrganizations(multisig_address);
         return handleResponse(res, "Cannot fetch Organizations")
       },
       getOrganization: async (_, {address}, { dataSources }) => {

@@ -38,6 +38,8 @@
     "start:ui": "concurrently \"npm run ui:alice\" \"npm run ui:bob\"",
     "start:apollo-server": "cd ../../ui/server/ && npm run start:agents",
     "start:holochain": "cd ../../dna && holochain -c conductor-config.toml",
+    "start:holochain-alice": "cd ../../dna && holochain -c conductor-alice.toml",
+    "start:holochain-bob": "cd ../../dna && holochain -c conductor-bob.toml",
     "package": "cd ../../dna && hc package",
     "hc:test": "cd ../../dna && hc test"
   },

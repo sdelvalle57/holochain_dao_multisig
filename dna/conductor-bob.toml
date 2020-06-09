@@ -3,13 +3,6 @@ persistence_dir = ''
 ui_bundles = []
 ui_interfaces = []
 
-
-[[agents]]
-id = 'hc-alice'
-keystore_file = './alice.keystore'
-name = 'alice'
-public_address = 'HcScijzE9x3Qjogoz9xOK4NjxFNthmf9br9ow8tN7PUb6djyAoWu5rKuhrsq93i'
-
 [[agents]]
 id = 'hc-bob'
 keystore_file = './bob.keystore'
@@ -24,28 +17,8 @@ public_address = 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3ko
 
 [[dnas]]
 file = './dist/dna.dna.json'
-hash = 'QmPL2AzcosxCshFrL8Mqgs7R3DN8bhRZjXkN4g8rEne5cy'
+hash = 'QmWeDETojrXuwDag9iBoCewi22SZyF4JCpyUzjVriuhTsg'
 id = 'hc-multisig'
-
-# Alice
-[[instances]]
-agent = 'hc-alice'
-dna = 'hc-multisig'
-id = 'alice-instance'
-
-[instances.storage]
-type = 'memory'
-
-[[interfaces]]
-admin = true
-id = 'alice-interface'
-
-[[interfaces.instances]]
-id = 'alice-instance'
-
-[interfaces.driver]
-port = 8888
-type = 'websocket'
 
 # Bob
 [[instances]]
@@ -66,26 +39,6 @@ id = 'bob-instance'
 [interfaces.driver]
 port = 8889
 type = 'websocket'
-
-# Charlie
-# [[instances]]
-# agent = 'hc-charlie'
-# dna = 'hc-multisig'
-# id = 'charlie-instance'
-
-# [instances.storage]
-# type = 'memory'
-
-# [[interfaces]]
-# admin = true
-# id = 'charlie-interface'
-
-# [[interfaces.instances]]
-# id = 'charlie-instance'
-
-# [interfaces.driver]
-# port = 8890
-# type = 'websocket'
 
 
 [logger]

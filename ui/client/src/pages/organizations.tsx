@@ -1,5 +1,5 @@
 import React,  { Component, ReactNode } from 'react';
-import { WithApolloClient } from 'react-apollo';
+import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
 import { Map } from 'immutable';
@@ -12,7 +12,7 @@ import {
     GetTransaction_getTransaction_entry_links
 } from '../__generated__/GetTransaction';
 
-import { GET_TRANSACTIONS, GET_TRANSACTION, GET_APP_DATA } from '../queries';
+import { GET_TRANSACTIONS, GET_TRANSACTION, GET_APP_DATA, GET_ORGANIZATIONS, GET_ORGANIZATION } from '../queries';
 
 import Loading from '../components/loading';
 import Error from '../components/error';
@@ -22,7 +22,13 @@ import { getMethodName } from '../common/helpers';
 import InfoIcon from '../assets/images/infoIcon.png'
 import { colors } from '../styles';
 import { Button } from '../components';
+import { SignTransaction, SignTransactionVariables } from '../__generated__/SignTransaction';
+import { SIGN_TRANSACTION, EXECUTE_TRANSACTION } from '../mutations';
+import { ApolloError } from 'apollo-client';
 import { AppData } from '../__generated__/AppData';
+import { ExecuteTransaction, ExecuteTransactionVariables } from '../__generated__/ExecuteTransaction';
+import { GetOrganizationsVariables, GetOrganizations } from '../__generated__/GetOrganizations';
+import { GetOrganizationVariables, GetOrganization } from '../__generated__/GetOrganization';
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
     multisigAddress?: string;
@@ -32,49 +38,42 @@ interface StateProps {
     loading: boolean,
     error?: Object,
     myAddress: string | null;
-    transactionsEntryList: (string | null)[];
-    transactionsList: Map<any, any>,
+    organizationsEntryList: (string | null)[];
+    organizationsList: Map<any, any>,
 
 }
 
-export default class ApprovedTxs extends Component<PageProps, StateProps> {
+export default class Organizations extends Component<PageProps, StateProps> {
 
     state = {
         loading: true,
         error: undefined,
         myAddress: null,
-        transactionsEntryList: [],
-        transactionsList: Map<string, any>()
+        organizationsEntryList: [],
+        organizationsList: Map<string, any>(),
     }
 
     componentDidMount = async () => {
-        console.log("hjasja")
         const { client, multisigAddress } = this.props;
         if(multisigAddress) {
 
             try {
-
-                const myData = await client.query<AppData>({
-                    query: GET_APP_DATA
-                });
-                this.setState({myAddress: myData.data.myAddress})
-
-                const transactions = await client.query<GetTransactionList, GetTransactionListVariables>({
-                    query: GET_TRANSACTIONS,
+                const organizations = await client.query<GetOrganizations, GetOrganizationsVariables>({
+                    query: GET_ORGANIZATIONS,
+                    fetchPolicy: 'network-only',
                     variables: {
                         multisig_address: multisigAddress
                     }
                 })
-                console.log("aka")
-                console.log(transactions)
-                if(transactions.data.getTransactionList.length > 0) {
-                this.setState({transactionsEntryList: transactions.data.getTransactionList})
-                    transactions.data.getTransactionList.map( async entry_address => {
+                if(organizations.data.getOrganizations.length > 0) {
+                    this.setState({organizationsEntryList: organizations.data.getOrganizations})
+                    organizations.data.getOrganizations.map( async entry_address => {
                         if(entry_address) {
-                            this.fetchTransactionData(entry_address)
+                            this.fetchOrganizationsData(entry_address)
                         }
                     })
                 }
+
                 
             } catch (error) {
                 this.setState({error: <Error error={error} />})
@@ -83,152 +82,64 @@ export default class ApprovedTxs extends Component<PageProps, StateProps> {
         this.setState({ loading: false })
     }
 
-    fetchTransactionData = async (entry_address: string) => {
+    fetchOrganizationsData = async (address: string) => {
         const { client } = this.props;
-        const transactionData = await client.query<GetTransaction, GetTransactionVariables>({
-            query: GET_TRANSACTION,
+        const organizartionData = await client.query<GetOrganization, GetOrganizationVariables>({
+            query: GET_ORGANIZATION,
             fetchPolicy: 'network-only',
             variables: {
-                entry_address,
+                address,
             }
         })
-        console.log(transactionData)
-        this.updateTxList(entry_address, transactionData.data)
+        this.updateOrgList(address, organizartionData.data)
+    }
+
+    updateOrgList= (entry: string, value: any) => {
+        if(this.state.organizationsList.has(entry)) {
+            this.setState(({organizationsList}) => ({
+                organizationsList: organizationsList.update(entry, ()=> value)
+            }))
+        } else {
+            this.setState(({organizationsList}) => ({
+                organizationsList: organizationsList.set(entry, value)
+            }))
+        }
     }
 
     sortData = () => {
-        const { transactionsEntryList } = this.state;
+        const { organizationsEntryList } = this.state;
         const cols: any = []
         let rows: any = [];
         
-        for(let j = 0; j < transactionsEntryList.length; j++){
-            const key = transactionsEntryList[j];
+        for(let j = 0; j < organizationsEntryList.length; j++){
+            const key = organizationsEntryList[j];
             rows.push(key);
-            if((j+1) % 4 === 0 || (j + 1) === transactionsEntryList.length) {
+            if((j+1) % 4 === 0 || (j + 1) === organizationsEntryList.length) {
                 cols.push(rows);
                 rows = []
             }
         }
         return cols
     }
-
-    getEntryData = (entry: string): string => {
-        return JSON.stringify(JSON.parse(entry), undefined, 3);
-    }
-
-    getAction = (action: GetTransaction_getTransaction_entry_action | null): ReactNode => {
-        if(action) {
-            if(!action.COMMIT && !action.REMOVE && !action.UPDATE) return (
-                <Values>
-                    <ContentTitle>Action</ContentTitle>
-                    <ContentValue>Commit</ContentValue>
-                </Values>
-            )
-            else if(!action.COMMIT && ! action.REMOVE && action.UPDATE) {
-                return(
-                    <div>
-                        <Values>
-                            <ContentTitle>Action</ContentTitle>
-                            <ContentValue>Update</ContentValue>
-                        </Values>
-                        <small><strong>Entry:</strong> {action.UPDATE}</small>
-                    </div>
-                )
-            }
-            else if(!action.COMMIT && action.REMOVE && !action.UPDATE) {
-                return(
-                    <div>
-                        <Values>
-                            <ContentTitle>Action</ContentTitle>
-                            <ContentValue>Remove</ContentValue>
-                        </Values>
-                        <small><strong>Entry:</strong> {action.REMOVE}</small>
-                    </div>
-                )
-            }
-        }
-        return null;
-    }
-
-    getLinks = (links: (GetTransaction_getTransaction_entry_links | null)[] | null): ReactNode => {
-        if(!links) return null;
-        return(
-            <>
-                <Title>Entry Links</Title>
-                {
-                    links.map((l, i) => {
-                        delete l?.__typename;
-                        return(
-                            <PRE key={i}>{JSON.stringify(l, undefined, 3)}</PRE>
-                        )
-                    })
-                }
-            </>
-        )
-    }
-
-
-    updateTxList= (entry: string, value: any) => {
-        if(this.state.transactionsList.has(entry)) {
-            this.setState(({transactionsList}) => ({
-                transactionsList: transactionsList.update(entry, ()=> value)
-            }))
-        } else {
-            this.setState(({transactionsList}) => ({
-                transactionsList: transactionsList.set(entry, value)
-            }))
-        }
-    }
-
-
-
-    renderContent = (data: GetTransaction, entry_address: string) => {
-
+    renderContent = (data: GetOrganization, entry_address: string) => {
 
         return(
             <Card key={entry_address}>
-            <Title>{getMethodName(data.getTransaction.title)}</Title> 
+            <Title>{data.getOrganization.name}</Title> 
             <ImageCard src = {InfoIcon}/>
             <CardContainer>
                 <Content>
                     <Title>Description</Title>
-                    <Value>{data.getTransaction.description}</Value>
+                    <Value>{data.getOrganization.description}</Value>
                     <HR />
 
-                    <Title>Submitter</Title>
-                    <Value>{data.getTransaction.creator.member.name}</Value>
-                    <Value><small>{data.getTransaction.creator.member.address}</small></Value>
+                    <Title>Address</Title>
+                    <Value><small>{entry_address}</small></Value>
                     <HR />
 
-                    <Title>Signatures</Title>
-                    {data.getTransaction.signed?.map(({member}) => {
-                        return(
-                            <>
-                            <Value>{member.member.name}</Value>
-                            <Value><small>{member.member.address}</small></Value>
-                            </>
-                        )
-                    })}
+                    <Title>Owner</Title>
+                    <Value><small>{data.getOrganization.owner}</small></Value>
                     <HR />
-
-                    <Title>Entry Data</Title>
-                    <Values>
-                        <ContentTitle>Type</ContentTitle>
-                        <ContentValue>{data.getTransaction.entry_data.App[0]}</ContentValue>
-                    </Values>
-
-                    <Values>
-                        <ContentTitle>Required</ContentTitle>
-                        <ContentValue>{data.getTransaction.required}</ContentValue>
-                    </Values>
-                    
-                    {this.getAction(data.getTransaction.entry_action)}
-
-                    <PRE>{this.getEntryData(data.getTransaction.entry_data.App[1])}</PRE>
-                    <HR />
-
-
-                    {this.getLinks(data.getTransaction.entry_links)}
 
 
                 </Content>
@@ -238,15 +149,14 @@ export default class ApprovedTxs extends Component<PageProps, StateProps> {
         )
     }
 
-    renderTransaction = (entry_address: string, index: number) => {
-        const {transactionsList} = this.state;
-        const transaction: GetTransaction = transactionsList.get(entry_address);
-        console.log(transaction)
-        if(transaction && transaction.getTransaction.executed) {
+    renderOrganization = (entry_address: string, index: number) => {
+        const {organizationsList} = this.state;
+        const organization: GetOrganization = organizationsList.get(entry_address);
+        if(organization) {
             return (
                 <Col key={index}>
                     {
-                        this.renderContent(transaction, entry_address)
+                        this.renderContent(organization, entry_address)
                     }
                 </Col>
             )
@@ -269,7 +179,7 @@ export default class ApprovedTxs extends Component<PageProps, StateProps> {
                            <Row key={i}>
                                {
                                    col.map((entry_address: string, index: number) => {
-                                        return this.renderTransaction(entry_address, index)   
+                                        return this.renderOrganization(entry_address, index)   
                                     
                                    })
                                }

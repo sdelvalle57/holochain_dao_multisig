@@ -75,10 +75,14 @@ pub fn entry_def() -> ValidatingEntryType {
                 },
                 EntryValidationData::Delete { old_entry, .. } => {
                     let multisig_address = old_entry.multisig_address;
+                    hdk::debug(format!("m_sig {:?}", multisig_address.clone()))?;
                     let multisig = multisig::get_multisig(multisig_address.clone())?;
+                    hdk::debug(format!("m_sig_data {:?}", multisig.clone()))?;
                     let multisig_members = get_members(multisig_address.clone())?;
+                    hdk::debug(format!("m_sig_members {:?}", multisig_members.clone()))?;
                     //The link "multisig-members" has previously been removed
                     if multisig.required > (multisig_members.len() as u64) {
+                        hdk::debug(format!("m_sig_err {:?}", multisig.required.clone()))?;
                         return Err(String::from("Requirement exceeds number of members"));
                     }
                     Ok(())

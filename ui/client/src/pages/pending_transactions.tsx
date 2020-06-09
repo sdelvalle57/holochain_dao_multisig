@@ -1,5 +1,5 @@
 import React,  { Component, ReactNode } from 'react';
-import { WithApolloClient, Query } from 'react-apollo';
+import { WithApolloClient } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
 import { Map } from 'immutable';
@@ -37,7 +37,7 @@ interface StateProps {
     error?: Object,
     myAddress: string | null;
     transactionsEntryList: (string | null)[];
-    transactionList: Map<any, any>,
+    transactionsList: Map<any, any>,
     txResponseR: Map<any, any>
 
 }
@@ -49,7 +49,7 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
         error: undefined,
         myAddress: null,
         transactionsEntryList: [],
-        transactionList: Map<string, any>(),
+        transactionsList: Map<string, any>(),
         txResponseR: Map<string, any>()
     }
 
@@ -66,12 +66,13 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
 
                 const transactions = await client.query<GetTransactionList, GetTransactionListVariables>({
                     query: GET_TRANSACTIONS,
+                    fetchPolicy: 'network-only',
                     variables: {
                         multisig_address: multisigAddress
                     }
                 })
                 if(transactions.data.getTransactionList.length > 0) {
-                this.setState({transactionsEntryList: transactions.data.getTransactionList})
+                    this.setState({transactionsEntryList: transactions.data.getTransactionList})
                     transactions.data.getTransactionList.map( async entry_address => {
                         if(entry_address) {
                             this.fetchTransactionData(entry_address)
@@ -182,13 +183,13 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
     }
 
     updateTxList= (entry: string, value: any) => {
-        if(this.state.transactionList.has(entry)) {
-            this.setState(({transactionList}) => ({
-                transactionList: transactionList.update(entry, ()=> value)
+        if(this.state.transactionsList.has(entry)) {
+            this.setState(({transactionsList}) => ({
+                transactionsList: transactionsList.update(entry, ()=> value)
             }))
         } else {
-            this.setState(({transactionList}) => ({
-                transactionList: transactionList.set(entry, value)
+            this.setState(({transactionsList}) => ({
+                transactionsList: transactionsList.set(entry, value)
             }))
         }
     }
@@ -338,8 +339,8 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
     }
 
     renderTransaction = (entry_address: string, index: number) => {
-        const {transactionList} = this.state;
-        const transaction: GetTransaction = transactionList.get(entry_address);
+        const {transactionsList} = this.state;
+        const transaction: GetTransaction = transactionsList.get(entry_address);
         if(transaction && !transaction.getTransaction.executed) {
             return (
                 <Col key={index}>

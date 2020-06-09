@@ -39,7 +39,6 @@ pub struct Organization {
     pub name: String,
     pub description: String,
     pub owner: Address,
-    pub permissions: Vec<String>,
     pub multisig_address: Address,
 }
 
@@ -49,7 +48,6 @@ impl Organization {
             name,
             description,
             owner,
-            permissions: Vec::default(),
             multisig_address
         }
     }
@@ -182,9 +180,7 @@ pub fn new_multisig(title: String, description: String, organization_address: Ad
 
 }
 
-pub fn get_all() -> ZomeApiResult<Vec<Address>> {
-    let rpc_call_msig_address = hdk::call(hdk::THIS_INSTANCE, "multisig", Address::from(hdk::PUBLIC_TOKEN.to_string()), "get_multisig_address", JsonString::from("{}"));
-    let multisig_address: Address = decode_zome_call(rpc_call_msig_address)?;
+pub fn get_all(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
     let links = hdk::get_links(
         &multisig_address, 
         LinkMatch::Exactly("multisig->organizations"), 

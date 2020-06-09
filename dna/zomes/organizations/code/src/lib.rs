@@ -62,8 +62,8 @@ mod my_zome {
 
     /*************** Getter Functions */
     #[zome_fn("hc_public")]
-    fn get_all() -> ZomeApiResult<Vec<Address>> {
-      organization::get_all()
+    fn get_all(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
+      organization::get_all(multisig_address)
     }
 
     #[zome_fn("hc_public")]

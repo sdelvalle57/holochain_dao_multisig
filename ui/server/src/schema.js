@@ -19,7 +19,7 @@ const typeDefs = gql`
         getTransactionMemberList(multisig_address: String!): [String]!,
 
         #**** Organizations *****
-        getOrganizations: [String]!,
+        getOrganizations(multisig_address: String!): [String]!,
         getOrganization(address: String!): Organization!
         getMyOrganizations: [String]!
     }
@@ -46,7 +46,6 @@ const typeDefs = gql`
         name: String!,
         description: String!,
         owner: String!,
-        permissions: [String]!,
         multisig_address: String!
     }
 

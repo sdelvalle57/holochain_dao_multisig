@@ -79,6 +79,25 @@ export const GET_TRANSACTION = gql`
     }
 `;
 
+
+/*******Organizations */
+export const GET_ORGANIZATIONS = gql`
+    query GetOrganizations($multisig_address: String!) {
+        getOrganizations(multisig_address: $multisig_address) 
+    }
+`
+
+export const GET_ORGANIZATION = gql`
+    query GetOrganization($address: String!) {
+        getOrganization(address: $address) {
+            description
+            multisig_address
+            name
+            owner
+        }
+    }
+`
+
 /*****Helpers */
 export const GET_APP_DATA = gql`
     query AppData {
@@ -86,7 +105,6 @@ export const GET_APP_DATA = gql`
         getDnaAddress
     }
 `;
-
 
 export const GET_HARDCODED_MEMBERS = gql`
     query HardcodedMembers {

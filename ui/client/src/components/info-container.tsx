@@ -5,10 +5,11 @@ import { GetMultisig_getMultisig } from '../__generated__/GetMultisig';
 
 interface ModalProps {
   members: GetMultisigMembers_getMembers[];
-  multisigData: GetMultisig_getMultisig
+  multisigData: GetMultisig_getMultisig;
+  organizations: (string | null)[]
 }
 
-const InfoContainer: React.FC<ModalProps> = ({ members, multisigData }) => {
+const InfoContainer: React.FC<ModalProps> = ({ members, multisigData, organizations }) => {
     return (
         <div >
             <WalletInfo>
@@ -23,6 +24,10 @@ const InfoContainer: React.FC<ModalProps> = ({ members, multisigData }) => {
                 <Row>
                     <ColTitle>Required Signatories: </ColTitle>
                     <ColValue>{multisigData.required}</ColValue>
+                </Row>
+                <Row>
+                    <ColTitle>Organizations: </ColTitle>
+                    <ColValue>{organizations.length}</ColValue>
                 </Row>
             </WalletInfo>
             <Note>Below is a list of individuals part of the Community</Note>

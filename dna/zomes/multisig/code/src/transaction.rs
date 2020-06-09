@@ -123,6 +123,7 @@ pub fn entry_def() -> ValidatingEntryType {
             match validation_data {
                 EntryValidationData::Create { .. } => {
                     member::get_member(AGENT_ADDRESS.clone(), multisig::get_multisig_address()?)?;
+                    
                     Ok(())
                 },
                 EntryValidationData::Modify { old_entry, .. } => {

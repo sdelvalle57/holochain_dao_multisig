@@ -43,8 +43,10 @@ class OrganizationAPI extends RESTDataSource {
         return this.reducer(JSON.parse(response))
     }
 
-    async getOrganizations() {
-        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "get_all")({})
+    async getOrganizations(multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_ORGANIZATIONS, "get_all")({
+            multisig_address
+        })
         return this.reducer(JSON.parse(response))
     }
 
