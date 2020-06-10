@@ -242,12 +242,19 @@ pub fn sign_entry(entry_address: Address, multisig_address: Address) -> ZomeApiR
 }
 
 pub fn execute_transaction(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-    let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address)?;
+    let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address.clone())?;
     if !member.active {
         return Err(ZomeApiError::from(String::from("Member is not active")));
     }
     let mut transaction = Transaction::get(entry_address.clone())?;
-    let can_execute = can_execute(&transaction.clone());
+    
+    let links_count = hdk::get_links_count(
+        &multisig_address, 
+        LinkMatch::Exactly("multisig->members"), 
+        LinkMatch::Any
+    )?;
+
+    let can_execute = can_execute(&transaction.clone(), links_count.count);
     match can_execute {
         Some(err) => return Err(err),
         None =>  {
@@ -315,19 +322,31 @@ fn data_to_string(entry_data: Entry, entry_links: Option<Vec<LinkData>>) -> Zome
     Ok(data_s)
 }
 
-fn can_execute(transaction: &Transaction) -> Option<ZomeApiError> {
-    if transaction.signed.clone().len() < transaction.required as usize {
-        return Some(ZomeApiError::Internal("Cannot execute transaction".into()));
-    } 
+fn can_execute(transaction: &Transaction, members_count: usize) -> Option<ZomeApiError> {
+
     if transaction.executed  {
         return Some(ZomeApiError::Internal("Transaction already executed".into()));
     }
-    for verified_member in &transaction.signed {
-        if verified_member.member.member.address == AGENT_ADDRESS.clone() {
-            // No error.transaction can be executed
-            return None
+
+    // Check if all members have signed
+    if members_count == transaction.signed.clone().len() {
+        for verified_member in &transaction.signed {
+            if verified_member.member.member.address == AGENT_ADDRESS.clone() {
+                // No error.transaction can be executed
+                return None
+            }
+        }
+    } else if transaction.signed.clone().len() < transaction.required as usize {
+        return Some(ZomeApiError::Internal("Cannot execute transaction".into()));
+    } else {
+        for verified_member in &transaction.signed {
+            if verified_member.member.member.address == AGENT_ADDRESS.clone() {
+                // No error.transaction can be executed
+                return None
+            }
         }
     }
+    
     Some(ZomeApiError::Internal("Member has not signed the transaction".into()))
 }
 
