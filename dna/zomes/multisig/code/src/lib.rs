@@ -122,8 +122,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn remove_member(description: String, address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
-        member::remove_member(description, address, multisig_address)
+    fn remove_member(description: String, entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
+        member::remove_member(description, entry_address, multisig_address)
     }
 
     /*********** Transaction.rs */
@@ -153,7 +153,7 @@ mod my_zome {
 
     #[zome_fn("hc_public")]
     fn is_member(multisig_address: Address) -> ZomeApiResult<bool> {
-        let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address);
+        let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address);
         match member {
             Ok(member) => {
                 if member.active {
@@ -182,13 +182,14 @@ mod my_zome {
 
     /*********** member.rs */
     #[zome_fn("hc_public")]
-    fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<member::Member>> {
+    fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
         member::get_members(multisig_address)
     }
 
+    // Consider not making it available to public
     #[zome_fn("hc_public")]
-    fn get_member(entry_address: Address) -> ZomeApiResult<member::Member> {
-        member::get_member_by_entry(entry_address)
+    fn get_member(entry_address: Address, multisig_address: Address) -> ZomeApiResult<member::Member> {
+        member::get_member(entry_address, multisig_address)
     }
     
     /*********** multisig.rs */

@@ -1,18 +1,20 @@
 import React, { Component } from 'react';
 import styled from 'react-emotion';
 
-import { StyledForm, StyledInput, StyledSelector} from '../global-containers'
+import { StyledForm, StyledInput, StyledSelector} from '../global-containers';
 import { unit } from '../../styles';
-import { useMutation } from 'react-apollo';
+import { useMutation, Query } from 'react-apollo';
 import { REMOVE_MEMBER } from '../../mutations';
 import { Loading, Error, Button } from '../index';
 import Alert, { Type } from '../alert';
 import { RemoveMember, RemoveMemberVariables } from '../../__generated__/RemoveMember';
-import { GetMultisigMembers_getMembers } from '../../__generated__/GetMultisigMembers';
+import { GetMultisigMembers } from '../../__generated__/GetMultisigMembers';
+import { GetMember, GetMemberVariables } from '../../__generated__/GetMember';
+import { GET_MEMBER } from '../../queries';
 
 interface MainProps {
     multisigAddress: string;
-    members: GetMultisigMembers_getMembers[];
+    members: GetMultisigMembers;
 }
 
 const RemoveMemberFC: React.FC<MainProps> = (props) => {
@@ -35,7 +37,7 @@ export default RemoveMemberFC;
 interface RemoveMemberProps {
     removeMember: (a : {variables: RemoveMemberVariables}) => void;
     multisig: string;
-    members: GetMultisigMembers_getMembers[];
+    members: GetMultisigMembers;
 }
 
 interface RemoveMemberFormState {
@@ -87,8 +89,22 @@ class RemoveMemberForm extends Component<RemoveMemberProps, RemoveMemberFormStat
           name="address">
           <option key="selection" value="">Please select</option>
           {
-            members.map((m, index) => {
-              return <option key={index} value={m.member.address}>{m.member.name}</option>
+            members.getMembers.map((m, index) => {
+              return (
+                <Query<GetMember, GetMemberVariables> 
+                query = { GET_MEMBER } 
+                variables = {{
+                  entry_address: m,
+                  multisig_address: this.props.multisig
+                }}>
+                  {({data, error, loading}) => {
+                        if(error) return <option key={index} value={m}>{m}</option>;
+                        if(loading) return <option key={index} value={m}>{m}</option>;
+                        return <option key={index} value={m}>{data?.getMember?.member.name}</option>;
+                    }}
+                </Query>
+              )
+              
             })
           }
         </StyledSelector>

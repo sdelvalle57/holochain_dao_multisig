@@ -1,15 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'react-emotion';
-import { GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
+import { GetMultisigMembers } from '../__generated__/GetMultisigMembers';
 import { GetMultisig_getMultisig } from '../__generated__/GetMultisig';
+import { Query } from 'react-apollo';
+import { GET_MEMBER } from '../queries';
+import { GetMember, GetMemberVariables } from '../__generated__/GetMember';
 
 interface ModalProps {
-  members: GetMultisigMembers_getMembers[];
+  members: GetMultisigMembers;
   multisigData: GetMultisig_getMultisig;
+  multisigAddress: string;
   organizations: (string | null)[]
 }
 
-const InfoContainer: React.FC<ModalProps> = ({ members, multisigData, organizations }) => {
+interface FilterProps {
+    onSelect: any
+}
+
+interface MemberProps {
+    member: GetMember | null | undefined,
+    filter: number
+}
+
+const Filter: React.FC<FilterProps> = ({onSelect})=> {
+    return (
+        <StyledFilter>
+            Filter
+            <StyledSelector onChange={({target}) => { onSelect(parseInt(target.value)) }} >
+                <option key="0" value="0">Active</option>
+                <option key="1" value="1">Inactive</option>
+                <option key="2" value="2">All</option>
+            </StyledSelector>
+        </StyledFilter>
+    )
+}
+
+const Member: React.FC<MemberProps> = ({member, filter}) => {
+
+    const renderMember = (member: GetMember | null | undefined) => {
+        if(!member) return null
+        return (
+            <>
+                <MembersColTitle>{member.getMember?.member.name}</MembersColTitle>
+                <MembersColValue color={!member.getMember?.active ? "red" : null}>
+                    {member.getMember?.member.address}
+                </MembersColValue>
+            </>
+        )
+    }
+
+    switch(filter) {
+        case 0: 
+            if(member?.getMember?.active) return renderMember(member)
+            return null;
+        case 1:
+            if(!member?.getMember?.active) return renderMember(member)
+            return null;
+        default:
+            return renderMember(member)
+    }
+
+}
+
+const InfoContainer: React.FC<ModalProps> = ({ 
+    members, 
+    multisigData, 
+    organizations,
+    multisigAddress
+}) => {
+    const [filter, setFilter] = useState(0);
+
     return (
         <div >
             <WalletInfo>
@@ -32,14 +92,38 @@ const InfoContainer: React.FC<ModalProps> = ({ members, multisigData, organizati
             </WalletInfo>
             <Note>Below is a list of individuals part of the Community</Note>
             <MembersContainer>
-                <MembersHeader>Members</MembersHeader>
+            <MembersHeader>Members <Filter onSelect={(value: number) => setFilter(value) } /></MembersHeader>
                 <MembersDiv>
                     {
-                        members.map((m, index) => {
+                        members.getMembers.map((m, index) => {
                             return (
                                 <MembersRow key={index}>
-                                    <MembersColTitle>{m.member.name}</MembersColTitle>
-                                    <MembersColValue>{m.member.address}</MembersColValue>
+                                    <Query<GetMember, GetMemberVariables> 
+                                    query = { GET_MEMBER } 
+                                    fetchPolicy = "network-only"
+                                    variables = {{
+                                        entry_address: m,
+                                        multisig_address: multisigAddress
+                                      }} >
+                                        {({data, error, loading}) => {
+                                            if(error) return (
+                                                <>
+                                                    <MembersColTitle>Error fetching member</MembersColTitle>
+                                                    <MembersColValue>{m}</MembersColValue>
+                                                </>
+                                            );
+                                            if(loading) return (
+                                                <>
+                                                    <MembersColTitle>Loading</MembersColTitle>
+                                                    <MembersColValue>{m}</MembersColValue>
+                                                </>
+                                            )
+                                            return (
+                                                <Member member = {data} filter={filter}/>
+                                            )
+                                            
+                                        }}
+                                    </Query>
                                 </MembersRow>
                             )
                         })
@@ -167,11 +251,32 @@ const MembersColTitle = styled(MembersCols)({
     maxWidth: '25%',
 })
 
-const MembersColValue = styled(MembersCols)({
+const MembersColValue = styled(MembersCols)((props: any) => ({
     textAlign: 'start',
     fontSize: '10px',
     fontStyle: 'normal',
-    color: '#000000',
     flex: '0 0 75%',
     maxWidth: '75%',
+    color: props.color || '#000000'
+    
+
+}))
+
+
+export const StyledFilter = styled('div')({
+    width: '280px',
+    fontSize: '9px',
+    display: 'inline-block',
+    textAlign: 'center',
+    position: 'absolute'
+})
+
+const StyledSelector = styled('select')({
+    textDecoration: 'underline',
+    border: 'none',
+    MozAppearance: 'none',
+    textIndent: '1px',
+    background: 'transparent',
+    fontSize: "10px",
+    color: '#C49E57'
 })

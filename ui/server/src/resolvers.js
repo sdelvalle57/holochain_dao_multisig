@@ -30,6 +30,10 @@ module.exports = {
         const res = await dataSources.multisigAPI.getMembers(multisig_address);
         return handleResponse(res, "Cannot fetch members")
       },
+      getMember: async (_, { entry_address, multisig_address }, { dataSources }) => {
+        const res = await dataSources.multisigAPI.getMember(entry_address, multisig_address);
+        return handleResponse(res, "Cannot fetch members")
+      },
       getMultisigAddress: async (_, __, { dataSources }) => {
         const res = await dataSources.multisigAPI.getMultisigAddress();
         return handleResponse(res, "Cannot fetch Multisig Address")
@@ -44,6 +48,7 @@ module.exports = {
       },
       getTransactionList: async (_, {multisig_address}, { dataSources }) => {
         const res = await dataSources.multisigAPI.getTransactionList(multisig_address);
+        console.log(res)
         return handleResponse(res, "Cannot fetch List")
       },
       getTransactionMemberList: async (_, {multisig_address}, { dataSources }) => {
@@ -56,8 +61,8 @@ module.exports = {
         const res = await dataSources.organizationsAPI.getOrganizations(multisig_address);
         return handleResponse(res, "Cannot fetch Organizations")
       },
-      getOrganization: async (_, {address}, { dataSources }) => {
-        const res = await dataSources.organizationsAPI.getOrganization(address);
+      getOrganization: async (_, { entry_address }, { dataSources }) => {
+        const res = await dataSources.organizationsAPI.getOrganization(entry_address);
         return handleResponse(res, "Cannot fetch Organization")
       },
       getMyOrganizations: async (_, __, { dataSources }) => {

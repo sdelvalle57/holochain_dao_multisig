@@ -67,8 +67,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get(address: Address) -> ZomeApiResult<organization::Organization> {
-      organization::get(address)
+    fn get(entry_address: Address) -> ZomeApiResult<organization::Organization> {
+      organization::get(entry_address)
     } 
 
     #[zome_fn("hc_public")]

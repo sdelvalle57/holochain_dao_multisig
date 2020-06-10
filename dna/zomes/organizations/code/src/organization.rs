@@ -218,8 +218,8 @@ pub fn get_all(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
 // pub fn get_all_suborganizations(parent: Address) -> ZomeApiResult<Vec<Address>> {
 // }
 
-pub fn get(address: Address) -> ZomeApiResult<Organization> {
-    let organization: Organization = hdk::utils::get_as_type(address.clone())?;
+pub fn get(entry_address: Address) -> ZomeApiResult<Organization> {
+    let organization: Organization = hdk::utils::get_as_type(entry_address.clone())?;
     Ok(organization)
 } 
 

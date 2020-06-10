@@ -4,7 +4,7 @@ import styled from 'react-emotion';
 import { WithApolloClient} from 'react-apollo';
 
 import { GetMultisig, GetMultisigVariables, GetMultisig_getMultisig } from '../__generated__/GetMultisig';
-import { GetMultisigMembers, GetMultisigMembersVariables, GetMultisigMembers_getMembers } from '../__generated__/GetMultisigMembers';
+import { GetMultisigMembers, GetMultisigMembersVariables } from '../__generated__/GetMultisigMembers';
 
 import {Container} from './global-containers';
 import {Card, Alert, Error, Modal, Info } from '.'
@@ -66,13 +66,13 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
     return multisigData.data.getMultisig
   }
 
-  getMembers = async (multisigAddress: string): Promise<GetMultisigMembers_getMembers[]> => {
+  getMembers = async (multisigAddress: string): Promise<GetMultisigMembers> => {
     const { client } = this.props;
     const members = await client.query<GetMultisigMembers, GetMultisigMembersVariables>({
       query: GET_MULTISIG_MEMBERS,
       variables: { multisig_address: multisigAddress }
     })
-    return members.data.getMembers
+    return members.data
   }
 
   getOrganizations = async (multisigAddress: string): Promise<(string | null)[]> => {
@@ -92,13 +92,18 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
         const multisigData = await this.getMultisigData(multisigAddress);
 
         if(multisigData) {
-          const members = await this.getMembers(multisigAddress);
+          const members: GetMultisigMembers = await this.getMembers(multisigAddress);
 
           const organizations = await this.getOrganizations(multisigAddress)
 
-          if(members.length > 0 && organizations) {
-            const info = <Info members={members} multisigData={multisigData} organizations={organizations}/>
-            this.setState({
+          if(members.getMembers.length > 0 && organizations) {
+            const info = (
+              <Info members={members} 
+                multisigData={multisigData} 
+                multisigAddress = {multisigAddress}
+                organizations={organizations}/>
+            )
+              this.setState({
               header: multisigAddress,
               headerTitle: "Multisig",
               show: true, 

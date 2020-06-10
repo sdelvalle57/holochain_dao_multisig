@@ -118,13 +118,13 @@ export default class ApprovedTxs extends Component<PageProps, StateProps> {
 
     getAction = (action: GetTransaction_getTransaction_entry_action | null): ReactNode => {
         if(action) {
-            if(!action.COMMIT && !action.REMOVE && !action.UPDATE) return (
+            if(!action.COMMIT && !action.UPDATE) return (
                 <Values>
                     <ContentTitle>Action</ContentTitle>
                     <ContentValue>Commit</ContentValue>
                 </Values>
             )
-            else if(!action.COMMIT && ! action.REMOVE && action.UPDATE) {
+            else if(!action.COMMIT && action.UPDATE) {
                 return(
                     <div>
                         <Values>
@@ -132,17 +132,6 @@ export default class ApprovedTxs extends Component<PageProps, StateProps> {
                             <ContentValue>Update</ContentValue>
                         </Values>
                         <small><strong>Entry:</strong> {action.UPDATE}</small>
-                    </div>
-                )
-            }
-            else if(!action.COMMIT && action.REMOVE && !action.UPDATE) {
-                return(
-                    <div>
-                        <Values>
-                            <ContentTitle>Action</ContentTitle>
-                            <ContentValue>Remove</ContentValue>
-                        </Values>
-                        <small><strong>Entry:</strong> {action.REMOVE}</small>
                     </div>
                 )
             }

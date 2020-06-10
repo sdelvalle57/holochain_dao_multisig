@@ -136,7 +136,7 @@ pub fn entry_def() -> ValidatingEntryType {
                 },
                 EntryValidationData::Modify { new_entry, .. } => {
                     let multisig_address = get_multisig_address()?;
-                    let member = member::get_member(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+                    let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address.clone())?;
                     if !member.active {
                         return Err(String::from("Member is not active"));
                     }

@@ -12,6 +12,7 @@ const typeDefs = gql`
         #**** Multisig *****
         isMember(multisig_address: String!): Boolean!,
         getMembers(multisig_address: String!): [String!]!,
+        getMember(entry_address: String!, multisig_address: String!): Member,
         getMultisigAddress: Entry!,
         getMultisig(multisig_address: String!): Multisig!,
         getTransaction(entry_address: String!): Transaction!,
@@ -20,7 +21,7 @@ const typeDefs = gql`
 
         #**** Organizations *****
         getOrganizations(multisig_address: String!): [String]!,
-        getOrganization(address: String!): Organization!
+        getOrganization(entry_address: String!): Organization!
         getMyOrganizations: [String]!
     }
 

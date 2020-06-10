@@ -43,12 +43,13 @@ class MyAddressAPI extends RESTDataSource {
         return this.entryReducer(JSON.parse(response))
     }
 
-    async removeMember(description, address, multisig_address) {
+    async removeMember(description, entry_address, multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "remove_member")({
             description, 
-            address,
+            entry_address,
             multisig_address
         })
+        console.log(response)
         return this.entryReducer(JSON.parse(response))
     }
 
@@ -88,6 +89,14 @@ class MyAddressAPI extends RESTDataSource {
 
     async getMembers(multisig_address) {
         const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_members")({
+            multisig_address
+        })
+        return this.reducer(JSON.parse(response))
+    }
+
+    async getMember(entry_address, multisig_address) {
+        const response = await this.callZome(process.env.INSTANCE_NAME, process.env.ZOME_MULTISIG, "get_member")({
+            entry_address,
             multisig_address
         })
         return this.reducer(JSON.parse(response))

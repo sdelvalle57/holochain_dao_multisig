@@ -93,7 +93,7 @@ pub fn add_member(name: String, description: String, address: Address, multisig_
 
 pub fn remove_member(description: String, entry_address: Address, multisig_address: Address) -> ZomeApiResult<Address> {
     
-    let mut member = get_member(entry_address, multisig_address)?;
+    let mut member = get_member(entry_address.clone(), multisig_address.clone())?;
     if member.multisig_address != multisig_address.clone() {
         return Err(ZomeApiError::from(String::from("Member does not belong to Multisig")))
     } else if !member.active {
@@ -106,7 +106,7 @@ pub fn remove_member(description: String, entry_address: Address, multisig_addre
         REMOVE_MEMBER.to_string(), 
         description, 
         member_entry, 
-        EntryAction::UPDATE(entry_address.clone()), 
+        EntryAction::UPDATE(entry_address), 
         None, 
         multisig_address
     )
@@ -122,21 +122,23 @@ pub fn get_members(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
     Ok(links.addresses())
 }
 
-pub fn get_member(address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
-    let members = get_members(multisig_address)?;
+pub fn get_member(entry_address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
+    let member: Member = hdk::utils::get_as_type(entry_address.clone())?;
+    if member.multisig_address == multisig_address {
+        return Ok(member);
+    } 
+    Err(ZomeApiError::from(String::from("Member not found")))
+}
 
+pub fn get_member_by_address(address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
+    let members = get_members(multisig_address.clone())?;
     for member_entry in members {
-        let member = get_member_by_entry(member_entry)?;
+        let member = get_member(member_entry, multisig_address.clone())?;
         if member.member.address == address {
             return Ok(member)
         }
     }
     Err(ZomeApiError::from(String::from("Member not found")))
-}
-
-pub fn get_member_by_entry(entry_address: Address) -> ZomeApiResult<Member> {
-    let member: Member = hdk::utils::get_as_type(entry_address.clone())?;
-    Ok(member)
 }
 
 

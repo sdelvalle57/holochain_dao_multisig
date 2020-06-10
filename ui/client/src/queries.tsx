@@ -17,13 +17,13 @@ export const GET_MULTISIG_MEMBERS = gql`
 `;
 
 export const GET_MEMBER = gql`
-    query GetMember($entry_address: String!) {
-        getMember(entry_address: $entry_address) {
+    query GetMember($entry_address: String!, $multisig_address: String!) {
+        getMember(entry_address: $entry_address, multisig_address: $multisig_address) {
             member {
                 name
                 address
-                active
             }
+            active
         }
     }
 `;
@@ -56,16 +56,16 @@ export const GET_TRANSACTION = gql`
                     member {
                         name
                         address
-                        active
                     }
+                    active
                 }
             }
             creator {
                 member {
                     name
                     address
-                    active
                 }
+                active
             }
             executed
             entry_data {
@@ -94,8 +94,8 @@ export const GET_ORGANIZATIONS = gql`
 `
 
 export const GET_ORGANIZATION = gql`
-    query GetOrganization($address: String!) {
-        getOrganization(address: $address) {
+    query GetOrganization($entry_address: String!) {
+        getOrganization(entry_address: $entry_address) {
             description
             multisig_address
             name

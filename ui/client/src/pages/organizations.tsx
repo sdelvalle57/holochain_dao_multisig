@@ -82,26 +82,26 @@ export default class Organizations extends Component<PageProps, StateProps> {
         this.setState({ loading: false })
     }
 
-    fetchOrganizationsData = async (address: string) => {
+    fetchOrganizationsData = async (entry_address: string) => {
         const { client } = this.props;
         const organizartionData = await client.query<GetOrganization, GetOrganizationVariables>({
             query: GET_ORGANIZATION,
             fetchPolicy: 'network-only',
             variables: {
-                address,
+                entry_address,
             }
         })
-        this.updateOrgList(address, organizartionData.data)
+        this.updateOrgList(entry_address, organizartionData.data)
     }
 
-    updateOrgList= (entry: string, value: any) => {
-        if(this.state.organizationsList.has(entry)) {
+    updateOrgList= (entry_address: string, value: any) => {
+        if(this.state.organizationsList.has(entry_address)) {
             this.setState(({organizationsList}) => ({
-                organizationsList: organizationsList.update(entry, ()=> value)
+                organizationsList: organizationsList.update(entry_address, ()=> value)
             }))
         } else {
             this.setState(({organizationsList}) => ({
-                organizationsList: organizationsList.set(entry, value)
+                organizationsList: organizationsList.set(entry_address, value)
             }))
         }
     }
