@@ -1,8 +1,7 @@
 import React,  { Component } from 'react';
-import { WithApolloClient } from 'react-apollo';
+import { WithApolloClient, Query } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
-import { Map } from 'immutable';
 
 import { GET_ORGANIZATION } from '../../queries';
 
@@ -11,98 +10,24 @@ import Loading from '../../components/loading';
 import InfoIcon from '../../assets/images/infoIcon.png'
 import { colors } from '../../styles';
 import { GetOrganizationVariables, GetOrganization } from '../../__generated__/GetOrganization';
+import { Error, Alert } from '../../components';
+import { GetOrganizations } from '../../__generated__/GetOrganizations';
+import { Type } from '../../components/alert';
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
     entryAddress?: string;
 }
 
 interface StateProps {
-    loading: boolean,
-    error?: Object,
     myAddress: string | null;
-    organizationsEntryList: (string | null)[];
-    organizationsList: Map<any, any>,
-
 }
 
 export default class Organization extends Component<PageProps, StateProps> {
 
     state = {
-        loading: true,
-        error: undefined,
         myAddress: null,
-        organizationsEntryList: [],
-        organizationsList: Map<string, any>(),
     }
 
-    componentDidMount = async () => {
-        const { client, entryAddress } = this.props;
-        // if(multisigAddress) {
-
-        //     try {
-        //         const organizations = await client.query<GetOrganizations, GetOrganizationsVariables>({
-        //             query: GET_ORGANIZATIONS,
-        //             fetchPolicy: 'network-only',
-        //             variables: {
-        //                 multisig_address: multisigAddress
-        //             }
-        //         })
-        //         if(organizations.data.getOrganizations.length > 0) {
-        //             this.setState({organizationsEntryList: organizations.data.getOrganizations})
-        //             organizations.data.getOrganizations.map( async entry_address => {
-        //                 if(entry_address) {
-        //                     this.fetchOrganizationsData(entry_address)
-        //                 }
-        //             })
-        //         }
-
-                
-        //     } catch (error) {
-        //         this.setState({error: <Error error={error} />})
-        //     }
-        // }
-        this.setState({ loading: false })
-    }
-
-    fetchOrganizationsData = async (entry_address: string) => {
-        const { client } = this.props;
-        const organizartionData = await client.query<GetOrganization, GetOrganizationVariables>({
-            query: GET_ORGANIZATION,
-            fetchPolicy: 'network-only',
-            variables: {
-                entry_address,
-            }
-        })
-        this.updateOrgList(entry_address, organizartionData.data)
-    }
-
-    updateOrgList= (entry_address: string, value: any) => {
-        if(this.state.organizationsList.has(entry_address)) {
-            this.setState(({organizationsList}) => ({
-                organizationsList: organizationsList.update(entry_address, ()=> value)
-            }))
-        } else {
-            this.setState(({organizationsList}) => ({
-                organizationsList: organizationsList.set(entry_address, value)
-            }))
-        }
-    }
-
-    sortData = () => {
-        const { organizationsEntryList } = this.state;
-        const cols: any = []
-        let rows: any = [];
-        
-        for(let j = 0; j < organizationsEntryList.length; j++){
-            const key = organizationsEntryList[j];
-            rows.push(key);
-            if((j+1) % 4 === 0 || (j + 1) === organizationsEntryList.length) {
-                cols.push(rows);
-                rows = []
-            }
-        }
-        return cols
-    }
     renderContent = (data: GetOrganization, entry_address: string) => {
 
         return(
@@ -131,47 +56,57 @@ export default class Organization extends Component<PageProps, StateProps> {
         )
     }
 
-    renderOrganization = (entry_address: string, index: number) => {
-        const {organizationsList} = this.state;
-        const organization: GetOrganization = organizationsList.get(entry_address);
-        if(organization) {
-            return (
-                <Col key={index}>
-                    {
-                        this.renderContent(organization, entry_address)
-                    }
-                </Col>
-            )
-        }
-        return null;
-    }
     
     render() {
-        const { loading, error } = this.state;
-        const sorted = this.sortData();
-        // const { multisigAddress } = this.props;
-        // if(!multisigAddress) return <Alert type={Type.Danger} text="Error trying to fetch multisig" />
-        if(error) return error;
-        if(loading) return <Loading />
-        return (
-            <Container>
-                {
-                    sorted.map((col: any, i: number) => {
-                       return(
-                           <Row key={i}>
-                               {
-                                   col.map((entry_address: string, index: number) => {
-                                        return this.renderOrganization(entry_address, index)   
-                                    
-                                   })
-                               }
-
-                           </Row>
-                       )
-                   })
-                }
-            </Container>
-        )
+        if(!this.props.entryAddress) return <Alert type={Type.Danger} text="No entry Address" />
+        return  (
+            <Query<GetOrganization, GetOrganizationVariables>query = { GET_ORGANIZATION } 
+            fetchPolicy = "network-only"
+            variables = {{
+                entry_address: this.props.entryAddress
+              }} >
+                  {({data, error, loading}) => {
+                    if(error) return <Error error={error} />;
+                    if(loading) return <Loading />
+                    return (
+                        <Header>
+                            <Row>
+                                <HeaderTitle>Name</HeaderTitle>
+                                <HeaderContainer>
+                                <HeaderValue>{data?.getOrganization.name}</HeaderValue>
+                                </HeaderContainer>
+                            </Row>
+                            <Row>
+                                <HeaderTitle>Address</HeaderTitle>
+                                <HeaderContainer>
+                                <HeaderValue>{this.props.entryAddress}</HeaderValue>
+                                </HeaderContainer>
+                            </Row>
+                            <Row>
+                                <HeaderTitle>Owner</HeaderTitle>
+                                <HeaderContainer>
+                                <HeaderValue>{data?.getOrganization.owner}</HeaderValue>
+                                </HeaderContainer>
+                            </Row>
+                            <Row>
+                                <HeaderTitle>Parent Multisig</HeaderTitle>
+                                <HeaderContainer>
+                                <HeaderValue>{data?.getOrganization.multisig_address}</HeaderValue>
+                                </HeaderContainer>
+                            </Row>
+                            <Row>
+                                <HeaderTitle>Description</HeaderTitle>
+                                <HeaderContainer>
+                                <HeaderValue>{data?.getOrganization.description}</HeaderValue>
+                                </HeaderContainer>
+                            </Row>
+                        </Header>
+                    )
+                    
+                }}
+              
+            </Query>
+          )
     }
 }
 
@@ -284,3 +219,54 @@ const HR = styled('hr')({
     borderTop: '1px',
     marginBottom: '10px'
 })
+
+
+
+
+
+const Header = styled('div')({
+    width: '735px',
+    background: '#F3F0EB',
+    border: '1px solid #C49E57',
+    boxSizing: 'border-box',
+    display: 'block',
+    justifyContent: 'space-around',
+    paddingTop: '20px',
+    margin: 'auto',
+    paddingBottom: '20px'
+  })
+  
+  const HeaderContainer = styled('div')({
+    width: '500px',
+    height: '36px',
+    background: '#FFFFFF',
+    border: '1px solid #E7E1D7',
+    boxSizing: 'border-box',
+    display: 'inline-flex',
+    lineHeight: '20px',
+    textAlign: 'center',
+  })
+  
+  const HeaderValue = styled('span')({
+    fontFamily: 'Avenir',
+    fontStyle: 'normal',
+    fontWeight: 'normal',
+    fontSize: '12px',
+    lineHeight: '30px',
+    color: '#000000',
+    margin: 'auto',
+  })
+  
+  const HeaderTitle = styled('div')({
+    fontFamily: 'Avenir',
+    fontStyle: 'normal',
+    fontWeight: 800,
+    fontSize: '12px',
+    lineHeight: '35px',
+    textAlign: 'right',
+    textTransform: 'uppercase',
+    color: '#C49E57',
+    marginRight: '2rem',
+    width: '165px',
+  })
+  
