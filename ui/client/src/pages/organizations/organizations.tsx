@@ -1,34 +1,20 @@
-import React,  { Component, ReactNode } from 'react';
-import { WithApolloClient, Query } from 'react-apollo';
+import React,  { Component } from 'react';
+import { WithApolloClient } from 'react-apollo';
 import { RouteComponentProps } from '@reach/router';
 import styled from 'react-emotion';
 import { Map } from 'immutable';
+import { navigate } from '@reach/router';
 
-import { GetTransactionList, GetTransactionListVariables } from '../__generated__/GetTransactionList';
-import { 
-    GetTransaction, 
-    GetTransactionVariables, 
-    GetTransaction_getTransaction_entry_action,
-    GetTransaction_getTransaction_entry_links
-} from '../__generated__/GetTransaction';
+import { GET_ORGANIZATIONS, GET_ORGANIZATION } from '../../queries';
 
-import { GET_TRANSACTIONS, GET_TRANSACTION, GET_APP_DATA, GET_ORGANIZATIONS, GET_ORGANIZATION } from '../queries';
+import Loading from '../../components/loading';
+import Error from '../../components/error';
+import Alert, { Type } from '../../components/alert';
 
-import Loading from '../components/loading';
-import Error from '../components/error';
-import Alert, { Type } from '../components/alert';
-import { getMethodName } from '../common/helpers';
-
-import InfoIcon from '../assets/images/infoIcon.png'
-import { colors } from '../styles';
-import { Button } from '../components';
-import { SignTransaction, SignTransactionVariables } from '../__generated__/SignTransaction';
-import { SIGN_TRANSACTION, EXECUTE_TRANSACTION } from '../mutations';
-import { ApolloError } from 'apollo-client';
-import { AppData } from '../__generated__/AppData';
-import { ExecuteTransaction, ExecuteTransactionVariables } from '../__generated__/ExecuteTransaction';
-import { GetOrganizationsVariables, GetOrganizations } from '../__generated__/GetOrganizations';
-import { GetOrganizationVariables, GetOrganization } from '../__generated__/GetOrganization';
+import InfoIcon from '../../assets/images/infoIcon.png'
+import { colors } from '../../styles';
+import { GetOrganizationsVariables, GetOrganizations } from '../../__generated__/GetOrganizations';
+import { GetOrganizationVariables, GetOrganization } from '../../__generated__/GetOrganization';
 
 interface PageProps extends WithApolloClient<RouteComponentProps> {
     multisigAddress?: string;
@@ -121,10 +107,16 @@ export default class Organizations extends Component<PageProps, StateProps> {
         }
         return cols
     }
+
+
+    viewOrganization = (entryAddress: string) => {
+        navigate(`/organization/${entryAddress}`)
+    }
+
     renderContent = (data: GetOrganization, entry_address: string) => {
 
         return(
-            <Card key={entry_address}>
+            <Card onClick={()=> this.viewOrganization(entry_address)} key={entry_address}>
             <Title>{data.getOrganization.name}</Title> 
             <ImageCard src = {InfoIcon}/>
             <CardContainer>
@@ -140,7 +132,6 @@ export default class Organizations extends Component<PageProps, StateProps> {
                     <Title>Owner</Title>
                     <Value><small>{data.getOrganization.owner}</small></Value>
                     <HR />
-
 
                 </Content>
             </CardContainer>
@@ -242,6 +233,10 @@ const Card = styled('div')({
     borderRadius: '0.25rem',
     '&:after, &:before': {
         boxSizing: 'border-box'
+    },
+    '&:hover': {
+        boxShadow: '0px 6px 6px rgba(0, 0, 0, 0.25)',
+        cursor: 'pointer',
     }
 })
 
@@ -289,50 +284,6 @@ const Content = styled('div')({
     wordWrap: 'break-word',
 })
 
-const ContentTitle = styled('div')({
-    fontWeight: 800,
-    lineHeight: '19px',
-    textAlign: 'end',
-    color: colors.title,
-    flex: '0 0 50%',
-    maxWidth: '50%',
-    position: 'relative',
-    width: '100%',
-    paddingRight: '15px',
-    paddingLeft: '15px',
-    wordWrap: 'break-word',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    '&:after, &:before': {
-        boxSizing: 'border-box'
-    }
-})
-
-const ContentValue = styled('div')({
-    fontWeight: 800,
-    lineHeight: '19px',
-    textAlign: 'start',
-    flex: '0 0 50%',
-    maxWidth: '50%',
-    fontStyle: 'normal',
-    position: 'relative',
-    width: '100%',
-    paddingRight: '15px',
-    paddingLeft: '15px',
-    wordWrap: 'break-word',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    '&:after, &:before': {
-        boxSizing: 'border-box'
-    }
-})
-
-const Values = styled('div')({
-    display: 'flex',
-})
-
 const Value = styled('div')({
     padding: '0px 20px',
     whiteSpace: 'nowrap',
@@ -345,22 +296,4 @@ const HR = styled('hr')({
     width: '80%',
     borderTop: '1px',
     marginBottom: '10px'
-})
-
-const PRE = styled('pre')({
-    textAlign: 'left',
-    marginTop: '-10px',
-    fontSize: '9px',
-    overflowY: 'hidden',
-    overflowX: 'auto',
-    background: '#F7F7F7',
-    margin: '3px 15px 0px 0px'
-})
-
-
-const SignButton = styled(Button)({
-    minWidth: '150px',
-    height: '40px',
-    lineHeight: '40px',
-    marginTop: '1em'
 })

@@ -1,0 +1,121 @@
+bridges = []
+persistence_dir = ''
+ui_bundles = []
+ui_interfaces = []
+
+
+[[agents]]
+id = 'hc-alice'
+keystore_file = './alice.keystore'
+name = 'alice'
+public_address = 'HcScijzE9x3Qjogoz9xOK4NjxFNthmf9br9ow8tN7PUb6djyAoWu5rKuhrsq93i'
+
+[[agents]]
+id = 'hc-bob'
+keystore_file = './bob.keystore'
+name = 'bob'
+public_address = 'HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa'
+
+# [[agents]]
+# id = 'hc-charlie'
+# keystore_file = './charlie.keystore'
+# name = 'charlie'
+# public_address = 'HcSCII95pzz4M5OvojZmEugvwZbpy3xseeVRe7qBcJjppyxpG66rKoS9cSGkw7r'
+
+[[dnas]]
+file = './dist/dna.dna.json'
+hash = 'QmYc19DdNzq15KiCbABwjBHv6tw3esotMJg8GBThJNzgye'
+id = 'hc-multisig'
+
+# Alice
+[[instances]]
+agent = 'hc-alice'
+dna = 'hc-multisig'
+id = 'alice-instance'
+
+[instances.storage]
+type = 'memory'
+
+[[interfaces]]
+admin = true
+id = 'alice-interface'
+
+[[interfaces.instances]]
+id = 'alice-instance'
+
+[interfaces.driver]
+port = 8888
+type = 'websocket'
+
+# Bob
+[[instances]]
+agent = 'hc-bob'
+dna = 'hc-multisig'
+id = 'bob-instance'
+
+[instances.storage]
+type = 'memory'
+
+[[interfaces]]
+admin = true
+id = 'bob-interface'
+
+[[interfaces.instances]]
+id = 'bob-instance'
+
+[interfaces.driver]
+port = 8889
+type = 'websocket'
+
+# Charlie
+# [[instances]]
+# agent = 'hc-charlie'
+# dna = 'hc-multisig'
+# id = 'charlie-instance'
+
+# [instances.storage]
+# type = 'memory'
+
+# [[interfaces]]
+# admin = true
+# id = 'charlie-interface'
+
+# [[interfaces.instances]]
+# id = 'charlie-instance'
+
+# [interfaces.driver]
+# port = 8890
+# type = 'websocket'
+
+
+[logger]
+state_dump = true
+type = 'debug'
+[[logger.rules.rules]]
+    color = "red"
+    exclude = false
+    pattern = "^err/"
+
+    [[logger.rules.rules]]
+    color = "white"
+    exclude = false
+    pattern = "^debug/dna"
+
+    [[logger.rules.rules]]
+    exclude = true
+    pattern = "^debug/reduce"
+
+    [[logger.rules.rules]]
+    exclude = false
+    pattern = ".*"
+
+[network]
+sim2h_url = 'ws://localhost:9000'
+type = 'sim2h'
+
+[passphrase_service]
+type = 'cmd'
+
+[signals]
+consistency = false
+trace = false

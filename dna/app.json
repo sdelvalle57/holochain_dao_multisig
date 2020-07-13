@@ -18,7 +18,15 @@
       },
       {
         "address": "HcSCjoiU46sN787haaPA8z9QJ87WF64tx4agaka44D3dx7h8k45UdS9aPTF3koa",
-        "name": "Charlie"
+        "name": "Bob"
+      },
+      {
+        "address": "HcSciaDXrXkqxwv7gukMChvazIuscvcrk457t8n88cmo95en4sPCEdDKvj4ucja",
+        "name": "Alice Dev"
+      },
+      {
+        "address": "HcSCi6q54V833PVHd9mckeY33vCHeymwm7wnkM5UwKGnbijrC38eV3FOqqmb7za",
+        "name": "Bob Dev"
       }
     ]
   }

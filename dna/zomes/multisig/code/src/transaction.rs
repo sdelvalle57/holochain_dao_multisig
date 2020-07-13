@@ -122,7 +122,9 @@ pub fn entry_def() -> ValidatingEntryType {
             match validation_data {
                 EntryValidationData::Create { entry, .. } => {
                     let member = member::get_member_by_address(AGENT_ADDRESS.clone(), entry.multisig_address)?;
+                    hdk::debug(format!("submit_tx {:?} {:?}", member.clone().member.name, entry.entry_data))?;
                     if !member.active {
+                        hdk::debug(format!("Member is not active"))?;
                         return Err(String::from("Member is not active"));
                     }
                     Ok(())

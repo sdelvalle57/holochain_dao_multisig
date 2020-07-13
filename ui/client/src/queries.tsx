@@ -104,6 +104,12 @@ export const GET_ORGANIZATION = gql`
     }
 `
 
+export const GET_MY_ORGANIZATIONS = gql`
+    query GetMyOrganizations{
+        getMyOrganizations 
+    }
+`
+
 /*****Helpers */
 export const GET_APP_DATA = gql`
     query AppData {

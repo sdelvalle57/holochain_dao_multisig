@@ -64,6 +64,8 @@ export default class PendingTxs extends Component<PageProps, StateProps> {
                 });
                 this.setState({myAddress: myData.data.myAddress})
 
+                //const multisigData = await client.query<>
+
                 const transactions = await client.query<GetTransactionList, GetTransactionListVariables>({
                     query: GET_TRANSACTIONS,
                     fetchPolicy: 'network-only',

@@ -132,8 +132,11 @@ pub fn get_member(entry_address: Address, multisig_address: Address) -> ZomeApiR
 
 pub fn get_member_by_address(address: Address, multisig_address: Address) -> ZomeApiResult<Member> {
     let members = get_members(multisig_address.clone())?;
+    hdk::debug(format!("member_by_add {:?}", members))?;
     for member_entry in members {
         let member = get_member(member_entry, multisig_address.clone())?;
+        hdk::debug(format!("member_by_add_memb {:?} {:?}", member.member.address, address))?;
+        hdk::debug(format!("member_by_add_memb {:?} ", member.member.address == address))?;
         if member.member.address == address {
             return Ok(member)
         }

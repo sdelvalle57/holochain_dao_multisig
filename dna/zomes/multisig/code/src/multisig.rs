@@ -134,22 +134,12 @@ pub fn entry_def() -> ValidatingEntryType {
                     Ok(())
         
                 },
-                EntryValidationData::Modify { new_entry, .. } => {
+                EntryValidationData::Modify { .. } => {
                     let multisig_address = get_multisig_address()?;
                     let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address.clone())?;
                     if !member.active {
                         return Err(String::from("Member is not active"));
                     }
-                    let links = hdk::get_links(
-                        &multisig_address, 
-                        LinkMatch::Exactly("multisig->members"), 
-                        LinkMatch::Any
-                    )?;
-
-                    if links.addresses().len() < new_entry.required as usize {
-                        return Err(String::from("Members length cannot be greater than required"));
-                    }
-
                     Ok(())
                 },
                 EntryValidationData::Delete { .. } => {

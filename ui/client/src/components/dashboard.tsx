@@ -27,7 +27,7 @@ import ViewCompaniesIcon from '../assets/images/viewCompaniesIcon.png'
 import {GET_MULTISIG_MEMBERS, GET_MULTISIG, GET_ORGANIZATIONS} from '../queries';
 import { GET_MULTISIG_INFO, VIEW_WALLET_INFO, ADD_NEW_MEMBER, REMOVE_MEMBER, 
   CHANGE_REQUIREMENTS, PENDING_TRASACTIONS, APPROVED_TRANSACTIONS, 
-  CREATE_ORGANIZATION, VIEW_ORGANIZATIONS } from '../common/constants';
+  CREATE_ORGANIZATION, VIEW_ORGANIZATIONS, VIEW_MY_ORGANIZATIONS } from '../common/constants';
 
 import {Type} from './alert';
 import { navigate } from '@reach/router';
@@ -218,26 +218,10 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
   viewOrganizations = async () => {
     const { multisigAddress } = this.props;
     navigate(`/organizations/${multisigAddress}`)
-    // const { multisigAddress } = this.props;
-    //   if(multisigAddress) {
-    //     const organizations = await this.getOrganizations(multisigAddress);
-    //     if(organizations && organizations.length > 0) {
-    //       const content = <ViewOrganizations multisigAddress={multisigAddress} organizations = {organizations} />
-    //       this.setState({ 
-    //         header: multisigAddress, 
-    //         headerTitle: "Organizations",
-    //         content,
-    //         show: true
-    //       });
-    //       return;
-    //     } else {
-    //       const info = <Alert text="There are no organizations" type={Type.Info} />
-    //       this.setState({show: true, content: info, header: "Organizations"})
-    //       return;
-    //     }
-    //   }
-    //   const error = <Alert text="Internal Error" type={Type.Danger} />
-    //   this.setState({show: true, content: error, header: "Error"})
+  }
+
+  viewMyOrganizations = async () => {
+    navigate(`/my_organizations`)
   }
 
   onCardClick =  async(cardName: string) => {
@@ -265,6 +249,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
         break
       case VIEW_ORGANIZATIONS:
         this.viewOrganizations();
+        break
+      case VIEW_MY_ORGANIZATIONS:
+        this.viewMyOrganizations();
         break
     }
   }
@@ -297,6 +284,9 @@ class StartMultisigForm extends Component<PageProps, ModalProps> {
           </CardContainer>
           <CardContainer>
             <Card onClick={() => this.onCardClick(VIEW_ORGANIZATIONS)} image={ViewCompaniesIcon} title={VIEW_ORGANIZATIONS} enabled={enabled} />
+          </CardContainer>
+          <CardContainer>
+            <Card onClick={() => this.onCardClick(VIEW_MY_ORGANIZATIONS)} image={ViewCompaniesIcon} title={VIEW_MY_ORGANIZATIONS} enabled={enabled} />
           </CardContainer>
         </Container>
         <Modal 

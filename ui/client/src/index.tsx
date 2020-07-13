@@ -9,7 +9,7 @@ import injectStyles from './styles';
 import { PageContainer } from './components';
 import { Router } from '@reach/router';
 
-import { Selector, PendingTxs, ApprovedTxs, Organizations } from './pages';
+import { Selector, PendingTxs, ApprovedTxs, Organizations, MyOrganizations, Organization } from './pages';
 
 /*Start initialization */
 const cache = new InMemoryCache();
@@ -46,6 +46,14 @@ ReactDOM.render(
 
               <Organizations
                 path='/organizations/:multisigAddress' 
+                client={client} />
+
+              <MyOrganizations
+                path='/my_organizations' 
+                client={client} />
+
+              <Organization
+                path='/organization/:entryAddress' 
                 client={client} />
                 
             </Router>
