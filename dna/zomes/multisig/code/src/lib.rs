@@ -63,11 +63,6 @@ mod my_zome {
     }
 
     #[entry_def]
-    fn open_multisig_entry_definition() -> ValidatingEntryType {
-      multisig::org_entry_def()
-    }
-
-    #[entry_def]
     fn transaction_entry_definition() -> ValidatingEntryType {
       transaction::entry_def()
     }
@@ -111,8 +106,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn create_for_organization(title: String, description: String) -> ZomeApiResult<Address> {
-        multisig::create_for_organization(title, description)
+    fn create_for_organization(title: String, description: String, org_address: Address) -> ZomeApiResult<Address> {
+        multisig::create_for_organization(title, description, org_address)
     }
 
     /*********** member.rs */

@@ -109,16 +109,6 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation: | _validation_data: hdk::LinkValidationData | {
                     Ok(())
                 }
-            ),
-            to!(
-                "org_multisig",
-                link_type: "organization->org_multisigs",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: | _validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
             )
         ]
     )
@@ -180,8 +170,8 @@ fn send_transaction(args: JsonString) -> ZomeApiResult<Address> {
 
 // }
 
-pub fn new_multisig(title: String, description: String, organization_address: Address) -> ZomeApiResult<Address> {
-    let organization: Organization = hdk::utils::get_as_type(organization_address.clone())?;
+pub fn new_multisig(title: String, description: String, org_address: Address) -> ZomeApiResult<Address> {
+    let organization: Organization = hdk::utils::get_as_type(org_address.clone())?;
 
     let owner: employee::Employee = hdk::utils::get_as_type(organization.owner)?;
 
@@ -193,17 +183,21 @@ pub fn new_multisig(title: String, description: String, organization_address: Ad
     pub struct MSIG {
         pub title: String,
         pub description: String,
+        pub org_address: Address
     }
-    let to_send = MSIG { title, description };
+    let to_send = MSIG { 
+        title, 
+        description, 
+        org_address 
+    };
 
     let token_cap = Address::from(hdk::PUBLIC_TOKEN.to_string());
     hdk::debug(format!("org_pub_token {:?}", token_cap.clone()))?;
     let rpc_call_new_msig = hdk::call(hdk::THIS_INSTANCE, "multisig", token_cap.clone(), "create_for_organization", to_send.into());
     let multisig_address: Address = decode_zome_call(rpc_call_new_msig.clone())?;
-    hdk::link_entries(&organization_address, &multisig_address, "organization->org_multisigs", "")?; 
     Ok(multisig_address)
-
 }
+
 
 pub fn get_all(multisig_address: Address) -> ZomeApiResult<Vec<Address>> {
     let links = hdk::get_links(

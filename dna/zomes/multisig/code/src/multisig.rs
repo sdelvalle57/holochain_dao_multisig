@@ -40,7 +40,8 @@ use crate::{
 pub struct Multisig {
     pub title: String,
     pub description: String,
-    pub required: u64
+    pub required: u64,
+    pub org_address: Option<Address>
 }
 
 impl Multisig{
@@ -48,15 +49,17 @@ impl Multisig{
         Multisig {
             title: String::from("Master Multisig"),
             description: String::from("Master managed multisig"),
-            required: 2
+            required: 2,
+            org_address: None
         }
     }
     
-    pub fn new(title: String, description: String) -> Self {
+    pub fn new(title: String, description: String, org_address: Address) -> Self {
         Multisig {
             title,
             description,
-            required: 1
+            required: 1,
+            org_address: Some(org_address)
         }
     }
 
@@ -66,10 +69,6 @@ impl Multisig{
 
     pub fn entry(&self) -> Entry {
         Entry::App("multisig".into(), self.into())
-    }
-
-    pub fn org_entry(&self) -> Entry {
-        Entry::App("org_multisig".into(), self.into())
     }
 }
 
@@ -126,21 +125,56 @@ pub fn entry_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<Multisig> | {
             match validation_data{
-                EntryValidationData::Create { .. } => {
-                    let is_member = helpers::check_is_member()?;
-                    if !is_member {
-                        return Err(String::from("Only members can perform this operation"));
+                EntryValidationData::Create { entry, .. } => {
+                    //Checks if the new multisig is the anchor or an org_multisig
+                    match entry.org_address {
+                        //is org_multisig
+                        Some(address) => {
+                            let org_multisig_created = get_org_multisig(address)?;
+                            if org_multisig_created.len() > 0 {
+                                return Err(String::from("Organization multisig already created")); 
+                            }
+                            return Ok(());
+                        },
+                        //is anchor_multisig
+                        _ => {
+                            let is_member = helpers::check_is_member()?;
+                            if !is_member {
+                                return Err(String::from("Only members can perform this operation"));
+                            }
+                            Ok(())
+                        }
                     }
-                    Ok(())
-        
                 },
-                EntryValidationData::Modify { .. } => {
-                    let multisig_address = get_multisig_address()?;
-                    let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address.clone())?;
-                    if !member.active {
-                        return Err(String::from("Member is not active"));
+                EntryValidationData::Modify { old_entry, new_entry, .. } => {
+                    //Checks if the multisig is the anchor or an org_multisig
+                    match old_entry.org_address {
+                        //is org_multisig
+                        Some(address) => {
+                            let org_multisig_address = get_org_multisig(address.clone())?;
+                            if org_multisig_address.len() > 0 {
+                                let member = member::get_member_by_address(AGENT_ADDRESS.clone(), org_multisig_address[0].clone())?;
+                                if !member.active {
+                                    return Err(String::from("Member is not active"));
+                                }
+                                if Some(address) != new_entry.org_address {
+                                    return Err(String::from("Cannot modify multisig org address"));
+                                }
+                                return Ok(());
+                            }
+                            return Err(String::from("Organization multisig not yet created")); 
+                        },
+                         //is anchor_multisig
+                         _ => {
+                            let multisig_address = get_multisig_address()?;
+                            let member = member::get_member_by_address(AGENT_ADDRESS.clone(), multisig_address.clone())?;
+                            if !member.active {
+                                return Err(String::from("Member is not active"));
+                            }
+                            return Ok(());
+                         }
                     }
-                    Ok(())
+                    
                 },
                 EntryValidationData::Delete { .. } => {
                     Err(String::from("Cannot delete multisig"))
@@ -200,30 +234,21 @@ pub fn entry_def() -> ValidatingEntryType {
                        _ => Ok(())
                     }
                 }
+            ),
+            from!(
+                "org_multisig",
+                link_type: "organization->multisig",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: | _validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
             )
         ]
     )
 }
 
-pub fn org_entry_def() -> ValidatingEntryType {
-    entry!(
-        name: "org_multisig",
-        description: "multisig entry def",
-        sharing: Sharing::Public,
-        validation_package: || {
-            hdk::ValidationPackageDefinition::Entry
-        },
-        validation: | validation_data: hdk::EntryValidationData<Multisig> | {
-            match validation_data {
-                EntryValidationData::Create { validation_data, .. } => {
-                    hdk::debug(format!("entry_def_val_data {:?}", validation_data))?;
-                    Ok(())
-                }
-                _ => Ok(())
-            }
-        }
-    )
-}
 
 pub fn start_multisig() -> ZomeApiResult<Address> {
     let anchor_entry = anchor_entry();
@@ -247,11 +272,11 @@ pub fn start_multisig() -> ZomeApiResult<Address> {
     Ok(multisig_address)
 }
 
-pub fn create_for_organization(title: String, description: String) -> ZomeApiResult<Address> {
-    hdk::debug(format!("m_sig_token {:?}", hdk::PUBLIC_TOKEN.to_string()))?;
-    let multisig = Multisig::new(title, description);
-    let multisig_entry = multisig.org_entry();
+pub fn create_for_organization(title: String, description: String, org_address: Address) -> ZomeApiResult<Address> {
+    let multisig = Multisig::new(title, description, org_address.clone());
+    let multisig_entry = multisig.entry();
     let multisig_address = hdk::commit_entry(&multisig_entry)?;
+    hdk::link_entries(&org_address, &multisig_address, "organization->multisig", "")?; 
     Ok(multisig_address)
 }
 
@@ -293,5 +318,14 @@ pub fn get_multisig_address() -> ZomeApiResult<Address> {
 pub fn get_multisig(multisig_address: Address) -> ZomeApiResult<Multisig> {
     let multisig: Multisig = hdk::utils::get_as_type(multisig_address.clone())?;
     Ok(multisig)
+}
+
+pub fn get_org_multisig(org_address: Address) -> ZomeApiResult<Vec<Address>> {
+    let links = hdk::get_links(
+        &org_address, 
+        LinkMatch::Exactly("organization->multisig"), 
+        LinkMatch::Any
+    )?;
+    return Ok(links.addresses());
 }
 

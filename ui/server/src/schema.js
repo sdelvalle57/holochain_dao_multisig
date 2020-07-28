@@ -6,7 +6,7 @@ const typeDefs = gql`
         #**** Helpers *****
         myAddress: String,
         getDnaAddress: String,
-        getHardcodedMembers: [Member!]!,
+        getHardcodedMembers: [Person!]!,
         isHardcodedMember: Boolean!,
 
         #**** Multisig *****
@@ -54,7 +54,8 @@ const typeDefs = gql`
     type Multisig {
         title: String!,
         description: String!,
-        required: Int!
+        required: Int!,
+        org_address: String
     }
 
     type Person {

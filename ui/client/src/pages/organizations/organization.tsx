@@ -28,24 +28,24 @@ export default class Organization extends Component<PageProps, StateProps> {
         myAddress: null,
     }
 
-    renderContent = (data: GetOrganization, entry_address: string) => {
+    renderContent = () => {
 
         return(
-            <Card key={entry_address}>
-            <Title>{data.getOrganization.name}</Title> 
+            <Card >
+            <Title>Multisig</Title> 
             <ImageCard src = {InfoIcon}/>
             <CardContainer>
                 <Content>
                     <Title>Description</Title>
-                    <Value>{data.getOrganization.description}</Value>
+                    <Value></Value>
                     <HR />
 
                     <Title>Address</Title>
-                    <Value><small>{entry_address}</small></Value>
+                    <Value><small></small></Value>
                     <HR />
 
                     <Title>Owner</Title>
-                    <Value><small>{data.getOrganization.owner}</small></Value>
+                    <Value><small></small></Value>
                     <HR />
 
 
@@ -69,6 +69,7 @@ export default class Organization extends Component<PageProps, StateProps> {
                     if(error) return <Error error={error} />;
                     if(loading) return <Loading />
                     return (
+                        <>
                         <Header>
                             <Row>
                                 <HeaderTitle>Name</HeaderTitle>
@@ -101,6 +102,8 @@ export default class Organization extends Component<PageProps, StateProps> {
                                 </HeaderContainer>
                             </Row>
                         </Header>
+                        {this.renderContent()}
+                        </>
                     )
                     
                 }}
@@ -219,9 +222,6 @@ const HR = styled('hr')({
     borderTop: '1px',
     marginBottom: '10px'
 })
-
-
-
 
 
 const Header = styled('div')({
